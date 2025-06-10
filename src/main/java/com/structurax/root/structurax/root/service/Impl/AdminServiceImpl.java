@@ -1,5 +1,6 @@
 package com.structurax.root.structurax.root.service.Impl;
 
+import com.structurax.root.structurax.root.dao.AdminDAO;
 import com.structurax.root.structurax.root.dto.EmployeeDTO;
 import com.structurax.root.structurax.root.repository.AdminRepository;
 import com.structurax.root.structurax.root.service.AdminService;
@@ -12,11 +13,14 @@ import java.util.List;
 public class AdminServiceImpl implements AdminService {
 
     @Autowired
-    AdminRepository adminRepository;
+    private AdminRepository adminRepository;
+
+    @Autowired
+    private AdminDAO adminDAO;
 
     @Override
     public EmployeeDTO createEmployee(EmployeeDTO employeeDTO) {
-        EmployeeDTO employeeDTO1=adminRepository.createEmployee(employeeDTO);
+        EmployeeDTO employeeDTO1=adminDAO.createEmployee(employeeDTO);
         return employeeDTO1;
     }
 
