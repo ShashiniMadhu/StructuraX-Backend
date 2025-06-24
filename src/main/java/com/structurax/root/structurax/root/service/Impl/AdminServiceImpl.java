@@ -11,7 +11,7 @@ import java.util.List;
 
 @Service
 public class AdminServiceImpl implements AdminService {
-    
+
     @Autowired
     private AdminDAO adminDAO;
 
