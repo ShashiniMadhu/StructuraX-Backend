@@ -26,21 +26,21 @@ public class AdminServiceImpl implements AdminService {
 
     @Override
     public List<EmployeeDTO> getAllEmployees() {
-        return adminRepository.getAllEmployees();
+        return adminDAO.getAllEmployees();
     }
 
     @Override
     public EmployeeDTO getEmployeeById(Integer id) {
-        return adminRepository.getEmployeeById(id);
+        return adminDAO.getEmployeeById(id);
     }
 
     @Override
     public EmployeeDTO updateEmployee(EmployeeDTO employeeDTO) {
-        return adminRepository.updateEmployee(employeeDTO);
+        return adminDAO.updateEmployee(employeeDTO);
     }
 
     @Override
     public EmployeeDTO deleteEmployeeById(Integer id) {
-        return adminRepository.deleteEmployeeById(id);
+        return adminDAO.deleteEmployeeById(id);
     }
 }
