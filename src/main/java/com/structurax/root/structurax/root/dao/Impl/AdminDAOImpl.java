@@ -2,7 +2,7 @@ package com.structurax.root.structurax.root.dao.Impl;
 
 import com.structurax.root.structurax.root.dao.AdminDAO;
 import com.structurax.root.structurax.root.dto.EmployeeDTO;
-import com.structurax.root.structurax.root.util.DatabseConnection;
+import com.structurax.root.structurax.root.util.DatabaseConnection;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;//for password hashing
@@ -17,7 +17,7 @@ import java.util.List;
 @Repository
 public class AdminDAOImpl implements AdminDAO {
     @Autowired
-    private DatabseConnection databseConnection;
+    private DatabaseConnection databaseConnection;
 
     @Override
     public EmployeeDTO createEmployee(EmployeeDTO employeeDTO) {
@@ -31,7 +31,7 @@ public class AdminDAOImpl implements AdminDAO {
         try {
             final String sql = "INSERT INTO employee (full_name, email, contact_number, address, employee_type, join_date, salary, password) " +
                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-            connection = databseConnection.getConnection();
+            connection = databaseConnection.getConnection();
             preparedStatement = connection.prepareStatement(sql);
 
             preparedStatement.setString(1, employeeDTO.getFullName());
@@ -63,7 +63,7 @@ public class AdminDAOImpl implements AdminDAO {
         final String sql = "SELECT * FROM employee";
 
         try (
-                Connection connection = databseConnection.getConnection();
+                Connection connection = databaseConnection.getConnection();
                 PreparedStatement preparedStatement = connection.prepareStatement(sql);
                 ResultSet resultSet = preparedStatement.executeQuery()
         ) {
@@ -97,7 +97,7 @@ public class AdminDAOImpl implements AdminDAO {
         ResultSet resultSet = null;
 
         try {
-            connection = databseConnection.getConnection();
+            connection = databaseConnection.getConnection();
             preparedStatement = connection.prepareStatement(sql);
             preparedStatement.setInt(1, empId);
             resultSet = preparedStatement.executeQuery();
@@ -144,7 +144,7 @@ public class AdminDAOImpl implements AdminDAO {
                 "employee_type = ?, join_date = ?, salary = ?, password = ? WHERE emp_id = ?";
 
         try {
-            connection = databseConnection.getConnection();
+            connection = databaseConnection.getConnection();
             preparedStatement = connection.prepareStatement(sql);
 
             preparedStatement.setString(1, employeeDTO.getFullName());
@@ -186,7 +186,7 @@ public class AdminDAOImpl implements AdminDAO {
         final String sql = "DELETE FROM employee WHERE emp_id = ?";
 
         try (
-                Connection connection = databseConnection.getConnection();
+                Connection connection = databaseConnection.getConnection();
                 PreparedStatement preparedStatement = connection.prepareStatement(sql)
         ) {
             preparedStatement.setInt(1, empId);
