@@ -2,7 +2,6 @@ package com.structurax.root.structurax.root.service.Impl;
 
 import com.structurax.root.structurax.root.dao.AdminDAO;
 import com.structurax.root.structurax.root.dto.EmployeeDTO;
-import com.structurax.root.structurax.root.repository.AdminRepository;
 import com.structurax.root.structurax.root.service.AdminService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
