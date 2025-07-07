@@ -33,7 +33,7 @@ public class SiteSupervisorServiceImpl implements SiteSupervisorService {
     }
 
     @Override
-    public List<LaborAttendanceDTO> updateLaborAttendance(List<LaborAttendanceDTO> laborAttendanceDTO) {
+    public LaborAttendanceDTO updateLaborAttendance(LaborAttendanceDTO laborAttendanceDTO) {
         return siteSupervisorDAO.updateLaborAttendance(laborAttendanceDTO);
     }
 

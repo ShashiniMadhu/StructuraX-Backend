@@ -85,44 +85,48 @@ public class SiteSupervisorDAOImpl implements SiteSupervisorDAO {
     }
 
     @Override
-    public List<LaborAttendanceDTO> updateLaborAttendance(List<LaborAttendanceDTO> attendanceList) {
-        final String sql = "UPDATE labor_attendance SET hiring_type = ?, labor_type = ?, count = ?, company = ? " +
-                "WHERE project_id = ? AND date = ?";
+    public LaborAttendanceDTO updateLaborAttendance(LaborAttendanceDTO laborAttendanceDTO) {
+        final String sql = "UPDATE labor_attendance SET project_id = ?, date = ?, hiring_type = ?, labor_type = ?, count = ?, company = ? " +
+                "WHERE id = ?";
 
         try (
                 Connection connection = databaseConnection.getConnection();
                 PreparedStatement preparedStatement = connection.prepareStatement(sql)
         ) {
-            for (LaborAttendanceDTO dto : attendanceList) {
-                preparedStatement.setString(1, dto.getHiring_type());
-                preparedStatement.setString(2, dto.getLabor_type());
-                preparedStatement.setInt(3, dto.getCount());
-                preparedStatement.setString(4, dto.getCompany());
-                preparedStatement.setInt(5, dto.getProject_id());
-                preparedStatement.setDate(6, dto.getDate());
+            System.out.println("Updating: id=" + laborAttendanceDTO.getId() +
+                    ", project_id=" + laborAttendanceDTO.getProject_id() +
+                    ", date=" + laborAttendanceDTO.getDate() +
+                    ", hiring_type=" + laborAttendanceDTO.getHiring_type() +
+                    ", labor_type=" + laborAttendanceDTO.getLabor_type() +
+                    ", count=" + laborAttendanceDTO.getCount() +
+                    ", company=" + laborAttendanceDTO.getCompany());
 
-                preparedStatement.addBatch(); // Add to batch
+            preparedStatement.setInt(1, laborAttendanceDTO.getProject_id());
+            preparedStatement.setDate(2, laborAttendanceDTO.getDate());
+            preparedStatement.setString(3, laborAttendanceDTO.getHiring_type());
+            preparedStatement.setString(4, laborAttendanceDTO.getLabor_type());
+            preparedStatement.setInt(5, laborAttendanceDTO.getCount());
+            preparedStatement.setString(6, laborAttendanceDTO.getCompany());
+            preparedStatement.setInt(7, laborAttendanceDTO.getId());
+
+            int rowsAffected = preparedStatement.executeUpdate();
+            if (rowsAffected == 0) {
+                throw new RuntimeException("No labor attendance record found with id=" + laborAttendanceDTO.getId());
             }
 
-            int[] rowsAffected = preparedStatement.executeBatch(); // Execute batch
-
-            // Optionally check success
-            if (rowsAffected.length != attendanceList.size()) {
-                throw new RuntimeException("Some labor attendance records failed to update.");
-            }
-
-            return attendanceList;
+            return laborAttendanceDTO;
         } catch (SQLException e) {
-            throw new RuntimeException("Error updating labor attendance batch: " + e.getMessage(), e);
+            throw new RuntimeException("Error updating labor attendance: " + e.getMessage(), e);
         }
     }
 
 
 
+
     @Override
-    public List<LaborAttendanceDTO> getAttendanceByProjectIdAndDate(Integer projectId, java.sql.Date date) {
+    public List<LaborAttendanceDTO> getAttendanceByProjectIdAndDate(Integer project_id, java.sql.Date date) {
         final String sql = "SELECT * FROM labor_attendance l INNER JOIN project p ON p.project_id=l.project_id" +
-                " WHERE project_id = ? AND DATE(date) = ?";
+                " WHERE l.project_id = ? AND DATE(l.date) = ?";
 
         List<LaborAttendanceDTO> laborAttendanceDTOS = new ArrayList<>();
 
@@ -130,12 +134,15 @@ public class SiteSupervisorDAOImpl implements SiteSupervisorDAO {
                 Connection connection = databaseConnection.getConnection();
                 PreparedStatement preparedStatement = connection.prepareStatement(sql)
         ) {
-            preparedStatement.setInt(1, projectId);
+            preparedStatement.setInt(1, project_id);
             preparedStatement.setDate(2, date);  // java.sql.Date is fine here
 
             try (ResultSet rs = preparedStatement.executeQuery()) {
                 while (rs.next()) {
                     LaborAttendanceDTO dto = new LaborAttendanceDTO();
+                    dto.setId(rs.getInt("id"));            // or rs.getLong if ID is long
+                    dto.setProject_id(rs.getInt("project_id"));
+                    dto.setDate(rs.getDate("date"));
                     dto.setHiring_type(rs.getString("hiring_type"));
                     dto.setLabor_type(rs.getString("labor_type"));
                     dto.setCount(rs.getInt("count"));

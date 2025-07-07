@@ -10,7 +10,7 @@ public interface SiteSupervisorDAO {
 
     List<LaborAttendanceDTO> getAllLaborAttendance();
 
-    List<LaborAttendanceDTO> updateLaborAttendance(List<LaborAttendanceDTO> laborAttendanceDTO);
+    LaborAttendanceDTO updateLaborAttendance(LaborAttendanceDTO laborAttendanceDTO);
 
 
     List<LaborAttendanceDTO> deleteLaborAttendanceRecord(Integer projectId, Date date);

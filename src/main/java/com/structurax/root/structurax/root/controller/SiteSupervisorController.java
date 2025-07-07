@@ -33,6 +33,16 @@ public class SiteSupervisorController {
     }
 
 
+    /*@GetMapping
+    public ResponseEntity<List<LaborAttendanceDTO>> getAttendanceByProjectIdAndDate(
+            @RequestParam("projectId") Integer projectId,
+            @RequestParam("date") String dateStr // accept date as yyyy-MM-dd
+    ) {
+        java.sql.Date date = java.sql.Date.valueOf(dateStr);
+        List<LaborAttendanceDTO> attendanceList = siteSupervisorService.getAttendanceByProjectIdAndDate(projectId, date);
+        return ResponseEntity.ok(attendanceList);
+    }*/
+
 
 
 
@@ -43,8 +53,9 @@ public class SiteSupervisorController {
         return new ResponseEntity<>(laborAttendance, HttpStatus.OK);
     }
 
-    @PutMapping
-    public ResponseEntity<List<LaborAttendanceDTO>> updateLaborAttendance(@RequestBody List<LaborAttendanceDTO> laborAttendanceDTO){
+    @PutMapping("{id}")
+    public ResponseEntity<LaborAttendanceDTO> updateLaborAttendance(@PathVariable Integer id,@RequestBody LaborAttendanceDTO laborAttendanceDTO){
+        laborAttendanceDTO.setId(id);
         siteSupervisorService.updateLaborAttendance(laborAttendanceDTO);
         return new ResponseEntity<>(laborAttendanceDTO,HttpStatus.OK);
     }

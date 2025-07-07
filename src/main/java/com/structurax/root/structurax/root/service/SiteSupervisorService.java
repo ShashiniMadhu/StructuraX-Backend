@@ -15,7 +15,7 @@ public interface SiteSupervisorService {
 
     List<LaborAttendanceDTO> getAttendanceByProjectIdAndDate(Integer project_id, Date date);
 
-    List<LaborAttendanceDTO> updateLaborAttendance(List<LaborAttendanceDTO> laborAttendanceDTO);
+    LaborAttendanceDTO updateLaborAttendance(LaborAttendanceDTO laborAttendanceDTO);
 
     List<LaborAttendanceDTO> deleteLaborAttendanceRecord(Integer project_id, Date date);
 }
