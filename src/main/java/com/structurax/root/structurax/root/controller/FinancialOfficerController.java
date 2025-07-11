@@ -66,11 +66,7 @@ public class FinancialOfficerController {
         return new ResponseEntity<>(paymentPlanDTO,HttpStatus.OK);
     }
 
-    @DeleteMapping("/payment_plan/{id}")
-    public ResponseEntity<PaymentPlanDTO> deletePaymentPlanById(@PathVariable Integer id){
-        PaymentPlanDTO paymentPlan = financialOfficerService.deletePaymentPlanById(id);
-        return new ResponseEntity<>(paymentPlan, HttpStatus.OK);
-    }
+
 
 
     /*@PutMapping()
