@@ -44,7 +44,7 @@ public class SiteSupervisorServiceImpl implements SiteSupervisorService {
     }
 
     @Override
-    public List<MaterialDTO> getMaterialsByRequestId(Integer id) {
+    public List<SiteResourceDTO> getMaterialsByRequestId(Integer id) {
         return siteSupervisorDAO.getMaterialsByRequestId(id);
     }
 
@@ -62,6 +62,27 @@ public class SiteSupervisorServiceImpl implements SiteSupervisorService {
     public RequestDTO createMaterialRequest(RequestDTO requestDTO) {
         RequestDTO request=siteSupervisorDAO.createMaterialRequest(requestDTO);
         return request;
+    }
+
+    @Override
+    public TodoDTO createToDo(TodoDTO todoDTO) {
+        TodoDTO todo=siteSupervisorDAO.createToDo(todoDTO);
+        return todo;
+    }
+
+    @Override
+    public List<TodoDTO> getToDoBySpId(String id) {
+        return siteSupervisorDAO.getToDoBySpId(id);
+    }
+
+
+    public boolean updateTodo(TodoDTO todoDTO) {
+        return siteSupervisorDAO.updateTodo(todoDTO);
+    }
+
+    @Override
+    public boolean deleteToDoTask(Integer taskId) {
+        return siteSupervisorDAO.deleteToDoTask(taskId);
     }
 
     /*@Override

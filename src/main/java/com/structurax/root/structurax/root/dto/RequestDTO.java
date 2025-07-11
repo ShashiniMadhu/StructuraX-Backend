@@ -9,7 +9,7 @@ public class RequestDTO {
 
     private String approvalStatus;
     private Date date;
-    private List<MaterialDTO> materials;
+    private List<SiteResourceDTO> materials;
     private int projectId;
     private String requestType;
     // ✅ No-args constructor (required by frameworks like Jackson)
@@ -64,11 +64,11 @@ public class RequestDTO {
         this.projectId = projectId;
     }
 
-    public List<MaterialDTO> getMaterials() {
+    public List<SiteResourceDTO> getMaterials() {
         return materials;
     }
 
-    public void setMaterials(List<MaterialDTO> materials) {
+    public void setMaterials(List<SiteResourceDTO> materials) {
         this.materials = materials;
     }
 }

@@ -1,9 +1,6 @@
 package com.structurax.root.structurax.root.dto;
 
-import java.sql.Date;
-import java.util.List;
-
-public class MaterialDTO {
+public class SiteResourceDTO {
 
     private Integer id;
     private String materialName;
@@ -11,10 +8,10 @@ public class MaterialDTO {
     private String priority;
     private Integer requestId;
 
-    public MaterialDTO() {}
+    public SiteResourceDTO() {}
 
     // ✅ Proper full constructor
-    public MaterialDTO(int id, String materialName, int quantity, String priority, int requestId) {
+    public SiteResourceDTO(int id, String materialName, int quantity, String priority, int requestId) {
         this.id = id;
         this.materialName = materialName;
         this.quantity = quantity;
