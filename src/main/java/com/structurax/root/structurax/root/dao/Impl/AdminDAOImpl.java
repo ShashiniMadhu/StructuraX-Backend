@@ -34,8 +34,8 @@ public class AdminDAOImpl implements AdminDAO {
         }
 
         try {
-            final String sql = "INSERT INTO employee (employee_id, name, email, phone_number, address, type, joined_date, password, availability) " +
-                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            final String sql = "INSERT INTO employee (employee_id, name, email, phone_number, address, type, joined_date, password, availability, profile_image_url) " +
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
             connection = databaseConnection.getConnection();
             preparedStatement = connection.prepareStatement(sql);
 
@@ -48,6 +48,8 @@ public class AdminDAOImpl implements AdminDAO {
             preparedStatement.setDate(7, java.sql.Date.valueOf(employeeDTO.getJoinedDate()));
             preparedStatement.setString(8, hashedPassword);
             preparedStatement.setBoolean(9, employeeDTO.getAvailability());
+            preparedStatement.setString(10, employeeDTO.getProfileImageUrl());
+
 
             int rowsAffected = preparedStatement.executeUpdate();
             if (rowsAffected == 0) {
@@ -81,7 +83,8 @@ public class AdminDAOImpl implements AdminDAO {
                         resultSet.getString("type"),
                         resultSet.getDate("joined_date").toLocalDate(),
                         null, // Don't expose password in responses
-                        resultSet.getBoolean("availability")
+                        resultSet.getBoolean("availability"),
+                        resultSet.getString("profile_image_url")
                 );
                 employeeList.add(employee);
             }
@@ -115,7 +118,9 @@ public class AdminDAOImpl implements AdminDAO {
                         resultSet.getString("type"),
                         resultSet.getDate("joined_date").toLocalDate(),
                         null, // Don't expose password
-                        resultSet.getBoolean("availability")
+                        resultSet.getBoolean("availability"),
+                        resultSet.getString("profile_image_url")
+
                 );
             } else {
                 return null;
@@ -141,7 +146,7 @@ public class AdminDAOImpl implements AdminDAO {
         }
 
         final String sql = "UPDATE employee SET name = ?, email = ?, phone_number = ?, address = ?, " +
-                "type = ?, joined_date = ?, password = ?, availability = ? WHERE employee_id = ?";
+                "type = ?, joined_date = ?, password = ?, availability = ?, profile_image_url = ? WHERE employee_id = ?";
 
         try {
             connection = databaseConnection.getConnection();
@@ -155,7 +160,7 @@ public class AdminDAOImpl implements AdminDAO {
             preparedStatement.setDate(6, java.sql.Date.valueOf(employeeDTO.getJoinedDate()));
             preparedStatement.setString(7, hashedPassword);
             preparedStatement.setBoolean(8, employeeDTO.getAvailability());
-            preparedStatement.setString(9, employeeDTO.getEmployeeId());
+            preparedStatement.setString(9, employeeDTO.getProfileImageUrl()); 
 
             int rowsAffected = preparedStatement.executeUpdate();
             if (rowsAffected == 0) {
