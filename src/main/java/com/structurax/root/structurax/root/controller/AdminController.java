@@ -5,6 +5,7 @@ import com.structurax.root.structurax.root.dto.EmployeeDTO;
 import com.structurax.root.structurax.root.service.AdminService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Pattern;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Slf4j
 @Validated
 @CrossOrigin("http://localhost:5173/")
 @RestController
