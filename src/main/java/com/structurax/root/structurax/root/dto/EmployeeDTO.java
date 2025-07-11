@@ -5,33 +5,31 @@ import java.time.LocalDate;
 
 public class EmployeeDTO {
     private Integer empId;
-    private String fullName;
+    private String name;
     private String email;
-    private String contactNumber;
+    private String phoneNumber;
     private String address;
-    private String employeeType;
-    private LocalDate joinDate;
-    private BigDecimal salary;
+    private String type;
+    private LocalDate joinedDate;
     private String password;
+    private Boolean availability;
 
     public EmployeeDTO() {
         // Default constructor
     }
 
-    public EmployeeDTO(Integer empId, String fullName, String email, String contactNumber, String address,
-                       String employeeType, LocalDate joinDate, BigDecimal salary, String password) {
+    public EmployeeDTO(Integer empId, String name, String email, String phoneNumber, String address, String type, LocalDate joinedDate, String password, Boolean availability) {
         this.empId = empId;
-        this.fullName = fullName;
+        this.name = name;
         this.email = email;
-        this.contactNumber = contactNumber;
+        this.phoneNumber = phoneNumber;
         this.address = address;
-        this.employeeType = employeeType;
-        this.joinDate = joinDate;
-        this.salary = salary;
+        this.type = type;
+        this.joinedDate = joinedDate;
         this.password = password;
+        this.availability = availability;
     }
 
-    // Getters and Setters
     public Integer getEmpId() {
         return empId;
     }
@@ -40,12 +38,12 @@ public class EmployeeDTO {
         this.empId = empId;
     }
 
-    public String getFullName() {
-        return fullName;
+    public String getName() {
+        return name;
     }
 
-    public void setFullName(String fullName) {
-        this.fullName = fullName;
+    public void setName(String name) {
+        this.name = name;
     }
 
     public String getEmail() {
@@ -56,12 +54,12 @@ public class EmployeeDTO {
         this.email = email;
     }
 
-    public String getContactNumber() {
-        return contactNumber;
+    public String getPhoneNumber() {
+        return phoneNumber;
     }
 
-    public void setContactNumber(String contactNumber) {
-        this.contactNumber = contactNumber;
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
     }
 
     public String getAddress() {
@@ -72,28 +70,20 @@ public class EmployeeDTO {
         this.address = address;
     }
 
-    public String getEmployeeType() {
-        return employeeType;
+    public String getType() {
+        return type;
     }
 
-    public void setEmployeeType(String employeeType) {
-        this.employeeType = employeeType;
+    public void setType(String type) {
+        this.type = type;
     }
 
-    public LocalDate getJoinDate() {
-        return joinDate;
+    public LocalDate getJoinedDate() {
+        return joinedDate;
     }
 
-    public void setJoinDate(LocalDate joinDate) {
-        this.joinDate = joinDate;
-    }
-
-    public BigDecimal getSalary() {
-        return salary;
-    }
-
-    public void setSalary(BigDecimal salary) {
-        this.salary = salary;
+    public void setJoinedDate(LocalDate joinedDate) {
+        this.joinedDate = joinedDate;
     }
 
     public String getPassword() {
@@ -102,5 +92,13 @@ public class EmployeeDTO {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public Boolean getAvailability() {
+        return availability;
+    }
+
+    public void setAvailability(Boolean availability) {
+        this.availability = availability;
     }
 }
