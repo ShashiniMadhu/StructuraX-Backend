@@ -15,7 +15,7 @@ public class AdminServiceImpl implements AdminService {
     private AdminDAO adminDAO;
 
     @Override
-    public EmployeeDTO createEmployee(EmployeeDTO employeeDTO) {
+    public EmployeeDTO createEmployee(EmployeeDTO employeeDTO){
         EmployeeDTO employeeDTO1=adminDAO.createEmployee(employeeDTO);
         return employeeDTO1;
     }
@@ -26,7 +26,7 @@ public class AdminServiceImpl implements AdminService {
     }
 
     @Override
-    public EmployeeDTO getEmployeeById(Integer id) {
+    public EmployeeDTO getEmployeeById(String id) {
         return adminDAO.getEmployeeById(id);
     }
 
@@ -36,7 +36,7 @@ public class AdminServiceImpl implements AdminService {
     }
 
     @Override
-    public EmployeeDTO deleteEmployeeById(Integer id) {
+    public EmployeeDTO deleteEmployeeById(String id) {
         return adminDAO.deleteEmployeeById(id);
     }
 }
