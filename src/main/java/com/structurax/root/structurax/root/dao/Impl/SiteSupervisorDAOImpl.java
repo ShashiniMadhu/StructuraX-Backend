@@ -203,12 +203,12 @@ public class SiteSupervisorDAOImpl implements SiteSupervisorDAO {
 
     //material request crud
     @Override
-    public List<MaterialDTO> getMaterialsByRequestId(Integer id) {
+    public List<SiteResourceDTO> getMaterialsByRequestId(Integer id) {
         final String sql = "SELECT * FROM material m " +
                 "INNER JOIN request r ON m.request_id = r.request_id " +
                 "WHERE m.request_id = ?";
 
-        List<MaterialDTO> materialList = new ArrayList<>();
+        List<SiteResourceDTO> materialList = new ArrayList<>();
 
         try (
                 Connection connection = databaseConnection.getConnection();
@@ -218,7 +218,7 @@ public class SiteSupervisorDAOImpl implements SiteSupervisorDAO {
 
             try (ResultSet rs = preparedStatement.executeQuery()) {
                 while (rs.next()) {
-                    MaterialDTO dto = new MaterialDTO();
+                    SiteResourceDTO dto = new SiteResourceDTO();
                     dto.setId(rs.getInt("id"));
                     dto.setMaterialName(rs.getString("name"));
                     dto.setQuantity(rs.getInt("quantity"));
@@ -285,7 +285,7 @@ public class SiteSupervisorDAOImpl implements SiteSupervisorDAO {
                         rs.getInt("project_id")
                 );
 
-                List<MaterialDTO> materials = getMaterialsByRequestId(request.getRequestId());
+                List<SiteResourceDTO> materials = getMaterialsByRequestId(request.getRequestId());
                 request.setMaterials(materials);
 
                 requests.add(request);
@@ -317,7 +317,7 @@ public class SiteSupervisorDAOImpl implements SiteSupervisorDAO {
                         rs.getInt("project_id")
                 );
 
-                List<MaterialDTO> materials = getMaterialsByRequestId(request.getRequestId());
+                List<SiteResourceDTO> materials = getMaterialsByRequestId(request.getRequestId());
                 request.setMaterials(materials);
 
                 requests.add(request);
@@ -329,6 +329,7 @@ public class SiteSupervisorDAOImpl implements SiteSupervisorDAO {
             throw new RuntimeException("Error fetching requests: " + e.getMessage(), e);
         }
     }
+
 
 
     @Override
@@ -360,7 +361,7 @@ public class SiteSupervisorDAOImpl implements SiteSupervisorDAO {
                             "VALUES (?, ?, ?, ?)";
 
                     try (PreparedStatement materialStmt = connection.prepareStatement(materialSql)) {
-                        for (MaterialDTO material : requestDTO.getMaterials()) {
+                        for (SiteResourceDTO material : requestDTO.getMaterials()) {
 
                             materialStmt.setString(1, material.getMaterialName());
                             materialStmt.setInt(2, material.getQuantity());
@@ -382,7 +383,97 @@ public class SiteSupervisorDAOImpl implements SiteSupervisorDAO {
         return requestDTO;
     }
 
+    @Override
+    public TodoDTO createToDo(TodoDTO todoDTO) {
+        final String sql = "INSERT INTO to_do (employee_id, status, description, date) VALUES (?, ?, ?, ?)";
 
+        try (
+                Connection connection = databaseConnection.getConnection();
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)
+        ) {
+            preparedStatement.setString(1, todoDTO.getEmployeeId());
+            preparedStatement.setString(2, todoDTO.getStatus());
+            preparedStatement.setString(3, todoDTO.getDescription());
+            preparedStatement.setDate(4, todoDTO.getDate());
+
+            preparedStatement.executeUpdate();
+
+            return todoDTO;
+        } catch (SQLException e) {
+            throw new RuntimeException("Error inserting to-do: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public List<TodoDTO> getToDoBySpId(String id) {
+        final String sql = "SELECT td.task_id, td.employee_id, td.status, td.description, td.date " +
+                "FROM to_do td WHERE td.employee_id = ?";
+
+        List<TodoDTO> todoList = new ArrayList<>();
+
+        try (
+                Connection connection = databaseConnection.getConnection();
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)
+        ) {
+            preparedStatement.setString(1, id);
+
+            try (ResultSet rs = preparedStatement.executeQuery()) {
+                while (rs.next()) {
+                    todoList.add(new TodoDTO(
+                            rs.getInt("task_id"),
+                            rs.getString("employee_id"),
+                            rs.getString("status"),
+                            rs.getString("description"),
+                            rs.getDate("date")
+                    ));
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error fetching to-dos by employee ID: " + e.getMessage(), e);
+        }
+
+        return todoList;
+    }
+
+
+    @Override
+    public boolean updateTodo(TodoDTO todoDTO) {
+        final String sql = "UPDATE to_do SET status = ?, description = ?, date = ? WHERE task_id = ?";
+
+        try (
+                Connection connection = databaseConnection.getConnection();
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)
+        ) {
+            preparedStatement.setString(1, todoDTO.getStatus());
+            preparedStatement.setString(2, todoDTO.getDescription());
+            preparedStatement.setDate(3, todoDTO.getDate());
+            preparedStatement.setInt(4, todoDTO.getTaskId());
+
+            int rowsUpdated = preparedStatement.executeUpdate();
+            return rowsUpdated > 0;
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Error updating to-do: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public boolean deleteToDoTask(Integer taskId) {
+        final String sql = "DELETE FROM to_do WHERE task_id = ?";
+
+        try (
+                Connection connection = databaseConnection.getConnection();
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)
+        ) {
+            preparedStatement.setInt(1, taskId);
+
+            int rowsDeleted = preparedStatement.executeUpdate();
+            return rowsDeleted > 0;
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Error deleting to-do: " + e.getMessage(), e);
+        }
+    }
 
 
 }

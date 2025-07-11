@@ -4,15 +4,10 @@ package com.structurax.root.structurax.root.controller;
 import com.structurax.root.structurax.root.dto.*;
 import com.structurax.root.structurax.root.service.SiteSupervisorService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.time.format.DateTimeFormatter;
-import java.util.Date;
 import java.util.List;
 
 @CrossOrigin(origins = "http://localhost:5173")
@@ -69,10 +64,10 @@ public class SiteSupervisorController {
     }
 
 
-    //material request
+    //material and tool (site resources) request--------------------------------------------------
     @GetMapping("/materials/{id}")
-    public ResponseEntity<List<MaterialDTO>> getMaterialsByRequestId(@PathVariable Integer id){
-        List<MaterialDTO> materials = siteSupervisorService.getMaterialsByRequestId(id);
+    public ResponseEntity<List<SiteResourceDTO>> getMaterialsByRequestId(@PathVariable Integer id){
+        List<SiteResourceDTO> materials = siteSupervisorService.getMaterialsByRequestId(id);
         return new ResponseEntity<>(materials, HttpStatus.OK);
     }
 
@@ -101,6 +96,43 @@ public class SiteSupervisorController {
         siteSupervisorService.createMaterialRequest(requestDTO);
         ///System.out.println("Received projectId: " + paymentPlanDTO.getProjectId());
         return new ResponseEntity<>(requestDTO, HttpStatus.OK);
+    }
+
+
+    //to-do creation----------------------------------------------------------------------
+    @PostMapping("/to_do")
+    public ResponseEntity<TodoDTO> createToDo(@RequestBody TodoDTO todoDTO){
+        siteSupervisorService.createToDo(todoDTO);
+        ///System.out.println("Received projectId: " + paymentPlanDTO.getProjectId());
+        return new ResponseEntity<>(todoDTO, HttpStatus.OK);
+    }
+
+    @GetMapping("/todo/sp/{id}")
+    public ResponseEntity<List<TodoDTO>> getToDoBySpId(@PathVariable String id){
+        List<TodoDTO> todos = siteSupervisorService.getToDoBySpId(id);
+        return new ResponseEntity<>(todos, HttpStatus.OK);
+    }
+
+    @PutMapping("/todo/update")
+    public ResponseEntity<String> updateTodo(@RequestBody TodoDTO todoDTO) {
+        boolean updated = siteSupervisorService.updateTodo(todoDTO);
+
+        if (updated) {
+            return ResponseEntity.ok("Task updated successfully.");
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Task not found.");
+        }
+    }
+
+    @DeleteMapping("/todo/{id}")
+    public ResponseEntity<String> deleteTodoTask(@PathVariable("id") int taskId) {
+        boolean deleted = siteSupervisorService.deleteToDoTask(taskId);
+
+        if (deleted) {
+            return ResponseEntity.ok("Task deleted successfully.");
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Task not found.");
+        }
     }
 
 
