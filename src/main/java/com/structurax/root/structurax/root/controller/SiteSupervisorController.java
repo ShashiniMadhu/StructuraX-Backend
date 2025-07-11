@@ -1,9 +1,7 @@
 package com.structurax.root.structurax.root.controller;
 
 
-import com.structurax.root.structurax.root.dto.LaborAttendanceDTO;
-import com.structurax.root.structurax.root.dto.PaymentPlanDTO;
-import com.structurax.root.structurax.root.dto.ProjectDTO;
+import com.structurax.root.structurax.root.dto.*;
 import com.structurax.root.structurax.root.service.SiteSupervisorService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -69,6 +67,42 @@ public class SiteSupervisorController {
         List<LaborAttendanceDTO> deleted = siteSupervisorService.deleteLaborAttendanceRecord(projectId, date);
         return ResponseEntity.ok(deleted);
     }
+
+
+    //material request
+    @GetMapping("/materials/{id}")
+    public ResponseEntity<List<MaterialDTO>> getMaterialsByRequestId(@PathVariable Integer id){
+        List<MaterialDTO> materials = siteSupervisorService.getMaterialsByRequestId(id);
+        return new ResponseEntity<>(materials, HttpStatus.OK);
+    }
+
+    @GetMapping("/material_requests")
+    public ResponseEntity<List<RequestDTO>> getAllMaterialRequests(){
+        List<RequestDTO> requestDTOS = siteSupervisorService.getAllMaterialRequests();
+        System.out.println("Endpoint hit");
+        return new ResponseEntity<>(requestDTOS, HttpStatus.OK);
+    }
+
+    @GetMapping("/tool_requests")
+    public ResponseEntity<List<RequestDTO>> getAllToolRequests(){
+        List<RequestDTO> requestDTOS = siteSupervisorService.getAllToolRequests();
+        System.out.println("Endpoint hit");
+        return new ResponseEntity<>(requestDTOS, HttpStatus.OK);
+    }
+
+    /*@GetMapping("/requests/{id}")
+    public ResponseEntity<RequestDTO> getRequestById(@PathVariable Integer id){
+        RequestDTO request = siteSupervisorService.getRequestById(id);
+        return new ResponseEntity<>(request,HttpStatus.OK);
+    }*/
+
+    @PostMapping("/material_request")
+    public ResponseEntity<RequestDTO> createMaterialRequest(@RequestBody RequestDTO requestDTO){
+        siteSupervisorService.createMaterialRequest(requestDTO);
+        ///System.out.println("Received projectId: " + paymentPlanDTO.getProjectId());
+        return new ResponseEntity<>(requestDTO, HttpStatus.OK);
+    }
+
 
 
 

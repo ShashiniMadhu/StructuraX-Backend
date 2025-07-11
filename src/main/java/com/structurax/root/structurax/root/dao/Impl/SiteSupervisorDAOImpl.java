@@ -1,8 +1,7 @@
 package com.structurax.root.structurax.root.dao.Impl;
 
 import com.structurax.root.structurax.root.dao.SiteSupervisorDAO;
-import com.structurax.root.structurax.root.dto.InstallmentDTO;
-import com.structurax.root.structurax.root.dto.LaborAttendanceDTO;
+import com.structurax.root.structurax.root.dto.*;
 
 import com.structurax.root.structurax.root.util.DatabaseConnection;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -199,6 +198,191 @@ public class SiteSupervisorDAOImpl implements SiteSupervisorDAO {
             throw new RuntimeException("Error deleting labor attendance records: " + e.getMessage(), e);
         }
     }
+
+
+
+    //material request crud
+    @Override
+    public List<MaterialDTO> getMaterialsByRequestId(Integer id) {
+        final String sql = "SELECT * FROM material m " +
+                "INNER JOIN request r ON m.request_id = r.request_id " +
+                "WHERE m.request_id = ?";
+
+        List<MaterialDTO> materialList = new ArrayList<>();
+
+        try (
+                Connection connection = databaseConnection.getConnection();
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)
+        ) {
+            preparedStatement.setInt(1, id);
+
+            try (ResultSet rs = preparedStatement.executeQuery()) {
+                while (rs.next()) {
+                    MaterialDTO dto = new MaterialDTO();
+                    dto.setId(rs.getInt("id"));
+                    dto.setMaterialName(rs.getString("name"));
+                    dto.setQuantity(rs.getInt("quantity"));
+                    dto.setPriority(rs.getString("priority"));
+                    dto.setRequestId(rs.getInt("request_id"));
+
+                    materialList.add(dto);
+                    ;
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error fetching material list by request ID: " + e.getMessage(), e);
+        }
+
+        return materialList;
+    }
+
+
+    /*@Override
+    public RequestDTO getRequestById(Integer id) {
+        final String sql = "SELECT * FROM request WHERE request_id = ?";
+
+        try (
+                Connection connection = databaseConnection.getConnection();
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)
+        ) {
+            preparedStatement.setInt(1, id);
+            try (ResultSet rs = preparedStatement.executeQuery()) {
+                if (rs.next()) {
+                    return new RequestDTO(
+                            rs.getInt("request_id"),
+                            rs.getString("approval_status"),
+                            rs.getString("request_type"),
+                            rs.getDate("date"),
+                            rs.getInt("project_id")
+                    );
+
+
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error fetching request by ID: " + e.getMessage(), e);
+        }
+
+        return null;
+    }*/
+
+    @Override
+    public List<RequestDTO> getAllMaterialRequests() {
+        final String sql = "SELECT * FROM request WHERE request_type='materials'";
+        List<RequestDTO> requests = new ArrayList<>();
+
+        try (
+                Connection connection = databaseConnection.getConnection();
+                PreparedStatement preparedStatement = connection.prepareStatement(sql);
+                ResultSet rs = preparedStatement.executeQuery()
+        ) {
+            while (rs.next()) {
+                RequestDTO request = new RequestDTO(
+                        rs.getInt("request_id"),
+                        rs.getString("approval_status"),
+                        rs.getString("request_type"),
+                        rs.getDate("date"),
+                        rs.getInt("project_id")
+                );
+
+                List<MaterialDTO> materials = getMaterialsByRequestId(request.getRequestId());
+                request.setMaterials(materials);
+
+                requests.add(request);
+            }
+
+            return requests;
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Error fetching requests: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public List<RequestDTO> getAllToolRequests() {
+        final String sql = "SELECT * FROM request WHERE request_type='tool'";
+        List<RequestDTO> requests = new ArrayList<>();
+
+        try (
+                Connection connection = databaseConnection.getConnection();
+                PreparedStatement preparedStatement = connection.prepareStatement(sql);
+                ResultSet rs = preparedStatement.executeQuery()
+        ) {
+            while (rs.next()) {
+                RequestDTO request = new RequestDTO(
+                        rs.getInt("request_id"),
+                        rs.getString("approval_status"),
+                        rs.getString("request_type"),
+                        rs.getDate("date"),
+                        rs.getInt("project_id")
+                );
+
+                List<MaterialDTO> materials = getMaterialsByRequestId(request.getRequestId());
+                request.setMaterials(materials);
+
+                requests.add(request);
+            }
+
+            return requests;
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Error fetching requests: " + e.getMessage(), e);
+        }
+    }
+
+
+    @Override
+    public RequestDTO createMaterialRequest(RequestDTO requestDTO) {
+        final String planSql = "INSERT INTO request (approval_status, request_type, date,project_id) " +
+                "VALUES (?, ?, ?, ? )";
+
+        try (
+                Connection connection = databaseConnection.getConnection();
+                PreparedStatement planStmt = connection.prepareStatement(planSql, Statement.RETURN_GENERATED_KEYS)
+        ) {
+            // 1. Insert request
+            planStmt.setString(1, requestDTO.getApprovalStatus());
+            planStmt.setString(2, requestDTO.getRequestType());
+            planStmt.setDate(3, requestDTO.getDate());
+            planStmt.setInt(4,requestDTO.getProjectId());
+
+            int rows = planStmt.executeUpdate();
+            if (rows == 0) throw new SQLException("Creating material request failed.");
+
+            // 2. Get generated request_id
+            try (ResultSet generatedKeys = planStmt.getGeneratedKeys()) {
+                if (generatedKeys.next()) {
+                    int generatedRequestId = generatedKeys.getInt(1);
+                    requestDTO.setRequestId(generatedRequestId);
+
+                    // 3. Insert each material
+                    String materialSql = "INSERT INTO material (name, quantity, priority, request_id) " +
+                            "VALUES (?, ?, ?, ?)";
+
+                    try (PreparedStatement materialStmt = connection.prepareStatement(materialSql)) {
+                        for (MaterialDTO material : requestDTO.getMaterials()) {
+
+                            materialStmt.setString(1, material.getMaterialName());
+                            materialStmt.setInt(2, material.getQuantity());
+                            materialStmt.setString(3, material.getPriority());
+                            materialStmt.setInt(4, generatedRequestId);
+                            materialStmt.addBatch(); // Batch insert for efficiency
+                        }
+                        materialStmt.executeBatch();
+                    }
+                } else {
+                    throw new SQLException("Failed to retrieve request id.");
+                }
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Error creating material request: " + e.getMessage(), e);
+        }
+
+        return requestDTO;
+    }
+
+
 
 
 }
