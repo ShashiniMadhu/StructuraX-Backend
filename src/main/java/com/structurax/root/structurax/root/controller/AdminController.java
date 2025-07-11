@@ -53,7 +53,7 @@ public class AdminController { // Fixed class name capitalization
     @PutMapping("/{id}")
     public ResponseEntity<?> updateEmployee(@PathVariable Integer id, @RequestBody EmployeeDTO employeeDTO){
         try {
-            employeeDTO.setEmpId(id); // Set the ID from path variable
+            employeeDTO.setEmployeeId(id); // Set the ID from path variable
             EmployeeDTO updatedEmployee = adminService.updateEmployee(employeeDTO);
             return new ResponseEntity<>(updatedEmployee, HttpStatus.OK);
         } catch (Exception e) {

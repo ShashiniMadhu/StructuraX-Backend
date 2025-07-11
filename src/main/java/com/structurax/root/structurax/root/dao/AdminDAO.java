@@ -5,13 +5,37 @@ import com.structurax.root.structurax.root.dto.EmployeeDTO;
 import java.util.List;
 
 public interface AdminDAO {
+    /**
+     * create an employee by admin
+     * @param employeeDTO
+     * @return EmployeeDTO
+     */
     EmployeeDTO createEmployee(EmployeeDTO employeeDTO);
 
+    /**
+     * get the all employees
+     * @return EmployeeDTO
+     */
     List<EmployeeDTO> getAllEmployees();
 
+    /**
+     * get the employee by employee_id
+     * @param id
+     * @return EmployeeDTO
+     */
     EmployeeDTO getEmployeeById(Integer id);
 
+    /**
+     * update employee(employee_id add to the RestAPI)
+     * @param employeeDTO
+     * @return EmployeeDTO
+     */
     EmployeeDTO updateEmployee(EmployeeDTO employeeDTO);
 
+    /**
+     * delete an employee by employee_id
+     * @param id
+     * @return
+     */
     EmployeeDTO deleteEmployeeById(Integer id);
 }

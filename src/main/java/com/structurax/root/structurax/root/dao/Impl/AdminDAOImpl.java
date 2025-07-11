@@ -149,11 +149,11 @@ public class AdminDAOImpl implements AdminDAO {
             preparedStatement.setDate(6, java.sql.Date.valueOf(employeeDTO.getJoinedDate()));
             preparedStatement.setString(7, hashedPassword);
             preparedStatement.setBoolean(8, employeeDTO.getAvailability());
-            preparedStatement.setInt(9, employeeDTO.getEmpId()); // FIX: Added missing empId parameter
+            preparedStatement.setInt(9, employeeDTO.getEmployeeId()); // FIX: Added missing empId parameter
 
             int rowsAffected = preparedStatement.executeUpdate();
             if (rowsAffected == 0) {
-                throw new RuntimeException("Employee update failed. Employee ID may not exist: " + employeeDTO.getEmpId());
+                throw new RuntimeException("Employee update failed. Employee ID may not exist: " + employeeDTO.getEmployeeId());
             }
         } catch (SQLException e) {
             throw new RuntimeException("Error updating employee: " + e.getMessage(), e);
