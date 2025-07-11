@@ -54,4 +54,8 @@ public class EmployeeDTO {
     @NotNull(message = "Availability status is required")
     @JsonProperty("availability")
     private Boolean availability;
+
+    @JsonProperty("profile_image_url")
+    private String profileImageUrl;
+
 }
