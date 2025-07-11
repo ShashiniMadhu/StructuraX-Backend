@@ -8,7 +8,7 @@ import java.util.List;
 @Service
 public interface AdminService {
     /**
-     * To create a employee
+     * To create an employee
      * @param employeeDTO
      * @return created employee
      */
@@ -16,9 +16,9 @@ public interface AdminService {
 
     List<EmployeeDTO> getAllEmployees();
 
-    EmployeeDTO getEmployeeById(Integer id);
+    EmployeeDTO getEmployeeById(String id);
 
     EmployeeDTO updateEmployee(EmployeeDTO employeeDTO);
 
-    EmployeeDTO deleteEmployeeById(Integer id);
+    EmployeeDTO deleteEmployeeById(String id);
 }

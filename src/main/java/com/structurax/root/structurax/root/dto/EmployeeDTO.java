@@ -1,106 +1,57 @@
 package com.structurax.root.structurax.root.dto;
 
-import java.math.BigDecimal;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.time.LocalDate;
 
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class EmployeeDTO {
-    private Integer empId;
-    private String fullName;
+
+    @JsonProperty("employee_id")
+    @Pattern(regexp = "^EMP_\\d{3}$", message = "Employee ID must follow format EMP_XXX")
+    private String employeeId;
+
+    @NotBlank(message = "Name is required")
+    @JsonProperty("name")
+    private String name;
+
+    @NotBlank(message = "Email is required")
+    @Email(message = "Email should be valid")
+    @JsonProperty("email")
     private String email;
-    private String contactNumber;
+
+    @NotBlank(message = "Phone number is required")
+    @JsonProperty("phone_number")
+    private String phoneNumber;
+
+    @NotBlank(message = "Address is required")
+    @JsonProperty("address")
     private String address;
-    private String employeeType;
-    private LocalDate joinDate;
-    private BigDecimal salary;
+
+    @NotBlank(message = "Type is required")
+    @JsonProperty("type")
+    private String type;
+
+    @NotNull(message = "Joined date is required")
+    @JsonProperty("joined_date")
+    private LocalDate joinedDate;
+
+    @NotBlank(message = "Password is required")
+    @Size(min = 8, message = "Password must be at least 8 characters")
+    @JsonProperty("password")
     private String password;
 
-    public EmployeeDTO() {
-        // Default constructor
-    }
-
-    public EmployeeDTO(Integer empId, String fullName, String email, String contactNumber, String address,
-                       String employeeType, LocalDate joinDate, BigDecimal salary, String password) {
-        this.empId = empId;
-        this.fullName = fullName;
-        this.email = email;
-        this.contactNumber = contactNumber;
-        this.address = address;
-        this.employeeType = employeeType;
-        this.joinDate = joinDate;
-        this.salary = salary;
-        this.password = password;
-    }
-
-    // Getters and Setters
-    public Integer getEmpId() {
-        return empId;
-    }
-
-    public void setEmpId(Integer empId) {
-        this.empId = empId;
-    }
-
-    public String getFullName() {
-        return fullName;
-    }
-
-    public void setFullName(String fullName) {
-        this.fullName = fullName;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getContactNumber() {
-        return contactNumber;
-    }
-
-    public void setContactNumber(String contactNumber) {
-        this.contactNumber = contactNumber;
-    }
-
-    public String getAddress() {
-        return address;
-    }
-
-    public void setAddress(String address) {
-        this.address = address;
-    }
-
-    public String getEmployeeType() {
-        return employeeType;
-    }
-
-    public void setEmployeeType(String employeeType) {
-        this.employeeType = employeeType;
-    }
-
-    public LocalDate getJoinDate() {
-        return joinDate;
-    }
-
-    public void setJoinDate(LocalDate joinDate) {
-        this.joinDate = joinDate;
-    }
-
-    public BigDecimal getSalary() {
-        return salary;
-    }
-
-    public void setSalary(BigDecimal salary) {
-        this.salary = salary;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
+    @NotNull(message = "Availability status is required")
+    @JsonProperty("availability")
+    private Boolean availability;
 }
