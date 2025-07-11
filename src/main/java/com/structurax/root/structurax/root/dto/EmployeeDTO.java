@@ -1,104 +1,52 @@
 package com.structurax.root.structurax.root.dto;
 
-import java.math.BigDecimal;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.time.LocalDate;
 
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class EmployeeDTO {
-    private Integer empId;
+
+    @NotNull
+    @JsonProperty("employee_id")
+    private Integer employeeId;
+
+    @NotBlank
+    @JsonProperty("name")
     private String name;
+
+    @NotBlank
+    @JsonProperty("email")
     private String email;
+
+    @NotBlank
+    @JsonProperty("phone_number")
     private String phoneNumber;
+
+    @NotBlank
+    @JsonProperty("address")
     private String address;
+
+    @NotBlank
+    @JsonProperty("type")
     private String type;
+
+    @NotBlank
+    @JsonProperty("joined_date")
     private LocalDate joinedDate;
+
+    @NotBlank
+    @JsonProperty("password")
     private String password;
+
+    @NotBlank
+    @JsonProperty("availability")
     private Boolean availability;
-
-    public EmployeeDTO() {
-        // Default constructor
-    }
-
-    public EmployeeDTO(Integer empId, String name, String email, String phoneNumber, String address, String type, LocalDate joinedDate, String password, Boolean availability) {
-        this.empId = empId;
-        this.name = name;
-        this.email = email;
-        this.phoneNumber = phoneNumber;
-        this.address = address;
-        this.type = type;
-        this.joinedDate = joinedDate;
-        this.password = password;
-        this.availability = availability;
-    }
-
-    public Integer getEmpId() {
-        return empId;
-    }
-
-    public void setEmpId(Integer empId) {
-        this.empId = empId;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getPhoneNumber() {
-        return phoneNumber;
-    }
-
-    public void setPhoneNumber(String phoneNumber) {
-        this.phoneNumber = phoneNumber;
-    }
-
-    public String getAddress() {
-        return address;
-    }
-
-    public void setAddress(String address) {
-        this.address = address;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    public LocalDate getJoinedDate() {
-        return joinedDate;
-    }
-
-    public void setJoinedDate(LocalDate joinedDate) {
-        this.joinedDate = joinedDate;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public Boolean getAvailability() {
-        return availability;
-    }
-
-    public void setAvailability(Boolean availability) {
-        this.availability = availability;
-    }
 }
