@@ -23,7 +23,7 @@ public interface AdminDAO {
      * @param id
      * @return EmployeeDTO
      */
-    EmployeeDTO getEmployeeById(Integer id);
+    EmployeeDTO getEmployeeById(String id);
 
     /**
      * update employee(employee_id add to the RestAPI)
@@ -37,5 +37,5 @@ public interface AdminDAO {
      * @param id
      * @return
      */
-    EmployeeDTO deleteEmployeeById(Integer id);
+    EmployeeDTO deleteEmployeeById(String id);
 }

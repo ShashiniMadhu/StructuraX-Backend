@@ -28,20 +28,26 @@ public class AdminDAOImpl implements AdminDAO {
         BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
         String hashedPassword = passwordEncoder.encode(employeeDTO.getPassword());
 
+        // Generate employee ID if not provided
+        if (employeeDTO.getEmployeeId() == null || employeeDTO.getEmployeeId().trim().isEmpty()) {
+            employeeDTO.setEmployeeId(generateEmployeeId());
+        }
+
         try {
-            final String sql = "INSERT INTO employee (name, email, phone_number, address, type, joined_date, password, availability) " +
-                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+            final String sql = "INSERT INTO employee (employee_id, name, email, phone_number, address, type, joined_date, password, availability) " +
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
             connection = databaseConnection.getConnection();
             preparedStatement = connection.prepareStatement(sql);
 
-            preparedStatement.setString(1, employeeDTO.getName());
-            preparedStatement.setString(2, employeeDTO.getEmail());
-            preparedStatement.setString(3, employeeDTO.getPhoneNumber());
-            preparedStatement.setString(4, employeeDTO.getAddress());
-            preparedStatement.setString(5, employeeDTO.getType());
-            preparedStatement.setDate(6, java.sql.Date.valueOf(employeeDTO.getJoinedDate()));
-            preparedStatement.setString(7, hashedPassword);
-            preparedStatement.setBoolean(8, employeeDTO.getAvailability());
+            preparedStatement.setString(1, employeeDTO.getEmployeeId());
+            preparedStatement.setString(2, employeeDTO.getName());
+            preparedStatement.setString(3, employeeDTO.getEmail());
+            preparedStatement.setString(4, employeeDTO.getPhoneNumber());
+            preparedStatement.setString(5, employeeDTO.getAddress());
+            preparedStatement.setString(6, employeeDTO.getType());
+            preparedStatement.setDate(7, java.sql.Date.valueOf(employeeDTO.getJoinedDate()));
+            preparedStatement.setString(8, hashedPassword);
+            preparedStatement.setBoolean(9, employeeDTO.getAvailability());
 
             int rowsAffected = preparedStatement.executeUpdate();
             if (rowsAffected == 0) {
@@ -67,7 +73,7 @@ public class AdminDAOImpl implements AdminDAO {
         ) {
             while (resultSet.next()) {
                 EmployeeDTO employee = new EmployeeDTO(
-                        resultSet.getInt("employee_id"),
+                        resultSet.getString("employee_id"),
                         resultSet.getString("name"),
                         resultSet.getString("email"),
                         resultSet.getString("phone_number"),
@@ -87,7 +93,7 @@ public class AdminDAOImpl implements AdminDAO {
     }
 
     @Override
-    public EmployeeDTO getEmployeeById(Integer empId) {
+    public EmployeeDTO getEmployeeById(String empId) {
         final String sql = "SELECT * FROM employee WHERE employee_id = ?";
         Connection connection = null;
         PreparedStatement preparedStatement = null;
@@ -96,12 +102,12 @@ public class AdminDAOImpl implements AdminDAO {
         try {
             connection = databaseConnection.getConnection();
             preparedStatement = connection.prepareStatement(sql);
-            preparedStatement.setInt(1, empId);
+            preparedStatement.setString(1, empId);
             resultSet = preparedStatement.executeQuery();
 
             if (resultSet.next()) {
                 return new EmployeeDTO(
-                        resultSet.getInt("employee_id"),
+                        resultSet.getString("employee_id"),
                         resultSet.getString("name"),
                         resultSet.getString("email"),
                         resultSet.getString("phone_number"),
@@ -149,7 +155,7 @@ public class AdminDAOImpl implements AdminDAO {
             preparedStatement.setDate(6, java.sql.Date.valueOf(employeeDTO.getJoinedDate()));
             preparedStatement.setString(7, hashedPassword);
             preparedStatement.setBoolean(8, employeeDTO.getAvailability());
-            preparedStatement.setInt(9, employeeDTO.getEmployeeId()); // FIX: Added missing empId parameter
+            preparedStatement.setString(9, employeeDTO.getEmployeeId());
 
             int rowsAffected = preparedStatement.executeUpdate();
             if (rowsAffected == 0) {
@@ -165,7 +171,7 @@ public class AdminDAOImpl implements AdminDAO {
     }
 
     @Override
-    public EmployeeDTO deleteEmployeeById(Integer empId) {
+    public EmployeeDTO deleteEmployeeById(String empId) {
         EmployeeDTO employee = getEmployeeById(empId);
 
         if (employee == null) {
@@ -178,7 +184,7 @@ public class AdminDAOImpl implements AdminDAO {
                 Connection connection = databaseConnection.getConnection();
                 PreparedStatement preparedStatement = connection.prepareStatement(sql)
         ) {
-            preparedStatement.setInt(1, empId);
+            preparedStatement.setString(1, empId);
             int rowsAffected = preparedStatement.executeUpdate();
             if (rowsAffected == 0) {
                 throw new RuntimeException("Failed to delete employee with id: " + empId);
@@ -188,6 +194,30 @@ public class AdminDAOImpl implements AdminDAO {
         }
 
         return employee;
+    }
+
+    // Helper method to generate employee ID
+    private String generateEmployeeId() {
+        String sql = "SELECT employee_id FROM employee ORDER BY employee_id DESC LIMIT 1";
+
+        try (
+                Connection connection = databaseConnection.getConnection();
+                PreparedStatement preparedStatement = connection.prepareStatement(sql);
+                ResultSet resultSet = preparedStatement.executeQuery()
+        ) {
+            if (resultSet.next()) {
+                String lastId = resultSet.getString("employee_id");
+                // Extract the number part from EMP_XXX format
+                String numberPart = lastId.substring(4); // Remove "EMP_"
+                int nextNumber = Integer.parseInt(numberPart) + 1;
+                return String.format("EMP_%03d", nextNumber);
+            } else {
+                // First employee
+                return "EMP_001";
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error generating employee ID: " + e.getMessage(), e);
+        }
     }
 
     // Helper method to close resources
