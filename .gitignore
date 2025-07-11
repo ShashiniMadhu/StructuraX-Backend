@@ -34,3 +34,6 @@ build/
 
 ### Application Logs ###
 logs/
+
+### Hide email info ###
+.env
