@@ -16,9 +16,12 @@ public interface AdminService {
 
     List<EmployeeDTO> getAllEmployees();
 
+    void deactivateEmployee(String empId);
+
     EmployeeDTO getEmployeeById(String id);
 
     EmployeeDTO updateEmployee(EmployeeDTO employeeDTO);
 
     EmployeeDTO deleteEmployeeById(String id);
+
 }
