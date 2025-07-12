@@ -18,6 +18,8 @@ public interface AdminDAO {
      */
     List<EmployeeDTO> getAllEmployees();
 
+    void removeEmployeePassword(String empId);
+
     /**
      * get the employee by employee_id
      * @param id

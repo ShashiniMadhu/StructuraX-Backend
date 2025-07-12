@@ -21,7 +21,7 @@ import java.util.List;
 
 @Slf4j
 @Validated
-@CrossOrigin("http://localhost:5174/")
+@CrossOrigin("http://localhost:5173/")
 @RestController
 @RequestMapping(value = "/admin")
 public class AdminController {
@@ -41,11 +41,23 @@ public class AdminController {
             @RequestParam("type") String type,
             @RequestParam("joined_date") String joinedDate,
             @RequestParam("password") String password,
-            @RequestParam("availability") Boolean availability,
+            @RequestParam(value = "availability", required = false) String availability, // Make it optional
             @RequestParam(value = "profile_image", required = false) MultipartFile profileImage
     ) {
         try {
-            // Save image
+            // Validate and set default availability
+            if (availability == null || availability.trim().isEmpty() ||
+                    availability.equals("true") || availability.equals("false")) {
+                availability = "Available"; // Set default value
+            }
+
+            // Validate availability enum
+            if (!isValidAvailability(availability)) {
+                return new ResponseEntity<>("Invalid availability status. Must be one of: Assigned, Available, Deactive",
+                        HttpStatus.BAD_REQUEST);
+            }
+
+            // Save image logic...
             String imageUrl = null;
             if (profileImage != null && !profileImage.isEmpty()) {
                 String fileName = System.currentTimeMillis() + "_" + profileImage.getOriginalFilename();
@@ -55,9 +67,7 @@ public class AdminController {
 
                 File dest = new File(uploadDir + fileName);
                 profileImage.transferTo(dest);
-
                 imageUrl = "/uploads/" + fileName;
-
             }
 
             // Convert to DTO
@@ -69,10 +79,11 @@ public class AdminController {
             employeeDTO.setType(type);
             employeeDTO.setJoinedDate(LocalDate.parse(joinedDate));
             employeeDTO.setPassword(password);
-            employeeDTO.setAvailability(availability);
+            employeeDTO.setAvailability(availability); // Now validated
             employeeDTO.setProfileImageUrl(imageUrl);
 
             EmployeeDTO savedEmployee = adminService.createEmployee(employeeDTO);
+
             // Send password email
             mailService.sendEmployeePassword(
                     savedEmployee.getEmail(),
@@ -88,6 +99,14 @@ public class AdminController {
         }
     }
 
+    // Helper method to validate availability
+    private boolean isValidAvailability(String availability) {
+        return availability != null &&
+                (availability.equals("Assigned") ||
+                        availability.equals("Available") ||
+                        availability.equals("Deactive"));
+    }
+
 //    @PostMapping(consumes = Constants.APPLICATION_JSON, produces = Constants.APPLICATION_JSON)
 //    public ResponseEntity<?> createEmployee(@Valid @RequestBody EmployeeDTO employeeDTO) {
 //        try {
@@ -98,7 +117,7 @@ public class AdminController {
 //        }
 //    }
 
-    @GetMapping(produces = Constants.APPLICATION_JSON)
+    @GetMapping(value = "get_employees" , produces = Constants.APPLICATION_JSON)
     public ResponseEntity<?> getAllEmployees() {
         try {
             final List employeeDTOS = adminService.getAllEmployees();
@@ -107,6 +126,29 @@ public class AdminController {
             return new ResponseEntity<>("Error fetching employees: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+    @PutMapping(value = "/deactivate/{id}")
+    public ResponseEntity<?> deactivateEmployee(@PathVariable @Pattern(regexp = "^EMP_\\d{3}$") String id) {
+        try {
+            EmployeeDTO employee = adminService.getEmployeeById(id);
+            if (employee == null) {
+                return new ResponseEntity<>("Employee not found", HttpStatus.NOT_FOUND);
+            }
+
+            // Check if employee is already deactivated
+            if ("Deactive".equals(employee.getAvailability())) {
+                return new ResponseEntity<>("Employee is already deactivated", HttpStatus.BAD_REQUEST);
+            }
+
+            adminService.deactivateEmployee(id);
+            mailService.sendRemovalNotification(employee.getEmail(), employee.getName());
+
+            return ResponseEntity.ok("Employee deactivated successfully and notification email sent.");
+        } catch (Exception e) {
+            return new ResponseEntity<>("Error deactivating employee: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
 
     @GetMapping(value = "/{id}", produces = Constants.APPLICATION_JSON)
     public ResponseEntity<?> getEmployeeById(@PathVariable @Pattern(regexp = "^EMP_\\d{3}$", message = "Employee ID must follow format EMP_XXX") String id) {

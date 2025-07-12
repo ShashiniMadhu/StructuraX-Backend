@@ -13,6 +13,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Repository
 public class AdminDAOImpl implements AdminDAO {
@@ -47,7 +48,7 @@ public class AdminDAOImpl implements AdminDAO {
             preparedStatement.setString(6, employeeDTO.getType());
             preparedStatement.setDate(7, java.sql.Date.valueOf(employeeDTO.getJoinedDate()));
             preparedStatement.setString(8, hashedPassword);
-            preparedStatement.setBoolean(9, employeeDTO.getAvailability());
+            preparedStatement.setString(9, employeeDTO.getAvailability()); // Changed from setBoolean to setString
             preparedStatement.setString(10, employeeDTO.getProfileImageUrl());
 
 
@@ -83,7 +84,7 @@ public class AdminDAOImpl implements AdminDAO {
                         resultSet.getString("type"),
                         resultSet.getDate("joined_date").toLocalDate(),
                         null, // Don't expose password in responses
-                        resultSet.getBoolean("availability"),
+                        resultSet.getString("availability"), // Changed from getBoolean to getString
                         resultSet.getString("profile_image_url")
                 );
                 employeeList.add(employee);
@@ -93,6 +94,34 @@ public class AdminDAOImpl implements AdminDAO {
         }
 
         return employeeList;
+    }
+
+    @Override
+    public void removeEmployeePassword(String empId) {
+        // Generate a random password that the employee won't know
+        String randomPassword = generateRandomPassword();
+        BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+        String hashedRandomPassword = passwordEncoder.encode(randomPassword);
+
+        final String sql = "UPDATE employee SET password = ?, availability = 'Deactive' WHERE employee_id = ?"; // Changed from false to 'Deactive'
+        try (
+                Connection connection = databaseConnection.getConnection();
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)
+        ) {
+            preparedStatement.setString(1, hashedRandomPassword);
+            preparedStatement.setString(2, empId);
+            int rows = preparedStatement.executeUpdate();
+            if (rows == 0) {
+                throw new RuntimeException("Employee deactivation failed for employee: " + empId);
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error deactivating employee: " + e.getMessage(), e);
+        }
+    }
+
+    // Helper method to generate a random password for deactivation
+    private String generateRandomPassword() {
+        return "DEACTIVATED_" + UUID.randomUUID().toString().replace("-", "").substring(0, 16);
     }
 
     @Override
@@ -118,7 +147,7 @@ public class AdminDAOImpl implements AdminDAO {
                         resultSet.getString("type"),
                         resultSet.getDate("joined_date").toLocalDate(),
                         null, // Don't expose password
-                        resultSet.getBoolean("availability"),
+                        resultSet.getString("availability"), // Changed from getBoolean to getString
                         resultSet.getString("profile_image_url")
 
                 );
@@ -159,8 +188,9 @@ public class AdminDAOImpl implements AdminDAO {
             preparedStatement.setString(5, employeeDTO.getType());
             preparedStatement.setDate(6, java.sql.Date.valueOf(employeeDTO.getJoinedDate()));
             preparedStatement.setString(7, hashedPassword);
-            preparedStatement.setBoolean(8, employeeDTO.getAvailability());
-            preparedStatement.setString(9, employeeDTO.getProfileImageUrl()); 
+            preparedStatement.setString(8, employeeDTO.getAvailability()); // Changed from setBoolean to setString
+            preparedStatement.setString(9, employeeDTO.getProfileImageUrl());
+            preparedStatement.setString(10, employeeDTO.getEmployeeId()); // Added missing WHERE parameter
 
             int rowsAffected = preparedStatement.executeUpdate();
             if (rowsAffected == 0) {
