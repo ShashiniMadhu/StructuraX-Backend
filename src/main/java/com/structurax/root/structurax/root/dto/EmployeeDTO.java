@@ -52,8 +52,9 @@ public class EmployeeDTO {
     private String password;
 
     @NotNull(message = "Availability status is required")
+    @Pattern(regexp = "^(Assigned|Available|Deactive)$", message = "Availability must be one of: Assigned, Available, Deactive")
     @JsonProperty("availability")
-    private Boolean availability;
+    private String availability;
 
     @JsonProperty("profile_image_url")
     private String profileImageUrl;

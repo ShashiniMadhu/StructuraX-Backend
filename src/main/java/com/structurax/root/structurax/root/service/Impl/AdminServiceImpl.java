@@ -40,6 +40,14 @@ public class AdminServiceImpl implements AdminService {
     }
 
     @Override
+    public void deactivateEmployee(String empId) {
+        // This method now sets a random password and marks availability as false
+        // instead of setting password to NULL
+        adminDAO.removeEmployeePassword(empId);
+    }
+
+
+    @Override
     @Cacheable(value = "employeeCache", key = "#id")
     public EmployeeDTO getEmployeeById(String id) {
         logger.info("Fetching employee by ID: {}", id);
