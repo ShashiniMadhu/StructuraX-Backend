@@ -3,6 +3,7 @@ package com.structurax.root.structurax.root.controller;
 import com.structurax.root.structurax.root.Constants.Constants;
 import com.structurax.root.structurax.root.dto.EmployeeDTO;
 import com.structurax.root.structurax.root.service.AdminService;
+import com.structurax.root.structurax.root.service.MailService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Pattern;
 import lombok.extern.slf4j.Slf4j;
@@ -20,13 +21,16 @@ import java.util.List;
 
 @Slf4j
 @Validated
-@CrossOrigin("http://localhost:5173/")
+@CrossOrigin("http://localhost:5174/")
 @RestController
 @RequestMapping(value = "/admin")
 public class AdminController {
 
     @Autowired
     private AdminService adminService;
+
+    @Autowired
+    private MailService mailService;
 
     @PostMapping(value = "/add_employee", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> createEmployee(
@@ -68,7 +72,16 @@ public class AdminController {
             employeeDTO.setAvailability(availability);
             employeeDTO.setProfileImageUrl(imageUrl);
 
-            return ResponseEntity.ok(adminService.createEmployee(employeeDTO));
+            EmployeeDTO savedEmployee = adminService.createEmployee(employeeDTO);
+            // Send password email
+            mailService.sendEmployeePassword(
+                    savedEmployee.getEmail(),
+                    savedEmployee.getName(),
+                    password
+            );
+
+            return ResponseEntity.ok(savedEmployee);
+
         } catch (Exception e) {
             e.printStackTrace();
             return new ResponseEntity<>("Error: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
