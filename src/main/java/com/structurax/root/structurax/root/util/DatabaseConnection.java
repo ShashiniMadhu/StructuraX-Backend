@@ -9,7 +9,7 @@ import java.sql.SQLException;
 @Component
 public class DatabaseConnection {
 
-    private final String url = "jdbc:mysql://localhost:3306/structurax";
+    private final String url = "jdbc:mysql://localhost:3306/structura";
     private final String username = "root";
     private final String password = "";
 
