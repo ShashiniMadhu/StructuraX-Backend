@@ -1,6 +1,8 @@
 package com.structurax.root.structurax.root.dao.Impl;
 
 import com.structurax.root.structurax.root.dao.AdminDAO;
+import com.structurax.root.structurax.root.dto.DesignDTO;
+import com.structurax.root.structurax.root.dto.DesignFullDTO;
 import com.structurax.root.structurax.root.dto.EmployeeDTO;
 import com.structurax.root.structurax.root.util.DatabaseConnection;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -162,75 +164,6 @@ public class AdminDAOImpl implements AdminDAO {
         }
     }
 
-    @Override
-    public EmployeeDTO updateEmployee(EmployeeDTO employeeDTO) {
-        Connection connection = null;
-        PreparedStatement preparedStatement = null;
-
-        // Only hash password if it's provided and not null
-        String hashedPassword = null;
-        if (employeeDTO.getPassword() != null && !employeeDTO.getPassword().trim().isEmpty()) {
-            BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
-            hashedPassword = passwordEncoder.encode(employeeDTO.getPassword());
-        }
-
-        final String sql = "UPDATE employee SET name = ?, email = ?, phone_number = ?, address = ?, " +
-                "type = ?, joined_date = ?, password = ?, availability = ?, profile_image_url = ? WHERE employee_id = ?";
-
-        try {
-            connection = databaseConnection.getConnection();
-            preparedStatement = connection.prepareStatement(sql);
-
-            preparedStatement.setString(1, employeeDTO.getName());
-            preparedStatement.setString(2, employeeDTO.getEmail());
-            preparedStatement.setString(3, employeeDTO.getPhoneNumber());
-            preparedStatement.setString(4, employeeDTO.getAddress());
-            preparedStatement.setString(5, employeeDTO.getType());
-            preparedStatement.setDate(6, java.sql.Date.valueOf(employeeDTO.getJoinedDate()));
-            preparedStatement.setString(7, hashedPassword);
-            preparedStatement.setString(8, employeeDTO.getAvailability()); // Changed from setBoolean to setString
-            preparedStatement.setString(9, employeeDTO.getProfileImageUrl());
-            preparedStatement.setString(10, employeeDTO.getEmployeeId()); // Added missing WHERE parameter
-
-            int rowsAffected = preparedStatement.executeUpdate();
-            if (rowsAffected == 0) {
-                throw new RuntimeException("Employee update failed. Employee ID may not exist: " + employeeDTO.getEmployeeId());
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException("Error updating employee: " + e.getMessage(), e);
-        } finally {
-            closeResources(preparedStatement, connection);
-        }
-
-        return employeeDTO;
-    }
-
-    @Override
-    public EmployeeDTO deleteEmployeeById(String empId) {
-        EmployeeDTO employee = getEmployeeById(empId);
-
-        if (employee == null) {
-            throw new RuntimeException("No employee found with id: " + empId);
-        }
-
-        final String sql = "DELETE FROM employee WHERE employee_id = ?";
-
-        try (
-                Connection connection = databaseConnection.getConnection();
-                PreparedStatement preparedStatement = connection.prepareStatement(sql)
-        ) {
-            preparedStatement.setString(1, empId);
-            int rowsAffected = preparedStatement.executeUpdate();
-            if (rowsAffected == 0) {
-                throw new RuntimeException("Failed to delete employee with id: " + empId);
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException("Error deleting employee: " + e.getMessage(), e);
-        }
-
-        return employee;
-    }
-
     // Helper method to generate employee ID
     private String generateEmployeeId() {
         String sql = "SELECT employee_id FROM employee ORDER BY employee_id DESC LIMIT 1";
@@ -266,5 +199,206 @@ public class AdminDAOImpl implements AdminDAO {
                 }
             }
         }
+    }
+
+    @Override
+    public List<DesignFullDTO> getAllDesigns() {
+        final List<DesignFullDTO> designList = new ArrayList<>();
+
+        // Updated SQL query with concatenated client name
+        final String sql = """
+        SELECT d.design_id, d.project_id, d.name, d.type, d.due_date, d.priority, d.price, d.design_link, d.description, d.additional_note, d.status, d.client_id, d.employee_id,
+            CONCAT(IFNULL(c.first_name, ''), ' ', IFNULL(c.last_name, '')) AS client_name
+        FROM design d
+        LEFT JOIN client c ON d.client_id = c.client_id
+        ORDER BY d.design_id
+        """;
+
+        try (
+                Connection connection = databaseConnection.getConnection();
+                PreparedStatement preparedStatement = connection.prepareStatement(sql);
+                ResultSet resultSet = preparedStatement.executeQuery()
+        ) {
+            while (resultSet.next()) {
+                String clientName = resultSet.getString("client_name");
+
+                // Clean up the client name (remove extra spaces)
+                if (clientName != null) {
+                    clientName = clientName.trim();
+                    if (clientName.isEmpty()) {
+                        clientName = null;
+                    }
+                }
+
+                DesignFullDTO design = new DesignFullDTO(
+                        resultSet.getString("design_id"),
+                        resultSet.getString("project_id"),
+                        resultSet.getString("name"),
+                        resultSet.getString("type"),
+                        resultSet.getDate("due_date"),
+                        resultSet.getString("priority"),
+                        resultSet.getBigDecimal("price"),
+                        resultSet.getString("design_link"),
+                        resultSet.getString("description"),
+                        resultSet.getString("additional_note"),
+                        resultSet.getString("status"),
+                        resultSet.getString("client_id"),
+                        resultSet.getString("employee_id"),
+                        resultSet.getString("client_name")
+                );
+                designList.add(design);
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error fetching all designs with client information: " + e.getMessage(), e);
+        }
+
+        return designList;
+    }
+
+    @Override
+    public DesignDTO deleteDesign(String id) {
+        String deleteQuery = "DELETE FROM design WHERE design_id = ?";
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
+
+        try {
+            connection = databaseConnection.getConnection();
+            preparedStatement = connection.prepareStatement(deleteQuery);
+            preparedStatement.setString(1, id);
+
+            int rowsAffected = preparedStatement.executeUpdate();
+
+            if (rowsAffected == 0) {
+                throw new RuntimeException("Design not found with ID: " + id);
+            }
+
+            // Return minimal DTO with deleted ID and success message in description
+            DesignDTO result = new DesignDTO();
+            result.setDesignId(id);
+            result.setDescription("Design deleted successfully");
+            return result;
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Error deleting design: " + e.getMessage(), e);
+        } finally {
+            closeResources(preparedStatement, connection);
+        }
+    }
+
+    @Override
+    public DesignFullDTO updateDesign(String id, DesignFullDTO updatedDesign) {
+        // First check if design exists
+        DesignFullDTO existingDesign = getDesignById(id);
+        if (existingDesign == null) {
+            throw new RuntimeException("Design not found with ID: " + id);
+        }
+
+        // Update query
+        String updateQuery = """
+        UPDATE design SET 
+            project_id = ?,
+            name = ?,
+            type = ?,
+            due_date = ?,
+            priority = ?,
+            price = ?,
+            design_link = ?,
+            description = ?,
+            additional_note = ?,
+            status = ?,
+            client_id = ?,
+            employee_id = ?
+        WHERE design_id = ?
+    """;
+
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
+
+        try {
+            connection = databaseConnection.getConnection();
+            preparedStatement = connection.prepareStatement(updateQuery);
+
+            // Set parameters
+            preparedStatement.setString(1, updatedDesign.getProjectId());
+            preparedStatement.setString(2, updatedDesign.getName());
+            preparedStatement.setString(3, updatedDesign.getType());
+            preparedStatement.setDate(4, updatedDesign.getDueDate() != null ? new java.sql.Date(updatedDesign.getDueDate().getTime()) : null);
+            preparedStatement.setString(5, updatedDesign.getPriority());
+            preparedStatement.setBigDecimal(6, updatedDesign.getPrice());
+            preparedStatement.setString(7, updatedDesign.getDesignLink());
+            preparedStatement.setString(8, updatedDesign.getDescription());
+            preparedStatement.setString(9, updatedDesign.getAdditionalNote());
+            preparedStatement.setString(10, updatedDesign.getStatus());
+            preparedStatement.setString(11, updatedDesign.getClientId());
+            preparedStatement.setString(12, updatedDesign.getEmployeeId());
+            preparedStatement.setString(13, id); // WHERE clause
+
+            int rowsAffected = preparedStatement.executeUpdate();
+
+            if (rowsAffected == 0) {
+                throw new RuntimeException("No rows were updated. Design might not exist with ID: " + id);
+            }
+
+            // Return the updated design
+            return getDesignById(id);
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Error updating design: " + e.getMessage(), e);
+        } finally {
+            closeResources(preparedStatement, connection);
+        }
+    }
+
+    @Override
+    // Helper method to get design by ID (if you don't have this already)
+    public DesignFullDTO getDesignById(String id) {
+        final String sql = """
+    SELECT d.design_id, d.project_id, d.name, d.type, d.due_date, d.priority, d.price, d.design_link, d.description, d.additional_note, d.status, d.client_id, d.employee_id,
+        CONCAT(IFNULL(c.first_name, ''), ' ', IFNULL(c.last_name, '')) AS client_name
+    FROM design d
+    LEFT JOIN client c ON d.client_id = c.client_id
+    WHERE d.design_id = ?
+    """;
+
+        try (
+                Connection connection = databaseConnection.getConnection();
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)
+        ) {
+            preparedStatement.setString(1, id);
+
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                if (resultSet.next()) {
+                    String clientName = resultSet.getString("client_name");
+
+                    // Clean up the client name (remove extra spaces)
+                    if (clientName != null) {
+                        clientName = clientName.trim();
+                        if (clientName.isEmpty()) {
+                            clientName = null;
+                        }
+                    }
+
+                    return new DesignFullDTO(
+                            resultSet.getString("design_id"),
+                            resultSet.getString("project_id"),
+                            resultSet.getString("name"),
+                            resultSet.getString("type"),
+                            resultSet.getDate("due_date"),
+                            resultSet.getString("priority"),
+                            resultSet.getBigDecimal("price"),
+                            resultSet.getString("design_link"),
+                            resultSet.getString("description"),
+                            resultSet.getString("additional_note"),
+                            resultSet.getString("status"),
+                            resultSet.getString("client_id"),
+                            resultSet.getString("employee_id"),
+                            clientName
+                    );
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error fetching design: " + e.getMessage(), e);
+        }
+        return null;
     }
 }
