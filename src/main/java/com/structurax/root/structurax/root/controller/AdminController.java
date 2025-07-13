@@ -154,46 +154,4 @@ public class AdminController {
         }
     }
 
-    @GetMapping(value = "get_design/{id}" , produces = Constants.APPLICATION_JSON)
-    public ResponseEntity<?> getDesignById(@PathVariable String id){
-        try{
-            DesignFullDTO design = adminService.getDesignById(id);
-            return ResponseEntity.ok(design);
-        }catch (Exception e) {
-            return new ResponseEntity<>("Error fetching design: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    @GetMapping(value = "all_designs" , produces = Constants.APPLICATION_JSON)
-    public ResponseEntity<?> getAllDesigns(){
-        try{
-            final List designDTOs = adminService.getAllDesigns();
-            return ResponseEntity.ok(designDTOs);
-        }catch (Exception e) {
-            return new ResponseEntity<>("Error fetching designs: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    @DeleteMapping(value = "delete_design/{id}")
-    public ResponseEntity<?> deleteDesign(@PathVariable String id){
-        try{
-            DesignDTO design = adminService.deleteDesign(id);
-            return ResponseEntity.ok(design);
-        }catch(Exception e){
-            return new ResponseEntity<>("Error deleting design: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    @PutMapping(value = "update_design/{id}", produces = Constants.APPLICATION_JSON)
-    public ResponseEntity<?> updateDesign(@PathVariable String id, @RequestBody DesignFullDTO updatedDesign) {
-        try {
-            // Set the ID from path parameter to ensure consistency
-            updatedDesign.setDesignId(id);
-
-            DesignFullDTO design = adminService.updateDesign(id, updatedDesign);
-            return ResponseEntity.ok(design);
-        } catch (Exception e) {
-            return new ResponseEntity<>("Error updating design: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
 }
