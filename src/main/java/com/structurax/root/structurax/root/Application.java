@@ -7,7 +7,7 @@ import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.scheduling.annotation.EnableAsync;
 
 @EnableAsync // Enables @Async functionality
-@EnableCaching
+//@EnableCaching
 @SpringBootApplication
 public class Application {
 
