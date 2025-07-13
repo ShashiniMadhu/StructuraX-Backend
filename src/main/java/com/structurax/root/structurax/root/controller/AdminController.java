@@ -22,7 +22,7 @@ import java.util.List;
 
 @Slf4j
 @Validated
-@CrossOrigin("http://localhost:5174/")
+@CrossOrigin("http://localhost:5173/")
 @RestController
 @RequestMapping(value = "/admin")
 public class AdminController {
