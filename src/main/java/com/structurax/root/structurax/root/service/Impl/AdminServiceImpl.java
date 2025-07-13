@@ -56,34 +56,4 @@ public class AdminServiceImpl implements AdminService {
         }
         return employee;
     }
-
-    @Override
-    public DesignFullDTO getDesignById(String id) {
-        DesignFullDTO design = adminDAO.getDesignById(id);
-        logger.info("Design fetched: {}", design.getDesignId());
-        return design;
-    }
-
-    @Override
-    public List<DesignFullDTO> getAllDesigns() {
-        logger.info("Fetching all designs");
-        List<DesignFullDTO> designs = adminDAO.getAllDesigns();
-        logger.info("Fetched {} designs", designs.size());
-        return designs;
-    }
-
-    @Override
-    public DesignDTO deleteDesign(String id) {
-        DesignDTO design = adminDAO.deleteDesign(id);
-        logger.info("Design deleted: {}", design.getDesignId());
-        return design;
-    }
-
-    @Override
-    public DesignFullDTO updateDesign(String id, DesignFullDTO updatedDesign) {
-        DesignFullDTO design = adminDAO.updateDesign(id, updatedDesign);
-        logger.info("Design updated successfully with ID: " + id);
-        return design;
-    }
-
 }
