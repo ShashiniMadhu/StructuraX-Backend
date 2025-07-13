@@ -1,5 +1,7 @@
 package com.structurax.root.structurax.root.dao;
 
+import com.structurax.root.structurax.root.dto.DesignDTO;
+import com.structurax.root.structurax.root.dto.DesignFullDTO;
 import com.structurax.root.structurax.root.dto.EmployeeDTO;
 
 import java.util.List;
@@ -18,6 +20,8 @@ public interface AdminDAO {
      */
     List<EmployeeDTO> getAllEmployees();
 
+    void removeEmployeePassword(String empId);
+
     /**
      * get the employee by employee_id
      * @param id
@@ -25,17 +29,11 @@ public interface AdminDAO {
      */
     EmployeeDTO getEmployeeById(String id);
 
-    /**
-     * update employee(employee_id add to the RestAPI)
-     * @param employeeDTO
-     * @return EmployeeDTO
-     */
-    EmployeeDTO updateEmployee(EmployeeDTO employeeDTO);
+    DesignFullDTO getDesignById(String id);
 
-    /**
-     * delete an employee by employee_id
-     * @param id
-     * @return
-     */
-    EmployeeDTO deleteEmployeeById(String id);
+    List<DesignFullDTO> getAllDesigns();
+
+    DesignDTO deleteDesign(String id);
+
+    DesignFullDTO updateDesign(String id, DesignFullDTO updatedDesign);
 }
