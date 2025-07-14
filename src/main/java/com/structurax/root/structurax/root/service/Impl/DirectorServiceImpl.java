@@ -1,0 +1,37 @@
+package com.structurax.root.structurax.root.service.Impl;
+
+import com.structurax.root.structurax.root.dao.DirectorDAO;
+import com.structurax.root.structurax.root.dto.ClientDTO;
+import com.structurax.root.structurax.root.service.DirectorService;
+import com.structurax.root.structurax.root.service.MailService;
+import com.structurax.root.structurax.root.util.OtpUtil;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+
+@Service
+public class DirectorServiceImpl implements DirectorService {
+
+    @Autowired
+    private DirectorDAO directorDAO;
+
+    @Autowired
+    private MailService mailService;
+
+    @Override
+    public ClientDTO createClient(ClientDTO clientDTO) {
+        String otp = OtpUtil.generateOtp();
+
+        ClientDTO createdClient = directorDAO.createClient(clientDTO,otp);
+
+        mailService.sendClientRegisterOtp(clientDTO.getEmail(),clientDTO.getFirstName(),otp);
+
+        return createdClient;
+    }
+
+    @Override
+    public List<ClientDTO> getClientByType(String type) {
+        return List.of();
+    }
+}
