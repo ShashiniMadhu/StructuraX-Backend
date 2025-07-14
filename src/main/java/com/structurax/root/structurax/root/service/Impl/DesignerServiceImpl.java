@@ -2,6 +2,7 @@ package com.structurax.root.structurax.root.service.Impl;
 
 import com.structurax.root.structurax.root.dao.AdminDAO;
 import com.structurax.root.structurax.root.dao.DesignerDAO;
+import com.structurax.root.structurax.root.dto.ClientDTO;
 import com.structurax.root.structurax.root.dto.DesignDTO;
 import com.structurax.root.structurax.root.dto.DesignFullDTO;
 import com.structurax.root.structurax.root.service.DesignerService;
@@ -46,6 +47,20 @@ public class DesignerServiceImpl implements DesignerService {
     public DesignFullDTO updateDesign(String id, DesignFullDTO updatedDesign) {
         DesignFullDTO design = designerDAO.updateDesign(id, updatedDesign);
         logger.info("Design updated successfully with ID: " + id);
+        return design;
+    }
+
+    @Override
+    public List<ClientDTO> getClientsWithoutPlan() {
+        List<ClientDTO> clients = designerDAO.getClientsWithoutPlan();
+        logger.info("Clients fetched successfully");
+        return clients;
+    }
+
+    @Override
+    public DesignDTO initializingDesign(DesignDTO designDTO) {
+        DesignDTO design = designerDAO.initializingDesign(designDTO);
+        logger.info("Design created successfully with ID: {}", design.getDesignId());
         return design;
     }
 
