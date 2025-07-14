@@ -1,6 +1,7 @@
 package com.structurax.root.structurax.root.controller;
 
 import com.structurax.root.structurax.root.Constants.Constants;
+import com.structurax.root.structurax.root.dto.ClientDTO;
 import com.structurax.root.structurax.root.dto.DesignDTO;
 import com.structurax.root.structurax.root.dto.DesignFullDTO;
 import com.structurax.root.structurax.root.service.AdminService;
@@ -8,15 +9,18 @@ import com.structurax.root.structurax.root.service.DesignerService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -71,6 +75,26 @@ public class DesignerController {
             return ResponseEntity.ok(design);
         } catch (Exception e) {
             return new ResponseEntity<>("Error updating design: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping(value = "get_clients" , produces = Constants.APPLICATION_JSON)
+    public ResponseEntity<?> getClientsWithoutPlan(){
+        try{
+            final List<ClientDTO> clientDTOS = designerService.getClientsWithoutPlan();
+            return ResponseEntity.ok(clientDTOS);
+        }catch(Exception e){
+            return new ResponseEntity<>("Error fetching clients: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @PostMapping(value = "initializing_design" , consumes = Constants.APPLICATION_JSON , produces = Constants.APPLICATION_JSON)
+    public ResponseEntity<?> initializingDesign(@RequestBody DesignDTO designDTO){
+        try{
+            final DesignDTO design = designerService.initializingDesign(designDTO);
+            return ResponseEntity.ok(design);
+        }catch(Exception e){
+            return new ResponseEntity<>("Error initializing design: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }
