@@ -64,4 +64,32 @@ public class MailService {
         }
     }
 
+    @Async
+    public void sendClientRegisterOtp(String toEmail, String name, String otp) {
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true);
+
+            helper.setTo(toEmail);
+            helper.setSubject("Welcome to Structurax - Your Account Credentials");
+            helper.setText(
+                    "Hi " + name + ",\n\n" +
+                            "Your Structurax Client account has been created successfully.\n\n" +
+                            "Here is your login Otp :\n" +
+                            "**" + otp + "**\n\n" +
+                            "Please log in and change it as soon as possible.\n\n" +
+                            "Regards,\n" +
+                            "Structurax Director"
+            );
+
+            mailSender.send(message);
+            log.info("📧 Email sent successfully to {}", toEmail);
+
+        } catch (MessagingException e) {
+           log.error("failed to send otp: {}",e.getMessage());
+        }
+    }
+
+
+
 }
