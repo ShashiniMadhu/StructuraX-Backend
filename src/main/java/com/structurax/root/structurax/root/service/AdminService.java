@@ -1,14 +1,17 @@
 package com.structurax.root.structurax.root.service;
 
+import com.structurax.root.structurax.root.dto.DesignDTO;
+import com.structurax.root.structurax.root.dto.DesignFullDTO;
 import com.structurax.root.structurax.root.dto.EmployeeDTO;
 import org.springframework.stereotype.Service;
 
+import java.awt.*;
 import java.util.List;
 
 @Service
 public interface AdminService {
     /**
-     * To create a employee
+     * To create an employee
      * @param employeeDTO
      * @return created employee
      */
@@ -16,9 +19,9 @@ public interface AdminService {
 
     List<EmployeeDTO> getAllEmployees();
 
-    EmployeeDTO getEmployeeById(Integer id);
+    void deactivateEmployee(String empId);
 
-    EmployeeDTO updateEmployee(EmployeeDTO employeeDTO);
+    EmployeeDTO getEmployeeById(String id);
 
-    EmployeeDTO deleteEmployeeById(Integer id);
+
 }

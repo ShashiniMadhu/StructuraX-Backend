@@ -1,11 +1,13 @@
 package com.structurax.root.structurax.root.dao.Impl;
 
 import com.structurax.root.structurax.root.dao.AdminDAO;
+import com.structurax.root.structurax.root.dto.DesignDTO;
+import com.structurax.root.structurax.root.dto.DesignFullDTO;
 import com.structurax.root.structurax.root.dto.EmployeeDTO;
 import com.structurax.root.structurax.root.util.DatabaseConnection;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;//for password hashing
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -13,6 +15,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Repository
 public class AdminDAOImpl implements AdminDAO {
@@ -28,31 +31,37 @@ public class AdminDAOImpl implements AdminDAO {
         BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
         String hashedPassword = passwordEncoder.encode(employeeDTO.getPassword());
 
+        // Generate employee ID if not provided
+        if (employeeDTO.getEmployeeId() == null || employeeDTO.getEmployeeId().trim().isEmpty()) {
+            employeeDTO.setEmployeeId(generateEmployeeId());
+        }
+
         try {
-            final String sql = "INSERT INTO employee (full_name, email, contact_number, address, employee_type, join_date, salary, password) " +
-                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+            final String sql = "INSERT INTO employee (employee_id, name, email, phone_number, address, type, joined_date, password, availability, profile_image_url) " +
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
             connection = databaseConnection.getConnection();
             preparedStatement = connection.prepareStatement(sql);
 
-            preparedStatement.setString(1, employeeDTO.getFullName());
-            preparedStatement.setString(2, employeeDTO.getEmail());
-            preparedStatement.setString(3, employeeDTO.getContactNumber());
-            preparedStatement.setString(4, employeeDTO.getAddress());
-            preparedStatement.setString(5, employeeDTO.getEmployeeType());
-            preparedStatement.setDate(6, java.sql.Date.valueOf(employeeDTO.getJoinDate()));
-            preparedStatement.setBigDecimal(7, employeeDTO.getSalary());
-            preparedStatement.setString(8, hashedPassword); // Save hashed password
+            preparedStatement.setString(1, employeeDTO.getEmployeeId());
+            preparedStatement.setString(2, employeeDTO.getName());
+            preparedStatement.setString(3, employeeDTO.getEmail());
+            preparedStatement.setString(4, employeeDTO.getPhoneNumber());
+            preparedStatement.setString(5, employeeDTO.getAddress());
+            preparedStatement.setString(6, employeeDTO.getType());
+            preparedStatement.setDate(7, java.sql.Date.valueOf(employeeDTO.getJoinedDate()));
+            preparedStatement.setString(8, hashedPassword);
+            preparedStatement.setString(9, employeeDTO.getAvailability()); // Changed from setBoolean to setString
+            preparedStatement.setString(10, employeeDTO.getProfileImageUrl());
 
-            preparedStatement.executeUpdate();
+
+            int rowsAffected = preparedStatement.executeUpdate();
+            if (rowsAffected == 0) {
+                throw new RuntimeException("Failed to create employee");
+            }
         } catch (SQLException e) {
             throw new RuntimeException("Error inserting employee: " + e.getMessage(), e);
         } finally {
-            try {
-                if (preparedStatement != null) preparedStatement.close();
-                if (connection != null) connection.close();
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
+            closeResources(preparedStatement, connection);
         }
         return employeeDTO;
     }
@@ -69,29 +78,57 @@ public class AdminDAOImpl implements AdminDAO {
         ) {
             while (resultSet.next()) {
                 EmployeeDTO employee = new EmployeeDTO(
-                        resultSet.getInt("emp_id"),
-                        resultSet.getString("full_name"),
+                        resultSet.getString("employee_id"),
+                        resultSet.getString("name"),
                         resultSet.getString("email"),
-                        resultSet.getString("contact_number"),
+                        resultSet.getString("phone_number"),
                         resultSet.getString("address"),
-                        resultSet.getString("employee_type"),
-                        resultSet.getDate("join_date").toLocalDate(),
-                        resultSet.getBigDecimal("salary"),
-                        resultSet.getString("password") // Optional — consider omitting for API responses
+                        resultSet.getString("type"),
+                        resultSet.getDate("joined_date").toLocalDate(),
+                        null, // Don't expose password in responses
+                        resultSet.getString("availability"), // Changed from getBoolean to getString
+                        resultSet.getString("profile_image_url")
                 );
                 employeeList.add(employee);
             }
         } catch (SQLException e) {
-            e.printStackTrace();
-            return new ArrayList<>();
+            throw new RuntimeException("Error fetching all employees: " + e.getMessage(), e);
         }
 
         return employeeList;
     }
 
     @Override
-    public EmployeeDTO getEmployeeById(Integer empId) {
-        final String sql = "SELECT * FROM employee WHERE emp_id = ?";
+    public void removeEmployeePassword(String empId) {
+        // Generate a random password that the employee won't know
+        String randomPassword = generateRandomPassword();
+        BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+        String hashedRandomPassword = passwordEncoder.encode(randomPassword);
+
+        final String sql = "UPDATE employee SET password = ?, availability = 'Deactive' WHERE employee_id = ?"; // Changed from false to 'Deactive'
+        try (
+                Connection connection = databaseConnection.getConnection();
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)
+        ) {
+            preparedStatement.setString(1, hashedRandomPassword);
+            preparedStatement.setString(2, empId);
+            int rows = preparedStatement.executeUpdate();
+            if (rows == 0) {
+                throw new RuntimeException("Employee deactivation failed for employee: " + empId);
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error deactivating employee: " + e.getMessage(), e);
+        }
+    }
+
+    // Helper method to generate a random password for deactivation
+    private String generateRandomPassword() {
+        return "DEACTIVATED_" + UUID.randomUUID().toString().replace("-", "").substring(0, 16);
+    }
+
+    @Override
+    public EmployeeDTO getEmployeeById(String empId) {
+        final String sql = "SELECT * FROM employee WHERE employee_id = ?";
         Connection connection = null;
         PreparedStatement preparedStatement = null;
         ResultSet resultSet = null;
@@ -99,103 +136,68 @@ public class AdminDAOImpl implements AdminDAO {
         try {
             connection = databaseConnection.getConnection();
             preparedStatement = connection.prepareStatement(sql);
-            preparedStatement.setInt(1, empId);
+            preparedStatement.setString(1, empId);
             resultSet = preparedStatement.executeQuery();
 
             if (resultSet.next()) {
                 return new EmployeeDTO(
-                        resultSet.getInt("emp_id"),
-                        resultSet.getString("full_name"),
+                        resultSet.getString("employee_id"),
+                        resultSet.getString("name"),
                         resultSet.getString("email"),
-                        resultSet.getString("contact_number"),
+                        resultSet.getString("phone_number"),
                         resultSet.getString("address"),
-                        resultSet.getString("employee_type"),
-                        resultSet.getDate("join_date").toLocalDate(),
-                        resultSet.getBigDecimal("salary"),
-                        resultSet.getString("password") // Optional: remove if sensitive
+                        resultSet.getString("type"),
+                        resultSet.getDate("joined_date").toLocalDate(),
+                        null, // Don't expose password
+                        resultSet.getString("availability"), // Changed from getBoolean to getString
+                        resultSet.getString("profile_image_url")
+
                 );
             } else {
-                return null; // or throw new RuntimeException("Employee not found")
+                return null;
             }
 
         } catch (SQLException e) {
             throw new RuntimeException("Error fetching employee by ID: " + e.getMessage(), e);
         } finally {
-            try {
-                if (resultSet != null) resultSet.close();
-                if (preparedStatement != null) preparedStatement.close();
-                if (connection != null) connection.close();
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
+            closeResources(resultSet, preparedStatement, connection);
         }
     }
 
-
-    @Override
-    public EmployeeDTO updateEmployee(EmployeeDTO employeeDTO) {
-        Connection connection = null;
-        PreparedStatement preparedStatement = null;
-
-        BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
-        String hashedPassword = passwordEncoder.encode(employeeDTO.getPassword());
-
-        final String sql = "UPDATE employee SET full_name = ?, email = ?, contact_number = ?, address = ?, " +
-                "employee_type = ?, join_date = ?, salary = ?, password = ? WHERE emp_id = ?";
-
-        try {
-            connection = databaseConnection.getConnection();
-            preparedStatement = connection.prepareStatement(sql);
-
-            preparedStatement.setString(1, employeeDTO.getFullName());
-            preparedStatement.setString(2, employeeDTO.getEmail());
-            preparedStatement.setString(3, employeeDTO.getContactNumber());
-            preparedStatement.setString(4, employeeDTO.getAddress());
-            preparedStatement.setString(5, employeeDTO.getEmployeeType());
-            preparedStatement.setDate(6, java.sql.Date.valueOf(employeeDTO.getJoinDate()));
-            preparedStatement.setBigDecimal(7, employeeDTO.getSalary());
-            preparedStatement.setString(8, hashedPassword); // hashed password
-            preparedStatement.setInt(9, employeeDTO.getEmpId());
-
-            int rowsAffected = preparedStatement.executeUpdate();
-            if (rowsAffected == 0) {
-                throw new RuntimeException("Employee update failed. Employee ID may not exist.");
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException("Error updating employee: " + e.getMessage(), e);
-        } finally {
-            try {
-                if (preparedStatement != null) preparedStatement.close();
-                if (connection != null) connection.close();
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
-        }
-
-        return employeeDTO;
-    }
-
-    @Override
-    public EmployeeDTO deleteEmployeeById(Integer empId) {
-        EmployeeDTO employee = getEmployeeById(empId); // Reuse this method if you already have it
-
-        if (employee == null) {
-            throw new RuntimeException("No employee found with id: " + empId);
-        }
-
-        final String sql = "DELETE FROM employee WHERE emp_id = ?";
+    // Helper method to generate employee ID
+    private String generateEmployeeId() {
+        String sql = "SELECT employee_id FROM employee ORDER BY employee_id DESC LIMIT 1";
 
         try (
                 Connection connection = databaseConnection.getConnection();
-                PreparedStatement preparedStatement = connection.prepareStatement(sql)
+                PreparedStatement preparedStatement = connection.prepareStatement(sql);
+                ResultSet resultSet = preparedStatement.executeQuery()
         ) {
-            preparedStatement.setInt(1, empId);
-            preparedStatement.executeUpdate();
+            if (resultSet.next()) {
+                String lastId = resultSet.getString("employee_id");
+                // Extract the number part from EMP_XXX format
+                String numberPart = lastId.substring(4); // Remove "EMP_"
+                int nextNumber = Integer.parseInt(numberPart) + 1;
+                return String.format("EMP_%03d", nextNumber);
+            } else {
+                // First employee
+                return "EMP_001";
+            }
         } catch (SQLException e) {
-            throw new RuntimeException("Error deleting employee: " + e.getMessage(), e);
+            throw new RuntimeException("Error generating employee ID: " + e.getMessage(), e);
         }
-
-        return employee;
     }
 
+    // Helper method to close resources
+    private void closeResources(AutoCloseable... resources) {
+        for (AutoCloseable resource : resources) {
+            if (resource != null) {
+                try {
+                    resource.close();
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+        }
+    }
 }

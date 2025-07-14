@@ -1,17 +1,31 @@
 package com.structurax.root.structurax.root.dao;
 
+import com.structurax.root.structurax.root.dto.DesignDTO;
+import com.structurax.root.structurax.root.dto.DesignFullDTO;
 import com.structurax.root.structurax.root.dto.EmployeeDTO;
 
 import java.util.List;
 
 public interface AdminDAO {
+    /**
+     * create an employee by admin
+     * @param employeeDTO
+     * @return EmployeeDTO
+     */
     EmployeeDTO createEmployee(EmployeeDTO employeeDTO);
 
+    /**
+     * get the all employees
+     * @return EmployeeDTO
+     */
     List<EmployeeDTO> getAllEmployees();
 
-    EmployeeDTO getEmployeeById(Integer id);
+    void removeEmployeePassword(String empId);
 
-    EmployeeDTO updateEmployee(EmployeeDTO employeeDTO);
-
-    EmployeeDTO deleteEmployeeById(Integer id);
+    /**
+     * get the employee by employee_id
+     * @param id
+     * @return EmployeeDTO
+     */
+    EmployeeDTO getEmployeeById(String id);
 }
