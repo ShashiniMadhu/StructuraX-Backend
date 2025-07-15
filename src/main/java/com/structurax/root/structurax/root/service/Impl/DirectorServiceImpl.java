@@ -2,6 +2,8 @@ package com.structurax.root.structurax.root.service.Impl;
 
 import com.structurax.root.structurax.root.dao.DirectorDAO;
 import com.structurax.root.structurax.root.dto.ClientDTO;
+import com.structurax.root.structurax.root.dto.ProjectDTO;
+import com.structurax.root.structurax.root.dto.ProjectInitiateDTO;
 import com.structurax.root.structurax.root.service.DirectorService;
 import com.structurax.root.structurax.root.service.MailService;
 import com.structurax.root.structurax.root.util.OtpUtil;
@@ -31,7 +33,22 @@ public class DirectorServiceImpl implements DirectorService {
     }
 
     @Override
-    public List<ClientDTO> getClientByType(String type) {
-        return List.of();
+    public List<ClientDTO> getClientWithPlan() {
+        List<ClientDTO> clients = directorDAO.getClientWithPlan();
+        return clients;
     }
+
+    @Override
+    public List<ClientDTO> getClientWithoutPlan() {
+        List<ClientDTO> clients = directorDAO.getClientWithoutPlan();
+        return clients;
+    }
+
+    @Override
+    public ProjectInitiateDTO initializeProject(ProjectInitiateDTO projectInitiateDTO) {
+        ProjectInitiateDTO  initializedProject = directorDAO.initializeProject(projectInitiateDTO);
+        return initializedProject;
+    }
+
+
 }
