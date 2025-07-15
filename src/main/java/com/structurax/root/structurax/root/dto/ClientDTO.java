@@ -32,6 +32,14 @@ public class ClientDTO {
     @JsonProperty("is_have_plan")
     private boolean isHavePlan;
 
+
+    private String address;
+
+    private String design_link;
+}
+
+
+
     // Explicitly define getter and setter for isHavePlan
     public boolean isHavePlan() {
         return isHavePlan;
@@ -41,3 +49,4 @@ public class ClientDTO {
         this.isHavePlan = isHavePlan;
     }
 }
+
