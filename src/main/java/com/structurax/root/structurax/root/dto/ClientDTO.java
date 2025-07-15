@@ -27,13 +27,10 @@ public class ClientDTO {
 
     private String type; // e.g., individual, company, etc.
 
-    private String address;
-
     @JsonProperty("is_have_plan")
     private boolean isHavePlan;
 
-
-    
+    private String address;
 
     private String design_link;
 
