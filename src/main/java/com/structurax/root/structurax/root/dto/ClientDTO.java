@@ -33,10 +33,10 @@ public class ClientDTO {
     private boolean isHavePlan;
 
 
-    private String address;
+    
 
     private String design_link;
-}
+
 
 
 
