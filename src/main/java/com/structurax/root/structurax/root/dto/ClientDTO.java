@@ -27,12 +27,26 @@ public class ClientDTO {
 
     private String type; // e.g., individual, company, etc.
 
+    private String address;
+
     @JsonProperty("is_have_plan")
     private boolean isHavePlan;
+
 
     private String address;
 
     private String design_link;
 }
 
+
+
+    // Explicitly define getter and setter for isHavePlan
+    public boolean isHavePlan() {
+        return isHavePlan;
+    }
+
+    public void setIsHavePlan(boolean isHavePlan) {
+        this.isHavePlan = isHavePlan;
+    }
+}
 
