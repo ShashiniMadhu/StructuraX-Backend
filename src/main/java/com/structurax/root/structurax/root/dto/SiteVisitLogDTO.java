@@ -11,6 +11,7 @@ import java.time.LocalDate;
 public class SiteVisitLogDTO {
     private Integer id;
 
+
     @JsonProperty("project_id")
     private Integer projectId;
     private LocalDate date;
