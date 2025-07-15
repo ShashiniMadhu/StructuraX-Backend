@@ -1,7 +1,7 @@
 package com.structurax.root.structurax.root.dao.Impl;
 
-import com.structurax.root.structurax.root.dao.VisitLogDAO;
-import com.structurax.root.structurax.root.dto.VisitLogDTO;
+import com.structurax.root.structurax.root.dao.ProjectManagerDAO;
+import com.structurax.root.structurax.root.dto.SiteVisitLogDTO;
 import com.structurax.root.structurax.root.util.DatabaseConnection;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
@@ -11,13 +11,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Repository
-public class VisitLogDAOImpl implements VisitLogDAO {
+public class ProjectManagerDAOImpl implements ProjectManagerDAO {
 
     @Autowired
     private DatabaseConnection databaseConnection;
 
     @Override
-    public VisitLogDTO createVisitLog(VisitLogDTO dto) {
+    public SiteVisitLogDTO createVisitLog(SiteVisitLogDTO dto) {
         // Validate required fields
         if (dto.getProjectId() == null) {
             throw new IllegalArgumentException("Project ID is required and cannot be null");
@@ -47,9 +47,9 @@ public class VisitLogDAOImpl implements VisitLogDAO {
     }
 
     @Override
-    public List<VisitLogDTO> getAllVisitLogs() {
+    public List<SiteVisitLogDTO> getAllVisitLogs() {
         String sql = "SELECT * FROM site_visit_log";
-        List<VisitLogDTO> list = new ArrayList<>();
+        List<SiteVisitLogDTO> list = new ArrayList<>();
 
         try (
                 Connection conn = databaseConnection.getConnection();
@@ -57,7 +57,7 @@ public class VisitLogDAOImpl implements VisitLogDAO {
                 ResultSet rs = ps.executeQuery()
         ) {
             while (rs.next()) {
-                VisitLogDTO dto = new VisitLogDTO(
+                SiteVisitLogDTO dto = new SiteVisitLogDTO(
                         rs.getInt("visit_id"),
                         rs.getInt("project_id"),
                         rs.getDate("date").toLocalDate(),
@@ -73,9 +73,9 @@ public class VisitLogDAOImpl implements VisitLogDAO {
     }
 
     @Override
-    public VisitLogDTO getVisitLogById(Integer id) {
+    public SiteVisitLogDTO getVisitLogById(Integer id) {
         String sql = "SELECT * FROM site_visit_log WHERE id = ?";
-        VisitLogDTO dto = null;
+        SiteVisitLogDTO dto = null;
 
         try (
                 Connection conn = databaseConnection.getConnection();
@@ -85,7 +85,7 @@ public class VisitLogDAOImpl implements VisitLogDAO {
             ResultSet rs = ps.executeQuery();
 
             if (rs.next()) {
-                dto = new VisitLogDTO(
+                dto = new SiteVisitLogDTO(
                         rs.getInt("id"),
                         rs.getInt("project_id"),
                         rs.getDate("visit_date").toLocalDate(),
@@ -101,23 +101,4 @@ public class VisitLogDAOImpl implements VisitLogDAO {
         return dto;
     }
 
-    @Override
-    public VisitLogDTO deleteVisitLogById(Integer id) {
-        VisitLogDTO dto = getVisitLogById(id);
-        if (dto == null) throw new RuntimeException("Visit log not found");
-
-        String sql = "DELETE FROM site_visit_log WHERE id = ?";
-
-        try (
-                Connection conn = databaseConnection.getConnection();
-                PreparedStatement ps = conn.prepareStatement(sql)
-        ) {
-            ps.setInt(1, id);
-            ps.executeUpdate();
-        } catch (SQLException e) {
-            throw new RuntimeException("Error deleting visit log", e);
-        }
-
-        return dto;
-    }
 }
