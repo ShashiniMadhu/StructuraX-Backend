@@ -4,6 +4,7 @@ import com.structurax.root.structurax.root.dao.DirectorDAO;
 import com.structurax.root.structurax.root.dto.ClientDTO;
 import com.structurax.root.structurax.root.dto.ProjectDTO;
 import com.structurax.root.structurax.root.dto.ProjectInitiateDTO;
+import com.structurax.root.structurax.root.dto.ProjectStartDTO;
 import com.structurax.root.structurax.root.service.DirectorService;
 import com.structurax.root.structurax.root.service.MailService;
 import com.structurax.root.structurax.root.util.OtpUtil;
@@ -48,6 +49,29 @@ public class DirectorServiceImpl implements DirectorService {
     public ProjectInitiateDTO initializeProject(ProjectInitiateDTO projectInitiateDTO) {
         ProjectInitiateDTO  initializedProject = directorDAO.initializeProject(projectInitiateDTO);
         return initializedProject;
+    }
+
+    @Override
+    public List<ProjectInitiateDTO> getAllProjects() {
+        List<ProjectInitiateDTO> projects = directorDAO.getAllProjects();
+        return projects;
+    }
+
+    @Override
+    public ProjectInitiateDTO getProjectById(String id) {
+        ProjectInitiateDTO project = directorDAO.getProjectById(id);
+        return project;
+    }
+
+    @Override
+    public List<ProjectInitiateDTO> getPendingProjects() {
+        List<ProjectInitiateDTO> projects = directorDAO.getPendingProjects();
+        return projects;
+    }
+
+    @Override
+    public void startProject(String projectId, ProjectStartDTO projectStartDTO) {
+        directorDAO.startProject(projectId, projectStartDTO);
     }
 
 
