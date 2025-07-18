@@ -46,4 +46,6 @@ public class ProjectInitiateDTO {
 
     private String category;
 
+    private String image_url;
+
 }
