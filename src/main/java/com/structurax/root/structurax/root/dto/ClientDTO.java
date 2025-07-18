@@ -32,7 +32,6 @@ public class ClientDTO {
 
     private String address;
 
-    
 
     private String design_link;
 
