@@ -8,6 +8,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.text.DecimalFormat;
 
 @Data
 @NoArgsConstructor
@@ -21,20 +22,20 @@ public class CatalogDTO {
     private Integer itemId;
     private String name;
     private String description;
-    private BigDecimal rate;
+    private Float rate;
     private Boolean availability;
     private String category;
-    private Boolean active;
-    private String supplierId;
+//    private Boolean active;
+//    private String supplierId;
 
-    public CatalogDTO(Integer itemId, String name, String description, BigDecimal rate, Boolean availability, String category, Boolean active, String supplierId) {
+    public CatalogDTO(Integer itemId, String name, String description, Float rate, Boolean availability, String category) {
         this.itemId = itemId;
         this.name = name;
         this.description = description;
         this.rate = rate;
         this.availability = availability;
         this.category = category;
-        this.active = active;
-        this.supplierId = supplierId;
+//        this.active = active;
+//        this.supplierId = supplierId;
     }
 }

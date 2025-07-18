@@ -18,14 +18,17 @@ public class SupplierDAOImpl implements SupplierDAO {
 
     @Override
     public CatalogDTO createCatalog(CatalogDTO catalogDTO) {
-        String sql = "INSERT INTO catalog(name, description, active) VALUES (?, ?, ?)";
+        String sql = "INSERT INTO catalog(item_id,name, description, rate, availability,category) VALUES (?,?,?,?, ?, ?)";
 
         try (Connection conn = databaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
-            ps.setString(1, catalogDTO.getName());
-            ps.setString(2, catalogDTO.getDescription());
-            ps.setBoolean(3, catalogDTO.getActive());
+            ps.setInt(1, catalogDTO.getItemId());
+            ps.setString(2, catalogDTO.getName());
+            ps.setString(3, catalogDTO.getDescription());
+            ps.setFloat(4, catalogDTO.getRate());
+            ps.setBoolean(5, catalogDTO.getAvailability());
+            ps.setString(6, catalogDTO.getCategory());
 
             ps.executeUpdate();
             ResultSet rs = ps.getGeneratedKeys();
@@ -49,10 +52,12 @@ public class SupplierDAOImpl implements SupplierDAO {
 
             while (rs.next()) {
                 CatalogDTO catalog = new CatalogDTO();
-                catalog.setId(rs.getInt("id"));
+                catalog.setId(rs.getInt("item_id"));
                 catalog.setName(rs.getString("name"));
                 catalog.setDescription(rs.getString("description"));
-                catalog.setActive(rs.getBoolean("active"));
+//                catalog.setRate(rs.getBigDecimal("rate"));
+                catalog.setAvailability(rs.getBoolean("availability"));
+                catalog.setCategory(rs.getString("category"));
                 catalogs.add(catalog);
             }
         } catch (SQLException e) {
@@ -91,7 +96,6 @@ public class SupplierDAOImpl implements SupplierDAO {
                 catalog.setId(rs.getInt("id"));
                 catalog.setName(rs.getString("name"));
                 catalog.setDescription(rs.getString("description"));
-                catalog.setActive(rs.getBoolean("active"));
             }
         } catch (SQLException e) {
             throw new RuntimeException("Error retrieving catalog by id", e);
