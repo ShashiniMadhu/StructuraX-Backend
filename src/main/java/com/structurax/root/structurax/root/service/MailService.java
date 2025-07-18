@@ -16,7 +16,7 @@ public class MailService {
     private JavaMailSender mailSender;
 
     @Async
-    public void sendEmployeePassword(String toEmail, String name, String password) {
+    public void sendEmployeeOtp(String toEmail, String name, String otp) {
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true);
@@ -26,19 +26,20 @@ public class MailService {
             helper.setText(
                     "Hi " + name + ",\n\n" +
                             "Your Structurax employee account has been created successfully.\n\n" +
-                            "Here is your login password:\n" +
-                            "**" + password + "**\n\n" +
+                            "Here is your one-time login password (OTP):\n" +
+                            "**" + otp + "**\n\n" +
                             "Please log in and change it as soon as possible.\n\n" +
                             "Regards,\n" +
                             "Structurax Administration"
             );
 
             mailSender.send(message);
-            log.info("📧 Email sent successfully to {}", toEmail);
+            log.info("📧 OTP email sent to {}", toEmail);
         } catch (MessagingException e) {
-            log.error("❌ Failed to send email: {}", e.getMessage());
+            log.error("❌ Failed to send OTP email: {}", e.getMessage());
         }
     }
+
 
     @Async
     public void sendRemovalNotification(String toEmail, String name) {
