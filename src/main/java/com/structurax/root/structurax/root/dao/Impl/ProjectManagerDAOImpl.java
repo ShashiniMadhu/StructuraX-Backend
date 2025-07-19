@@ -2,6 +2,7 @@ package com.structurax.root.structurax.root.dao.Impl;
 
 import com.structurax.root.structurax.root.dao.ProjectManagerDAO;
 import com.structurax.root.structurax.root.dto.SiteVisitLogDTO;
+import com.structurax.root.structurax.root.dto.VisitRequestDTO;
 import com.structurax.root.structurax.root.util.DatabaseConnection;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
@@ -29,16 +30,13 @@ public class ProjectManagerDAOImpl implements ProjectManagerDAO {
                 Connection conn = databaseConnection.getConnection();
                 PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)
         ) {
-            ps.setInt(1, dto.getProjectId());
+            ps.setString(1, dto.getProjectId());
             ps.setDate(2, Date.valueOf(dto.getDate()));
             ps.setString(3, dto.getDescription());
             ps.setString(4, dto.getStatus());
 
             ps.executeUpdate();
             ResultSet rs = ps.getGeneratedKeys();
-            if (rs.next()) {
-                dto.setId(rs.getInt(1));
-            }
 
         } catch (SQLException e) {
             throw new RuntimeException("Error creating visit log", e);
@@ -59,7 +57,7 @@ public class ProjectManagerDAOImpl implements ProjectManagerDAO {
             while (rs.next()) {
                 SiteVisitLogDTO dto = new SiteVisitLogDTO(
                         rs.getInt("visit_id"),
-                        rs.getInt("project_id"),
+                        rs.getString("project_id"),
                         rs.getDate("date").toLocalDate(),
                         rs.getString("description"),
                         rs.getString("status")
@@ -87,7 +85,7 @@ public class ProjectManagerDAOImpl implements ProjectManagerDAO {
             if (rs.next()) {
                 dto = new SiteVisitLogDTO(
                         rs.getInt("id"),
-                        rs.getInt("project_id"),
+                        rs.getString("project_id"),
                         rs.getDate("visit_date").toLocalDate(),
                         rs.getString("description"),
                         rs.getString("status")
@@ -100,5 +98,86 @@ public class ProjectManagerDAOImpl implements ProjectManagerDAO {
 
         return dto;
     }
+    @Override
+    public boolean updateVisitLog(SiteVisitLogDTO dto) {
+        // Validate required fields
+        if (dto.getId() == null) {
+            throw new IllegalArgumentException("Visit log ID is required for update");
+        }
+        if (dto.getProjectId() == null) {
+            throw new IllegalArgumentException("Project ID is required and cannot be null");
+        }
+
+        String sql = "UPDATE site_visit_log SET project_id = ?, date = ?, description = ?, status = ? WHERE visit_id = ?";
+
+        try (
+                Connection conn = databaseConnection.getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql)
+        ) {
+            ps.setString(1, dto.getProjectId());
+            ps.setDate(2, Date.valueOf(dto.getDate()));
+            ps.setString(3, dto.getDescription());
+            ps.setString(4, dto.getStatus());
+            ps.setInt(5, dto.getId());
+
+            int rowsAffected = ps.executeUpdate();
+            return rowsAffected > 0;
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Error updating visit log", e);
+        }
+    }
+
+    @Override
+    public List<VisitRequestDTO> getAllVisitRequests(){
+        // Modified to only return pending requests
+        String sql = "SELECT * FROM visit_request WHERE status = 'pending'";
+        List<VisitRequestDTO> list = new ArrayList<>();
+
+        try (
+                Connection conn = databaseConnection.getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql);
+                ResultSet rs = ps.executeQuery();
+        ){
+            while (rs.next()){
+                VisitRequestDTO dto = new VisitRequestDTO(
+                        rs.getString("project_id"),
+                        rs.getDate("from_date").toLocalDate(),
+                        rs.getDate("to_date").toLocalDate(),
+                        rs.getString("purpose"),
+                        rs.getString("status")
+                );
+                dto.setId(rs.getInt("request_id")); // Set the ID from database
+                list.add(dto);
+            }
+        } catch(SQLException e) {
+            throw new RuntimeException("Error reading visit requests", e);
+        }
+        return list;
+    }
+
+
+    @Override
+    public boolean updateVisitRequest(VisitRequestDTO dto){
+        // Fixed to use request_id instead of project_id for WHERE clause
+        String sql = "UPDATE visit_request SET status = ? WHERE request_id = ?";
+
+        try (
+                Connection conn = databaseConnection.getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql)
+        ){
+            ps.setString(1, dto.getStatus());
+            ps.setInt(2, dto.getId());
+
+            int rowsAffected = ps.executeUpdate();
+            return rowsAffected > 0;
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Error updating visit request", e);
+        }
+    }
+
+
+
 
 }
