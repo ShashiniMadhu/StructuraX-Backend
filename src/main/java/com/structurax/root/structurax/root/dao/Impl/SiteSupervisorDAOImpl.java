@@ -85,20 +85,14 @@ public class SiteSupervisorDAOImpl implements SiteSupervisorDAO {
 
     @Override
     public LaborAttendanceDTO updateLaborAttendance(LaborAttendanceDTO laborAttendanceDTO) {
-        final String sql = "UPDATE labor_attendance SET project_id = ?, date = ?, hiring_type = ?, labor_type = ?, count = ?, company = ? " +
-                "WHERE id = ?";
+        final String sql = "UPDATE labor_attendance SET project_id = ?, date = ?, hiring_type = ?, labor_type = ?, count = ?, company_name = ? " +
+                "WHERE attendance_id = ?";
 
         try (
                 Connection connection = databaseConnection.getConnection();
                 PreparedStatement preparedStatement = connection.prepareStatement(sql)
         ) {
-            System.out.println("Updating: id=" + laborAttendanceDTO.getId() +
-                    ", project_id=" + laborAttendanceDTO.getProject_id() +
-                    ", date=" + laborAttendanceDTO.getDate() +
-                    ", hiring_type=" + laborAttendanceDTO.getHiring_type() +
-                    ", labor_type=" + laborAttendanceDTO.getLabor_type() +
-                    ", count=" + laborAttendanceDTO.getCount() +
-                    ", company=" + laborAttendanceDTO.getCompany());
+
 
             preparedStatement.setString(1, laborAttendanceDTO.getProject_id());
             preparedStatement.setDate(2, laborAttendanceDTO.getDate());
@@ -173,7 +167,7 @@ public class SiteSupervisorDAOImpl implements SiteSupervisorDAO {
 
                 while (rs.next()) {
                     LaborAttendanceDTO dto = new LaborAttendanceDTO();
-                    dto.setId(rs.getInt("id"));
+                    dto.setId(rs.getInt("attendance_id"));
                     dto.setProject_id(rs.getString("project_id"));
                     dto.setDate(rs.getDate("date"));
                     dto.setHiring_type(rs.getString("hiring_type"));
