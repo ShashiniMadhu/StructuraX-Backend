@@ -20,7 +20,7 @@ public class SiteSupervisorDAOImpl implements SiteSupervisorDAO {
 
     @Override
     public List<LaborAttendanceDTO> createLaborAttendance(List<LaborAttendanceDTO> laborAttendanceList) {
-        final String sql = "INSERT INTO labor_attendance (project_id, date, hiring_type, labor_type, count, company) " +
+        final String sql = "INSERT INTO labor_attendance (project_id, date, hiring_type, labor_type, count, company_name) " +
                 "VALUES (?, ?, ?, ?, ?, ?)";
 
         try (
@@ -28,7 +28,7 @@ public class SiteSupervisorDAOImpl implements SiteSupervisorDAO {
                 PreparedStatement preparedStatement = connection.prepareStatement(sql)
         ) {
             for (LaborAttendanceDTO dto : laborAttendanceList) {
-                preparedStatement.setInt(1, dto.getProject_id());
+                preparedStatement.setString(1, dto.getProject_id());
                 preparedStatement.setDate(2, dto.getDate());
                 preparedStatement.setString(3, dto.getHiring_type());
                 preparedStatement.setString(4, dto.getLabor_type());
@@ -59,13 +59,13 @@ public class SiteSupervisorDAOImpl implements SiteSupervisorDAO {
         ) {
             while (rs.next()) {
                 LaborAttendanceDTO laborAttendanceRecord = new LaborAttendanceDTO();
-                laborAttendanceRecord.setId(rs.getInt("id"));
-                laborAttendanceRecord.setProject_id(rs.getInt("project_id"));
+                laborAttendanceRecord.setId(rs.getInt("attendance_id"));
+                laborAttendanceRecord.setProject_id(rs.getString("project_id"));
                 laborAttendanceRecord.setDate(rs.getDate("date"));
                 laborAttendanceRecord.setHiring_type(rs.getString("hiring_type"));
                 laborAttendanceRecord.setLabor_type(rs.getString("labor_type"));
                 laborAttendanceRecord.setCount(rs.getInt("count"));
-                laborAttendanceRecord.setCompany(rs.getString("company"));
+                laborAttendanceRecord.setCompany(rs.getString("company_name"));
 
                 if (rs.getDate("date") != null) {
                     laborAttendanceRecord.setDate(Date.valueOf(rs.getDate("date").toLocalDate()));
@@ -100,7 +100,7 @@ public class SiteSupervisorDAOImpl implements SiteSupervisorDAO {
                     ", count=" + laborAttendanceDTO.getCount() +
                     ", company=" + laborAttendanceDTO.getCompany());
 
-            preparedStatement.setInt(1, laborAttendanceDTO.getProject_id());
+            preparedStatement.setString(1, laborAttendanceDTO.getProject_id());
             preparedStatement.setDate(2, laborAttendanceDTO.getDate());
             preparedStatement.setString(3, laborAttendanceDTO.getHiring_type());
             preparedStatement.setString(4, laborAttendanceDTO.getLabor_type());
@@ -123,7 +123,7 @@ public class SiteSupervisorDAOImpl implements SiteSupervisorDAO {
 
 
     @Override
-    public List<LaborAttendanceDTO> getAttendanceByProjectIdAndDate(Integer project_id, java.sql.Date date) {
+    public List<LaborAttendanceDTO> getAttendanceByProjectIdAndDate(String project_id, java.sql.Date date) {
         final String sql = "SELECT * FROM labor_attendance l INNER JOIN project p ON p.project_id=l.project_id" +
                 " WHERE l.project_id = ? AND DATE(l.date) = ?";
 
@@ -133,14 +133,14 @@ public class SiteSupervisorDAOImpl implements SiteSupervisorDAO {
                 Connection connection = databaseConnection.getConnection();
                 PreparedStatement preparedStatement = connection.prepareStatement(sql)
         ) {
-            preparedStatement.setInt(1, project_id);
+            preparedStatement.setString(1, project_id);
             preparedStatement.setDate(2, date);  // java.sql.Date is fine here
 
             try (ResultSet rs = preparedStatement.executeQuery()) {
                 while (rs.next()) {
                     LaborAttendanceDTO dto = new LaborAttendanceDTO();
                     dto.setId(rs.getInt("id"));            // or rs.getLong if ID is long
-                    dto.setProject_id(rs.getInt("project_id"));
+                    dto.setProject_id(rs.getString("project_id"));
                     dto.setDate(rs.getDate("date"));
                     dto.setHiring_type(rs.getString("hiring_type"));
                     dto.setLabor_type(rs.getString("labor_type"));
@@ -158,7 +158,7 @@ public class SiteSupervisorDAOImpl implements SiteSupervisorDAO {
     }
 
     @Override
-    public List<LaborAttendanceDTO> deleteLaborAttendanceRecord(Integer project_id, Date date) {
+    public List<LaborAttendanceDTO> deleteLaborAttendanceRecord(String project_id, Date date) {
         final String selectSql = "SELECT * FROM labor_attendance WHERE project_id = ? AND date = ?";
         final String deleteSql = "DELETE FROM labor_attendance WHERE project_id = ? AND date = ?";
         List<LaborAttendanceDTO> deletedRecords = new ArrayList<>();
@@ -167,14 +167,14 @@ public class SiteSupervisorDAOImpl implements SiteSupervisorDAO {
 
             // Step 1: Fetch records before deleting
             try (PreparedStatement selectStmt = connection.prepareStatement(selectSql)) {
-                selectStmt.setInt(1, project_id);
+                selectStmt.setString(1, project_id);
                 selectStmt.setDate(2, date);
                 ResultSet rs = selectStmt.executeQuery();
 
                 while (rs.next()) {
                     LaborAttendanceDTO dto = new LaborAttendanceDTO();
                     dto.setId(rs.getInt("id"));
-                    dto.setProject_id(rs.getInt("project_id"));
+                    dto.setProject_id(rs.getString("project_id"));
                     dto.setDate(rs.getDate("date"));
                     dto.setHiring_type(rs.getString("hiring_type"));
                     dto.setLabor_type(rs.getString("labor_type"));
@@ -187,7 +187,7 @@ public class SiteSupervisorDAOImpl implements SiteSupervisorDAO {
 
             // Step 2: Delete the records
             try (PreparedStatement deleteStmt = connection.prepareStatement(deleteSql)) {
-                deleteStmt.setInt(1, project_id);
+                deleteStmt.setString(1, project_id);
                 deleteStmt.setDate(2, date);
                 deleteStmt.executeUpdate();
             }
@@ -204,8 +204,8 @@ public class SiteSupervisorDAOImpl implements SiteSupervisorDAO {
     //material request crud
     @Override
     public List<SiteResourceDTO> getMaterialsByRequestId(Integer id) {
-        final String sql = "SELECT * FROM material m " +
-                "INNER JOIN request r ON m.request_id = r.request_id " +
+        final String sql = "SELECT * FROM site_resources m " +
+                "INNER JOIN request_site_resources r ON m.request_id = r.request_id " +
                 "WHERE m.request_id = ?";
 
         List<SiteResourceDTO> materialList = new ArrayList<>();
@@ -267,9 +267,9 @@ public class SiteSupervisorDAOImpl implements SiteSupervisorDAO {
     }*/
 
     @Override
-    public List<RequestDTO> getAllMaterialRequests() {
-        final String sql = "SELECT * FROM request WHERE request_type='materials'";
-        List<RequestDTO> requests = new ArrayList<>();
+    public List<RequestSiteResourcesDTO> getAllMaterialRequests() {
+        final String sql = "SELECT * FROM request_site_resources WHERE request_type='material'";
+        List<RequestSiteResourcesDTO> requests = new ArrayList<>();
 
         try (
                 Connection connection = databaseConnection.getConnection();
@@ -277,12 +277,17 @@ public class SiteSupervisorDAOImpl implements SiteSupervisorDAO {
                 ResultSet rs = preparedStatement.executeQuery()
         ) {
             while (rs.next()) {
-                RequestDTO request = new RequestDTO(
+                RequestSiteResourcesDTO request = new RequestSiteResourcesDTO(
                         rs.getInt("request_id"),
-                        rs.getString("approval_status"),
+                        rs.getBoolean("pm_approval"),
+                        rs.getBoolean("qs_approval"),
                         rs.getString("request_type"),
                         rs.getDate("date"),
-                        rs.getInt("project_id")
+                        rs.getString("project_id"),
+                        rs.getString("site_supervisor_id"),
+                        rs.getString("qs_id"),
+                        rs.getBoolean("is_received"),
+                        new ArrayList<>()
                 );
 
                 List<SiteResourceDTO> materials = getMaterialsByRequestId(request.getRequestId());
@@ -299,9 +304,9 @@ public class SiteSupervisorDAOImpl implements SiteSupervisorDAO {
     }
 
     @Override
-    public List<RequestDTO> getAllToolRequests() {
-        final String sql = "SELECT * FROM request WHERE request_type='tool'";
-        List<RequestDTO> requests = new ArrayList<>();
+    public List<RequestSiteResourcesDTO> getAllToolRequests() {
+        final String sql = "SELECT * FROM request_site_resources WHERE request_type='tool'";
+        List<RequestSiteResourcesDTO> requests = new ArrayList<>();
 
         try (
                 Connection connection = databaseConnection.getConnection();
@@ -309,12 +314,17 @@ public class SiteSupervisorDAOImpl implements SiteSupervisorDAO {
                 ResultSet rs = preparedStatement.executeQuery()
         ) {
             while (rs.next()) {
-                RequestDTO request = new RequestDTO(
+                RequestSiteResourcesDTO request = new RequestSiteResourcesDTO(
                         rs.getInt("request_id"),
-                        rs.getString("approval_status"),
+                        rs.getBoolean("pm_approval"),
+                        rs.getBoolean("qs_approval"),
                         rs.getString("request_type"),
                         rs.getDate("date"),
-                        rs.getInt("project_id")
+                        rs.getString("project_id"),
+                        rs.getString("site_supervisor_id"),
+                        rs.getString("qs_id"),
+                        rs.getBoolean("is_received"),
+                        new ArrayList<>()
                 );
 
                 List<SiteResourceDTO> materials = getMaterialsByRequestId(request.getRequestId());
@@ -333,19 +343,23 @@ public class SiteSupervisorDAOImpl implements SiteSupervisorDAO {
 
 
     @Override
-    public RequestDTO createMaterialRequest(RequestDTO requestDTO) {
-        final String planSql = "INSERT INTO request (approval_status, request_type, date,project_id) " +
-                "VALUES (?, ?, ?, ? )";
+    public RequestSiteResourcesDTO createMaterialRequest(RequestSiteResourcesDTO requestDTO) {
+        final String planSql = "INSERT INTO request_site_resources (pm_approval, qs_approval, request_type,date,project_id,site_supervisor_id,qs_id,is_received) " +
+                "VALUES (?, ?, ?, ?,?,?,?,? )";
 
         try (
                 Connection connection = databaseConnection.getConnection();
                 PreparedStatement planStmt = connection.prepareStatement(planSql, Statement.RETURN_GENERATED_KEYS)
         ) {
             // 1. Insert request
-            planStmt.setString(1, requestDTO.getApprovalStatus());
-            planStmt.setString(2, requestDTO.getRequestType());
-            planStmt.setDate(3, requestDTO.getDate());
-            planStmt.setInt(4,requestDTO.getProjectId());
+            planStmt.setBoolean(1, requestDTO.getPmApproval());
+            planStmt.setBoolean(2, requestDTO.getQsApproval());
+            planStmt.setString(3, requestDTO.getRequestType());
+            planStmt.setDate(4,requestDTO.getDate());
+            planStmt.setString(5,requestDTO.getProjectId());
+            planStmt.setString(6,requestDTO.getSiteSupervisorId());
+            planStmt.setString(7,requestDTO.getQsId());
+            planStmt.setBoolean(8,requestDTO.getIsReceived());
 
             int rows = planStmt.executeUpdate();
             if (rows == 0) throw new SQLException("Creating material request failed.");
@@ -357,16 +371,17 @@ public class SiteSupervisorDAOImpl implements SiteSupervisorDAO {
                     requestDTO.setRequestId(generatedRequestId);
 
                     // 3. Insert each material
-                    String materialSql = "INSERT INTO material (name, quantity, priority, request_id) " +
+                    String materialSql = "INSERT INTO site_resources (request_id,name, quantity, priority) " +
                             "VALUES (?, ?, ?, ?)";
 
                     try (PreparedStatement materialStmt = connection.prepareStatement(materialSql)) {
                         for (SiteResourceDTO material : requestDTO.getMaterials()) {
 
-                            materialStmt.setString(1, material.getMaterialName());
-                            materialStmt.setInt(2, material.getQuantity());
-                            materialStmt.setString(3, material.getPriority());
-                            materialStmt.setInt(4, generatedRequestId);
+                            materialStmt.setInt(1, generatedRequestId);
+                            materialStmt.setString(2, material.getMaterialName());
+                            materialStmt.setInt(3, material.getQuantity());
+                            materialStmt.setString(4, material.getPriority());
+
                             materialStmt.addBatch(); // Batch insert for efficiency
                         }
                         materialStmt.executeBatch();

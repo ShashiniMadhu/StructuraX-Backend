@@ -3,7 +3,7 @@ package com.structurax.root.structurax.root.service;
 
 import com.structurax.root.structurax.root.dto.LaborAttendanceDTO;
 import com.structurax.root.structurax.root.dto.SiteResourceDTO;
-import com.structurax.root.structurax.root.dto.RequestDTO;
+import com.structurax.root.structurax.root.dto.RequestSiteResourcesDTO;
 import com.structurax.root.structurax.root.dto.TodoDTO;
 
 import java.sql.Date;
@@ -15,22 +15,22 @@ public interface SiteSupervisorService {
 
     List<LaborAttendanceDTO> getAllLaborAttendance();
 
-    List<LaborAttendanceDTO> getAttendanceByProjectIdAndDate(Integer project_id, Date date);
+    List<LaborAttendanceDTO> getAttendanceByProjectIdAndDate(String project_id, Date date);
 
     LaborAttendanceDTO updateLaborAttendance(LaborAttendanceDTO laborAttendanceDTO);
 
-    List<LaborAttendanceDTO> deleteLaborAttendanceRecord(Integer project_id, Date date);
+    List<LaborAttendanceDTO> deleteLaborAttendanceRecord(String project_id, Date date);
 
 
     // material and tool  request
     List<SiteResourceDTO> getMaterialsByRequestId(Integer id);
 
-    List<RequestDTO> getAllMaterialRequests();
+    List<RequestSiteResourcesDTO> getAllMaterialRequests();
 
-    List<RequestDTO> getAllToolRequests();
+    List<RequestSiteResourcesDTO> getAllToolRequests();
 
     //RequestDTO getRequestById(Integer id);
-    RequestDTO createMaterialRequest(RequestDTO requestDTO);
+    RequestSiteResourcesDTO createMaterialRequest(RequestSiteResourcesDTO requestDTO);
 
 
     //to-do list

@@ -10,7 +10,7 @@ public interface FinancialOfficerDAO {
 
     List<ProjectDTO> getAllProjects();
 
-    ProjectDTO getProjectById(Integer id);
+    ProjectDTO getProjectById(String id);
 
 
     //PaymentPlanDTO createPaymentPlan(PaymentPlanDTO paymentPlanDTO);
@@ -19,7 +19,7 @@ public interface FinancialOfficerDAO {
 
    // PaymentPlanDTO updatePaymentPlan(PaymentPlanDTO paymentPlanDTO);
 
-    PaymentPlanDTO deletePaymentPlanById(Integer id);
+    PaymentPlanDTO deletePaymentPlanById(String id);
 
 
 
@@ -37,7 +37,7 @@ public interface FinancialOfficerDAO {
 
     //InstallmentDTO deleteInstallmentById(Integer id);
 
-    PaymentPlanDTO getPaymentPlanByProjectId(Integer id);
+    PaymentPlanDTO getPaymentPlanByProjectId(String id);
 
     PaymentPlanDTO createFullPaymentPlan(PaymentPlanDTO paymentPlanDTO);
 

@@ -29,7 +29,7 @@ public class FinancialOfficerController {
 
 
     @GetMapping("/project/{id}")
-    public ResponseEntity<ProjectDTO> getProjectById(@PathVariable Integer id){
+    public ResponseEntity<ProjectDTO> getProjectById(@PathVariable String id){
         ProjectDTO project = financialOfficerService.getProjectById(id);
         return new ResponseEntity<>(project,HttpStatus.OK);
     }
@@ -54,7 +54,7 @@ public class FinancialOfficerController {
     }
 
     @GetMapping("/payment_plan/full/{id}")
-    public ResponseEntity<PaymentPlanDTO> getPaymentPlanByProjectId(@PathVariable Integer id){
+    public ResponseEntity<PaymentPlanDTO> getPaymentPlanByProjectId(@PathVariable String id){
         PaymentPlanDTO paymentPlan = financialOfficerService.getPaymentPlanByProjectId(id);
         return new ResponseEntity<>(paymentPlan,HttpStatus.OK);
     }
@@ -107,5 +107,19 @@ public class FinancialOfficerController {
         InstallmentDTO installmentDTO = financialOfficerService.deleteInstallmentById(id);
         return new ResponseEntity<>(installmentDTO, HttpStatus.OK);
     }*/
+
+
+    @DeleteMapping("/payment_plan/{projectId}")
+    public ResponseEntity<PaymentPlanDTO> deletePaymentPlanByProjectId(@PathVariable String projectId) {
+        System.out.println("DELETE called for projectId: " + projectId);
+        try {
+            PaymentPlanDTO deletedPlan = financialOfficerService.deletePaymentPlanById(projectId);
+            return new ResponseEntity<>(deletedPlan, HttpStatus.OK);
+        } catch (RuntimeException ex) {
+            System.out.println("Delete failed: " + ex.getMessage());
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+    }
+
 
 }

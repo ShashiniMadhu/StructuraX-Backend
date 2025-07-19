@@ -28,7 +28,7 @@ public class SiteSupervisorServiceImpl implements SiteSupervisorService {
     }
 
     @Override
-    public List<LaborAttendanceDTO> getAttendanceByProjectIdAndDate(Integer project_id, Date date) {
+    public List<LaborAttendanceDTO> getAttendanceByProjectIdAndDate(String project_id, Date date) {
         return siteSupervisorDAO.getAttendanceByProjectIdAndDate(project_id,date);
     }
 
@@ -39,7 +39,7 @@ public class SiteSupervisorServiceImpl implements SiteSupervisorService {
 
 
     @Override
-    public List<LaborAttendanceDTO> deleteLaborAttendanceRecord(Integer project_id, Date date) {
+    public List<LaborAttendanceDTO> deleteLaborAttendanceRecord(String project_id, Date date) {
         return siteSupervisorDAO.deleteLaborAttendanceRecord(project_id, date);
     }
 
@@ -49,18 +49,18 @@ public class SiteSupervisorServiceImpl implements SiteSupervisorService {
     }
 
     @Override
-    public List<RequestDTO> getAllMaterialRequests() {
+    public List<RequestSiteResourcesDTO> getAllMaterialRequests() {
         return siteSupervisorDAO.getAllMaterialRequests();
     }
 
     @Override
-    public List<RequestDTO> getAllToolRequests() {
+    public List<RequestSiteResourcesDTO> getAllToolRequests() {
         return siteSupervisorDAO.getAllToolRequests();
     }
 
     @Override
-    public RequestDTO createMaterialRequest(RequestDTO requestDTO) {
-        RequestDTO request=siteSupervisorDAO.createMaterialRequest(requestDTO);
+    public RequestSiteResourcesDTO createMaterialRequest(RequestSiteResourcesDTO requestDTO) {
+        RequestSiteResourcesDTO request=siteSupervisorDAO.createMaterialRequest(requestDTO);
         return request;
     }
 
