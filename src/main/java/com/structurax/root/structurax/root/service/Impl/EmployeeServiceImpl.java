@@ -33,7 +33,7 @@ public class EmployeeServiceImpl implements EmployeeService {
             throw new RuntimeException("Invalid password");
         }
 
-        String token = jwtUtil.generateToken(employee.getEmail(), employee.getType());
+        String token = jwtUtil.generateToken(employee.getEmail(), employee.getType(), employee.getEmployeeId());
 
         return new EmployeeResponseDTO(
                 employee.getEmployeeId(),
