@@ -4,6 +4,7 @@ import com.structurax.root.structurax.root.dao.DirectorDAO;
 import com.structurax.root.structurax.root.dto.ClientDTO;
 import com.structurax.root.structurax.root.dto.ProjectDTO;
 import com.structurax.root.structurax.root.dto.ProjectInitiateDTO;
+import com.structurax.root.structurax.root.dto.ProjectStartDTO;
 import com.structurax.root.structurax.root.util.DatabaseConnection;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -171,6 +172,147 @@ public class DirectorDAOImpl implements DirectorDAO {
             closeResources(preparedStatement,connection);
         }
         return projectInitiateDTO;
+    }
+
+    @Override
+    public List<ProjectInitiateDTO> getAllProjects() {
+        List<ProjectInitiateDTO> projectList =  new ArrayList<>();
+        final String sql = "SELECT p.*,pi.image_url FROM  project p LEFT JOIN project_images pi ON p.project_id = pi.project_id";
+
+        try(
+                Connection connection = databaseConnection.getConnection();
+                PreparedStatement preparedStatement = connection.prepareStatement(sql);
+                ResultSet resultSet = preparedStatement.executeQuery();
+
+                ){
+            while (resultSet.next()){
+                ProjectInitiateDTO project = new ProjectInitiateDTO(
+                        resultSet.getString("project_id"),
+                        resultSet.getString("name"),
+                        resultSet.getString("status"),
+                        resultSet.getBigDecimal("budget"),
+                        resultSet.getString("description"),
+                        resultSet.getString("location"),
+                        resultSet.getBigDecimal("estimated_value"),
+                        resultSet.getDate("start_date").toLocalDate(),
+                        resultSet.getDate("due_date").toLocalDate(),
+                        resultSet.getString("client_id"),
+                        resultSet.getString("qs_id"),
+                        resultSet.getString("pm_id"),
+                        resultSet.getString("category"),
+                        resultSet.getString("image_url")
+
+                );
+                projectList.add(project);
+            }
+        }catch (SQLException e){
+            throw new RuntimeException("Error getting projects: " + e.getMessage(),e);
+        }
+
+        return  projectList;
+    }
+
+    @Override
+    public ProjectInitiateDTO getProjectById(String id) {
+
+        final String sql = "SELECT p.*,pi.image_url FROM  project p LEFT JOIN project_images pi ON p.project_id = pi.project_id WHERE p.project_id = ?" ;
+        try(
+
+                Connection connection = databaseConnection.getConnection();
+                PreparedStatement preparedStatement = connection.prepareStatement(sql);
+
+
+                ){
+            preparedStatement.setString(1,id);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            if(resultSet.next()){
+                return new ProjectInitiateDTO(
+                        resultSet.getString("project_id"),
+                        resultSet.getString("name"),
+                        resultSet.getString("status"),
+                        resultSet.getBigDecimal("budget"),
+                        resultSet.getString("description"),
+                        resultSet.getString("location"),
+                        resultSet.getBigDecimal("estimated_value"),
+                        resultSet.getDate("start_date").toLocalDate(),
+                        resultSet.getDate("due_date").toLocalDate(),
+                        resultSet.getString("client_id"),
+                        resultSet.getString("qs_id"),
+                        resultSet.getString("pm_id"),
+                        resultSet.getString("category"),
+                        resultSet.getString("image_url")
+                );
+            }else {
+                return null;
+            }
+        }catch (SQLException e){
+            throw new RuntimeException("Error getting project: " + e.getMessage(),e);
+        }
+
+    }
+
+    @Override
+    public List<ProjectInitiateDTO> getPendingProjects() {
+        List<ProjectInitiateDTO> projectList =  new ArrayList<>();
+        final String sql = "SELECT p.*,pi.image_url FROM  project p LEFT JOIN project_images pi ON p.project_id = pi.project_id WHERE p.status = ? " ;
+        try(
+
+                Connection connection = databaseConnection.getConnection();
+                PreparedStatement preparedStatement = connection.prepareStatement(sql);
+
+
+        ){
+            preparedStatement.setString(1,"pending");
+            ResultSet resultSet = preparedStatement.executeQuery();
+            while (resultSet.next()){
+                ProjectInitiateDTO project = new ProjectInitiateDTO(
+                        resultSet.getString("project_id"),
+                        resultSet.getString("name"),
+                        resultSet.getString("status"),
+                        resultSet.getBigDecimal("budget"),
+                        resultSet.getString("description"),
+                        resultSet.getString("location"),
+                        resultSet.getBigDecimal("estimated_value"),
+                        resultSet.getDate("start_date").toLocalDate(),
+                        resultSet.getDate("due_date").toLocalDate(),
+                        resultSet.getString("client_id"),
+                        resultSet.getString("qs_id"),
+                        resultSet.getString("pm_id"),
+                        resultSet.getString("category"),
+                        resultSet.getString("image_url")
+
+                );
+                projectList.add(project);
+            }
+        }catch (SQLException e){
+            throw new RuntimeException("Error getting projects: " + e.getMessage(),e);
+        }
+        return projectList;
+    }
+
+    @Override
+    public void startProject(String projectId, ProjectStartDTO projectStartDTO) {
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
+        final String sql = "UPDATE project SET qs_id = ?, pm_id = ?, status = ? WHERE project_id = ? ";
+
+        try{
+            connection = databaseConnection.getConnection();
+            preparedStatement = connection.prepareStatement(sql);
+            preparedStatement.setString(1,sanitize(projectStartDTO.getQsId()));
+            preparedStatement.setString(2,sanitize(projectStartDTO.getPmId()));
+            preparedStatement.setString(3,sanitize(projectStartDTO.getStatus()));
+            preparedStatement.setString(4,projectId);
+            int rowUpdated = preparedStatement.executeUpdate();
+            if(rowUpdated == 0){
+                throw new RuntimeException("Error Editing: " );
+            }
+
+        }catch (SQLException e){
+            throw new RuntimeException("Error starting project: " + e.getMessage(),e);
+        }finally {
+            closeResources(connection,preparedStatement);
+        }
     }
 
     private String sanitizeForCategory(String category) {
