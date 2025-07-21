@@ -23,12 +23,5 @@ public interface AdminService {
 
     EmployeeDTO getEmployeeById(String id);
 
-    DesignFullDTO getDesignById(String id);
-
-    List<DesignFullDTO> getAllDesigns();
-
-    DesignDTO deleteDesign(String id);
-
-    DesignFullDTO updateDesign(String id, DesignFullDTO updatedDesign);
 
 }

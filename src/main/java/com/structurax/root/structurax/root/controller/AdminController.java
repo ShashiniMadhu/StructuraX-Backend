@@ -1,17 +1,17 @@
 package com.structurax.root.structurax.root.controller;
 
 import com.structurax.root.structurax.root.Constants.Constants;
-import com.structurax.root.structurax.root.dto.DesignDTO;
-import com.structurax.root.structurax.root.dto.DesignFullDTO;
 import com.structurax.root.structurax.root.dto.EmployeeDTO;
 import com.structurax.root.structurax.root.service.AdminService;
 import com.structurax.root.structurax.root.service.MailService;
+import com.structurax.root.structurax.root.util.OtpUtil;
 import jakarta.validation.constraints.Pattern;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -41,24 +41,23 @@ public class AdminController {
             @RequestParam("address") String address,
             @RequestParam("type") String type,
             @RequestParam("joined_date") String joinedDate,
-            @RequestParam("password") String password,
-            @RequestParam(value = "availability", required = false) String availability, // Make it optional
+            @RequestParam(value = "availability", required = false) String availability,
             @RequestParam(value = "profile_image", required = false) MultipartFile profileImage
     ) {
         try {
-            // Validate and set default availability
+            // Set default availability if not provided
             if (availability == null || availability.trim().isEmpty() ||
                     availability.equals("true") || availability.equals("false")) {
-                availability = "Available"; // Set default value
+                availability = "Available";
             }
 
-            // Validate availability enum
+            // Validate availability
             if (!isValidAvailability(availability)) {
                 return new ResponseEntity<>("Invalid availability status. Must be one of: Assigned, Available, Deactive",
                         HttpStatus.BAD_REQUEST);
             }
 
-            // Save image logic...
+            // Handle image upload
             String imageUrl = null;
             if (profileImage != null && !profileImage.isEmpty()) {
                 String fileName = System.currentTimeMillis() + "_" + profileImage.getOriginalFilename();
@@ -71,7 +70,10 @@ public class AdminController {
                 imageUrl = "/uploads/" + fileName;
             }
 
-            // Convert to DTO
+            // Generate OTP
+            String otp = OtpUtil.generateOtp();
+
+            // Create DTO and set fields (no hashing here)
             EmployeeDTO employeeDTO = new EmployeeDTO();
             employeeDTO.setName(name);
             employeeDTO.setEmail(email);
@@ -79,17 +81,18 @@ public class AdminController {
             employeeDTO.setAddress(address);
             employeeDTO.setType(type);
             employeeDTO.setJoinedDate(LocalDate.parse(joinedDate));
-            employeeDTO.setPassword(password);
-            employeeDTO.setAvailability(availability); // Now validated
+            employeeDTO.setPassword(otp); // Store plain OTP, hash it later in DAO
+            employeeDTO.setAvailability(availability);
             employeeDTO.setProfileImageUrl(imageUrl);
 
+            // Save employee
             EmployeeDTO savedEmployee = adminService.createEmployee(employeeDTO);
 
-            // Send password email
-            mailService.sendEmployeePassword(
+            // Send OTP email
+            mailService.sendEmployeeOtp(
                     savedEmployee.getEmail(),
                     savedEmployee.getName(),
-                    password
+                    otp
             );
 
             return ResponseEntity.ok(savedEmployee);
@@ -99,6 +102,8 @@ public class AdminController {
             return new ResponseEntity<>("Error: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+
 
     // Helper method to validate availability
     private boolean isValidAvailability(String availability) {
@@ -154,46 +159,4 @@ public class AdminController {
         }
     }
 
-    @GetMapping(value = "get_design/{id}" , produces = Constants.APPLICATION_JSON)
-    public ResponseEntity<?> getDesignById(@PathVariable String id){
-        try{
-            DesignFullDTO design = adminService.getDesignById(id);
-            return ResponseEntity.ok(design);
-        }catch (Exception e) {
-            return new ResponseEntity<>("Error fetching design: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    @GetMapping(value = "all_designs" , produces = Constants.APPLICATION_JSON)
-    public ResponseEntity<?> getAllDesigns(){
-        try{
-            final List designDTOs = adminService.getAllDesigns();
-            return ResponseEntity.ok(designDTOs);
-        }catch (Exception e) {
-            return new ResponseEntity<>("Error fetching designs: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    @DeleteMapping(value = "delete_design/{id}")
-    public ResponseEntity<?> deleteDesign(@PathVariable String id){
-        try{
-            DesignDTO design = adminService.deleteDesign(id);
-            return ResponseEntity.ok(design);
-        }catch(Exception e){
-            return new ResponseEntity<>("Error deleting design: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    @PutMapping(value = "update_design/{id}", produces = Constants.APPLICATION_JSON)
-    public ResponseEntity<?> updateDesign(@PathVariable String id, @RequestBody DesignFullDTO updatedDesign) {
-        try {
-            // Set the ID from path parameter to ensure consistency
-            updatedDesign.setDesignId(id);
-
-            DesignFullDTO design = adminService.updateDesign(id, updatedDesign);
-            return ResponseEntity.ok(design);
-        } catch (Exception e) {
-            return new ResponseEntity<>("Error updating design: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
 }

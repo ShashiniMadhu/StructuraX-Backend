@@ -1,0 +1,107 @@
+package com.structurax.root.structurax.root.service.Impl;
+
+import com.structurax.root.structurax.root.dao.SupplierDAO;
+import com.structurax.root.structurax.root.dto.CatalogDTO;
+import com.structurax.root.structurax.root.service.SupplierService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+
+@Service
+public class SupplierServiceImpl implements SupplierService {
+
+    private static final Logger logger = LoggerFactory.getLogger(SupplierServiceImpl.class);
+
+    @Autowired
+    private SupplierDAO supplierDAO;
+
+    @Override
+    public CatalogDTO createCatalog(CatalogDTO catalogDTO) {
+        logger.info("Creating catalog with name: {}", catalogDTO.getName());
+
+        // Validate required fields
+        if (catalogDTO.getName() == null || catalogDTO.getName().trim().isEmpty()) {
+            logger.error("Validation failed: Name is required");
+            throw new IllegalArgumentException("Name is required");
+        }
+        if (catalogDTO.getRate() == null || catalogDTO.getRate() <= 0) { // Changed from BigDecimal comparison
+            logger.error("Validation failed: Rate must be positive");
+            throw new IllegalArgumentException("Rate must be positive");
+        }
+        if (catalogDTO.getCategory() == null || catalogDTO.getCategory().trim().isEmpty()) {
+            logger.error("Validation failed: Category is required");
+            throw new IllegalArgumentException("Category is required");
+        }
+
+        // Set default availability if not provided
+        if (catalogDTO.getAvailability() == null) {
+            catalogDTO.setAvailability(true);
+        }
+
+        try {
+            CatalogDTO createdCatalog = supplierDAO.createCatalog(catalogDTO);
+            logger.info("Catalog created successfully with item_id: {}", createdCatalog.getItemId());
+            return createdCatalog;
+        } catch (Exception e) {
+            logger.error("Error creating catalog: {}", e.getMessage(), e);
+            throw e;
+        }
+    }
+
+    @Override
+    public List<CatalogDTO> getAllCatalogs() {
+        logger.info("Retrieving all catalogs");
+        try {
+            List<CatalogDTO> catalogs = supplierDAO.getAllCatalogs();
+            logger.info("Successfully retrieved {} catalogs", catalogs.size());
+            return catalogs;
+        } catch (Exception e) {
+            logger.error("Error retrieving catalogs: {}", e.getMessage(), e);
+            throw e;
+        }
+    }
+
+    @Override
+    public void deleteCatalog(Integer itemId) {
+        logger.info("Deleting catalog with item_id: {}", itemId);
+
+        if (itemId == null || itemId <= 0) {
+            logger.error("Validation failed: Valid item_id is required");
+            throw new IllegalArgumentException("Valid item_id is required");
+        }
+
+        try {
+            supplierDAO.deleteCatalog(itemId);
+            logger.info("Catalog with item_id {} deleted successfully", itemId);
+        } catch (Exception e) {
+            logger.error("Error deleting catalog with item_id {}: {}", itemId, e.getMessage(), e);
+            throw e;
+        }
+    }
+
+    @Override
+    public CatalogDTO getCatalogById(Integer itemId) {
+        logger.info("Retrieving catalog with item_id: {}", itemId);
+
+        if (itemId == null || itemId <= 0) {
+            logger.error("Validation failed: Valid item_id is required");
+            throw new IllegalArgumentException("Valid item_id is required");
+        }
+
+        try {
+            CatalogDTO catalog = supplierDAO.getCatalogById(itemId);
+            if (catalog == null) {
+                logger.warn("Catalog not found with item_id: {}", itemId);
+                throw new RuntimeException("Catalog not found with item_id: " + itemId);
+            }
+            logger.info("Successfully retrieved catalog with item_id: {}", itemId);
+            return catalog;
+        } catch (Exception e) {
+            logger.error("Error retrieving catalog with item_id {}: {}", itemId, e.getMessage(), e);
+            throw e;
+        }
+    }
+}
