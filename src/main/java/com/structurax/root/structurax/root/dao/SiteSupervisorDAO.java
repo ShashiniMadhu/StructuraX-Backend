@@ -1,14 +1,13 @@
 package com.structurax.root.structurax.root.dao;
 
-import com.structurax.root.structurax.root.dto.LaborAttendanceDTO;
-import com.structurax.root.structurax.root.dto.SiteResourceDTO;
-import com.structurax.root.structurax.root.dto.RequestSiteResourcesDTO;
-import com.structurax.root.structurax.root.dto.TodoDTO;
+import com.structurax.root.structurax.root.dto.*;
 
 import java.sql.Date;
 import java.util.List;
 
 public interface SiteSupervisorDAO {
+
+    List<ProjectDTO> getProjectsBySsId(String id);
 
     List<LaborAttendanceDTO> createLaborAttendance(List<LaborAttendanceDTO> laborAttendance);
 
@@ -33,6 +32,8 @@ public interface SiteSupervisorDAO {
     //RequestDTO getRequestById(Integer id);
 
     RequestSiteResourcesDTO createMaterialRequest(RequestSiteResourcesDTO requestDTO);
+
+    RequestSiteResourcesDTO updateRequest(RequestSiteResourcesDTO requestSiteResourcesDTO);
 
 
     //todo

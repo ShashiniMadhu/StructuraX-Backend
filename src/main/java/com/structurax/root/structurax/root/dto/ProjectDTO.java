@@ -28,6 +28,8 @@ public class ProjectDTO {
     private String pmId;
     private String ssId;
 
+    private ClientDTO client;
+
 
 
 }

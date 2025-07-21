@@ -1,15 +1,14 @@
 // SiteSupervisorService.java
 package com.structurax.root.structurax.root.service;
 
-import com.structurax.root.structurax.root.dto.LaborAttendanceDTO;
-import com.structurax.root.structurax.root.dto.SiteResourceDTO;
-import com.structurax.root.structurax.root.dto.RequestSiteResourcesDTO;
-import com.structurax.root.structurax.root.dto.TodoDTO;
+import com.structurax.root.structurax.root.dto.*;
 
 import java.sql.Date;
 import java.util.List;
 
 public interface SiteSupervisorService {
+
+    List<ProjectDTO> getProjectsBySsId(String id);
 
     List<LaborAttendanceDTO> createLaborAttendance(List<LaborAttendanceDTO> laborAttendance);
 
@@ -31,6 +30,8 @@ public interface SiteSupervisorService {
 
     //RequestDTO getRequestById(Integer id);
     RequestSiteResourcesDTO createMaterialRequest(RequestSiteResourcesDTO requestDTO);
+
+    RequestSiteResourcesDTO updateRequest(RequestSiteResourcesDTO requestSiteResourcesDTO);
 
 
     //to-do list

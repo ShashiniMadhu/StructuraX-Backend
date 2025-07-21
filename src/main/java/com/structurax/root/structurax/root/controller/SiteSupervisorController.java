@@ -25,6 +25,11 @@ public class SiteSupervisorController {
         return ResponseEntity.ok(savedAttendance);
     }
 
+    @GetMapping("/projects/{id}")
+    public ResponseEntity<List<ProjectDTO>> getProjectsBySsId(@PathVariable String id){
+        List<ProjectDTO> projects = siteSupervisorService.getProjectsBySsId(id);
+        return new ResponseEntity<>(projects, HttpStatus.OK);
+    }
 
     /*@GetMapping
     public ResponseEntity<List<LaborAttendanceDTO>> getAttendanceByProjectIdAndDate(
@@ -133,6 +138,12 @@ public class SiteSupervisorController {
         } else {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Task not found.");
         }
+    }
+
+    @PutMapping("request/update")
+    public ResponseEntity<RequestSiteResourcesDTO> updateRequest(@RequestBody RequestSiteResourcesDTO requestSiteResourcesDTO){
+        siteSupervisorService.updateRequest(requestSiteResourcesDTO);
+        return new ResponseEntity<>(requestSiteResourcesDTO,HttpStatus.OK);
     }
 
 

@@ -19,6 +19,65 @@ public class SiteSupervisorDAOImpl implements SiteSupervisorDAO {
 
 
     @Override
+    public List<ProjectDTO> getProjectsBySsId(String id) {
+        final String sql = "SELECT p.*, c.first_name,c.last_name FROM project p " +
+                "INNER JOIN client c ON p.client_id=c.client_id  WHERE ss_id = ?";
+
+        List<ProjectDTO> projectDTOList = new ArrayList<>();
+
+        try (
+                Connection connection = databaseConnection.getConnection();
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)
+        ) {
+            preparedStatement.setString(1, id);
+
+            try (ResultSet rs = preparedStatement.executeQuery()) {
+                while (rs.next()) {
+                    ProjectDTO dto = new ProjectDTO();
+                    dto.setProjectId(rs.getString("project_id"));
+                    dto.setName(rs.getString("name"));
+
+                    dto.setStatus(rs.getString("status"));
+                    dto.setBudget(rs.getBigDecimal("budget"));
+                    dto.setDescription(rs.getString("description"));
+                    dto.setLocation(rs.getString("location"));
+                    dto.setEstimatedValue(rs.getBigDecimal("estimated_value"));
+                    if (rs.getDate("start_date") != null) {
+                        dto.setStartDate(rs.getDate("start_date").toLocalDate());
+                    }
+                    if (rs.getDate("due_date") != null) {
+                        dto.setDueDate(rs.getDate("due_date").toLocalDate());
+                    }
+
+                    dto.setClientId(rs.getString("client_id"));
+                    dto.setQsId(rs.getString("qs_id"));
+                    dto.setPmId(rs.getString("pm_id"));
+                    dto.setSsId(rs.getString("ss_id"));
+                    dto.setCategory(rs.getString("category"));
+
+
+
+                    ClientDTO client = new ClientDTO();
+                    client.setFirstName(rs.getString("first_name"));
+                    client.setLastName(rs.getString("last_name"));
+                    dto.setClient(client);
+
+                    for (ProjectDTO p : projectDTOList) {
+                        System.out.println("Project: " + p.getName() + ", Client: " + p.getClient().getFirstName() + " " + p.getClient().getLastName());
+                    }
+
+                    projectDTOList.add(dto);
+
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error fetching installments by Payment Plan ID: " + e.getMessage(), e);
+        }
+
+        return projectDTOList;
+    }
+
+    @Override
     public List<LaborAttendanceDTO> createLaborAttendance(List<LaborAttendanceDTO> laborAttendanceList) {
         final String sql = "INSERT INTO labor_attendance (project_id, date, hiring_type, labor_type, count, company_name) " +
                 "VALUES (?, ?, ?, ?, ?, ?)";
@@ -173,7 +232,7 @@ public class SiteSupervisorDAOImpl implements SiteSupervisorDAO {
                     dto.setHiring_type(rs.getString("hiring_type"));
                     dto.setLabor_type(rs.getString("labor_type"));
                     dto.setCount(rs.getInt("count"));
-                    dto.setCompany(rs.getString("company"));
+                    dto.setCompany(rs.getString("company_name"));
 
                     deletedRecords.add(dto);
                 }
@@ -390,6 +449,74 @@ public class SiteSupervisorDAOImpl implements SiteSupervisorDAO {
         }
 
         return requestDTO;
+    }
+
+    @Override
+    public RequestSiteResourcesDTO updateRequest(RequestSiteResourcesDTO requestSiteResourcesDTO) {
+        Connection connection = null;
+        try {
+            connection = databaseConnection.getConnection();
+            connection.setAutoCommit(false);  // begin transaction
+
+            final String sqlUpdateRequest = "UPDATE request_site_resources SET is_received = ?, project_id = ? " +
+            "WHERE site_supervisor_id = ? AND pm_approval = 0 AND qs_approval = 0";;
+            try (PreparedStatement psPlan = connection.prepareStatement(sqlUpdateRequest)) {
+
+                psPlan.setBoolean(1, requestSiteResourcesDTO.getIsReceived());
+
+                psPlan.setString(2, requestSiteResourcesDTO.getProjectId());
+                psPlan.setString(3, requestSiteResourcesDTO.getSiteSupervisorId());
+
+
+                int updatedRequestRows = psPlan.executeUpdate();
+                if (updatedRequestRows == 0) {
+                    throw new RuntimeException("Request update failed. Either it's already approved or the Site Supervisor ID is incorrect.");
+                }
+            }
+
+            final String sqlUpdateResources = "UPDATE site_resources SET name = ?, quantity = ?, priority = ? WHERE id = ?";
+            try (PreparedStatement psResources = connection.prepareStatement(sqlUpdateResources)) {
+                for (SiteResourceDTO resource : requestSiteResourcesDTO.getMaterials()) {
+                    if (resource.getId() == 0) {
+                        throw new RuntimeException("Invalid resource ID for update: " + resource);
+                    }
+
+
+                    psResources.setString(1, resource.getMaterialName());
+                    psResources.setInt(2, resource.getQuantity());
+                    psResources.setString(3, resource.getPriority());
+
+                    psResources.setInt(4, resource.getId());
+
+
+
+                    int updateResourcesRows = psResources.executeUpdate();
+                    if (updateResourcesRows == 0) {
+                        throw new RuntimeException("Resource update failed. ID may not exist: " + resource.getId());
+                    }
+                }
+            }
+
+            connection.commit();
+        } catch (SQLException e) {
+            if (connection != null) {
+                try {
+                    connection.rollback();
+                } catch (SQLException rollbackEx) {
+                    throw new RuntimeException("Rollback failed: " + rollbackEx.getMessage(), rollbackEx);
+                }
+            }
+            throw new RuntimeException("Error updating full resource request: " + e.getMessage(), e);
+        } finally {
+            if (connection != null) {
+                try {
+                    connection.setAutoCommit(true);
+                    connection.close();
+                } catch (SQLException ignored) {}
+            }
+        }
+
+        return requestSiteResourcesDTO;
     }
 
     @Override

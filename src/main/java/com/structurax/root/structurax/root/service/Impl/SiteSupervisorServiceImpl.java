@@ -17,6 +17,11 @@ public class SiteSupervisorServiceImpl implements SiteSupervisorService {
     private SiteSupervisorDAO siteSupervisorDAO;
 
 
+    @Override
+    public List<ProjectDTO> getProjectsBySsId(String id) {
+        return siteSupervisorDAO.getProjectsBySsId(id);
+    }
+
     public List<LaborAttendanceDTO> createLaborAttendance(List<LaborAttendanceDTO> laborAttendanceList) {
         return siteSupervisorDAO.createLaborAttendance(laborAttendanceList);
     }
@@ -61,6 +66,12 @@ public class SiteSupervisorServiceImpl implements SiteSupervisorService {
     @Override
     public RequestSiteResourcesDTO createMaterialRequest(RequestSiteResourcesDTO requestDTO) {
         RequestSiteResourcesDTO request=siteSupervisorDAO.createMaterialRequest(requestDTO);
+        return request;
+    }
+
+    @Override
+    public RequestSiteResourcesDTO updateRequest(RequestSiteResourcesDTO requestSiteResourcesDTO) {
+        RequestSiteResourcesDTO request = siteSupervisorDAO.updateRequest(requestSiteResourcesDTO);
         return request;
     }
 
