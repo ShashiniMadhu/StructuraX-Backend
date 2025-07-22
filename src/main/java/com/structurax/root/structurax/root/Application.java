@@ -1,14 +1,16 @@
 package com.structurax.root.structurax.root;
 
-import io.github.cdimascio.dotenv.Dotenv;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.cache.annotation.EnableCaching;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.scheduling.annotation.EnableAsync;
+
+import io.github.cdimascio.dotenv.Dotenv;
 
 @EnableAsync // Enables @Async functionality
 //@EnableCaching
 @SpringBootApplication
+@ComponentScan(basePackages = "com.structurax.root.structurax.root")
 public class Application {
 
 	public static void main(String[] args) {

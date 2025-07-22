@@ -1,36 +1,50 @@
 package com.structurax.root.structurax.root.dto;
 
 import java.math.BigDecimal;
-import java.sql.Date;
 import java.time.LocalDate;
 
-public class Project1DTO {
+import com.fasterxml.jackson.annotation.JsonProperty;
 
+public class ProjectWithClientAndBOQDTO {
+    // Project fields
+    @JsonProperty("project_id")
     private String projectId;
     private String name;
     private String description;
     private String location;
     private String status;
+    
+    @JsonProperty("start_date")
     private LocalDate startDate;
+    
+    @JsonProperty("due_date")
     private LocalDate dueDate;
+    
+    @JsonProperty("estimated_value")
     private BigDecimal estimatedValue;
-    private String ownerId;
+    
+    @JsonProperty("qs_id")
     private String qsId;
-    private String spId;
-    private String planId;
+    
     private BigDecimal budget;
     private String category;
 
+    // Client fields
+    @JsonProperty("client_data")
+    private ClientDTO clientData;
 
+    // BOQ fields
+    @JsonProperty("boq_data")
+    private BOQWithItemsDTO boqData;
 
     // Default constructor
-    public Project1DTO() {
-    }
+    public ProjectWithClientAndBOQDTO() {}
 
-    // Full constructor
-    public Project1DTO(String projectId, String name, String description, String location,
-                      String status, LocalDate startDate, LocalDate dueDate,
-                      BigDecimal estimatedValue, String ownerId, String qsId, String spId, String planId) {
+    // Constructor
+    public ProjectWithClientAndBOQDTO(String projectId, String name, String description, String location,
+                                     String status, LocalDate startDate, LocalDate dueDate,
+                                     BigDecimal estimatedValue, String qsId, BigDecimal budget, 
+                                     String category, ClientDTO clientData, BOQWithItemsDTO boqData) {
         this.projectId = projectId;
         this.name = name;
         this.description = description;
@@ -39,14 +53,11 @@ public class Project1DTO {
         this.startDate = startDate;
         this.dueDate = dueDate;
         this.estimatedValue = estimatedValue;
-        this.ownerId = ownerId;
         this.qsId = qsId;
-        this.spId = spId;
-        this.planId = planId;
-    }
-
-    public Project1DTO(String projectId, String name, String description, String location, String status, String type, Date startDate, Date dueDate, BigDecimal estimatedValue) {
-        // This constructor is currently empty
+        this.budget = budget;
+        this.category = category;
+        this.clientData = clientData;
+        this.boqData = boqData;
     }
 
     // Getters and Setters
@@ -114,14 +125,6 @@ public class Project1DTO {
         this.estimatedValue = estimatedValue;
     }
 
-    public String getOwnerId() {
-        return ownerId;
-    }
-
-    public void setOwnerId(String ownerId) {
-        this.ownerId = ownerId;
-    }
-
     public String getQsId() {
         return qsId;
     }
@@ -130,24 +133,8 @@ public class Project1DTO {
         this.qsId = qsId;
     }
 
-    public String getSpId() {
-        return spId;
-    }
-
-    public void setSpId(String spId) {
-        this.spId = spId;
-    }
-
-    public String getPlanId() {
-        return planId;
-    }
-
-    public void setPlanId(String planId) {
-        this.planId = planId;
-    }
-
     public BigDecimal getBudget() {
-    return budget;
+        return budget;
     }
 
     public void setBudget(BigDecimal budget) {
@@ -162,4 +149,19 @@ public class Project1DTO {
         this.category = category;
     }
 
+    public ClientDTO getClientData() {
+        return clientData;
+    }
+
+    public void setClientData(ClientDTO clientData) {
+        this.clientData = clientData;
+    }
+
+    public BOQWithItemsDTO getBoqData() {
+        return boqData;
+    }
+
+    public void setBoqData(BOQWithItemsDTO boqData) {
+        this.boqData = boqData;
+    }
 }
