@@ -4,6 +4,7 @@ import com.structurax.root.structurax.root.dao.AdminDAO;
 import com.structurax.root.structurax.root.dto.DesignDTO;
 import com.structurax.root.structurax.root.dto.DesignFullDTO;
 import com.structurax.root.structurax.root.dto.EmployeeDTO;
+import com.structurax.root.structurax.root.dto.SupplierDTO;
 import com.structurax.root.structurax.root.service.AdminService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,4 +57,11 @@ public class AdminServiceImpl implements AdminService {
         }
         return employee;
     }
+
+    @Override
+    public SupplierDTO addSupplier(SupplierDTO supplierDTO) {
+        logger.info("Creating supplier: {}", supplierDTO);
+        SupplierDTO createdSupplier = adminDAO.addSupplier(supplierDTO);
+        logger.info("Supplier created successfully: {}", createdSupplier.getSupplier_id());
+        return createdSupplier;    }
 }

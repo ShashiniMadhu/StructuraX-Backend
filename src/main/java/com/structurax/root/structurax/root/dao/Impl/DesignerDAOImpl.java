@@ -274,7 +274,7 @@ public class DesignerDAOImpl implements DesignerDAO {
             e.printStackTrace(); // You can replace this with a proper logging mechanism
         }
 
-        return null;
+        return clientList;
     }
 
     @Override
