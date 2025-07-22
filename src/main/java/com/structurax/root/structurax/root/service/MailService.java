@@ -91,6 +91,31 @@ public class MailService {
         }
     }
 
+    @Async
+    public void sendSupplierOtp(String toEmail, String supplierName, String otp) {
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true);
 
+            helper.setTo(toEmail);
+            helper.setSubject("Welcome to Structurax - Supplier Account Credentials");
+            helper.setText(
+                    "Dear " + supplierName + ",\n\n" +
+                            "Your Structurax supplier account has been created successfully.\n\n" +
+                            "Here is your login OTP (One-Time Password):\n" +
+                            "**" + otp + "**\n\n" +
+                            "Please use this OTP to access your supplier portal and update your account details.\n\n" +
+                            "For security purposes, please change your password after your first login.\n\n" +
+                            "If you have any questions or need assistance, please contact our procurement team.\n\n" +
+                            "Best regards,\n" +
+                            "Structurax Administration Team"
+            );
+
+            mailSender.send(message);
+            log.info("📧 Supplier OTP email sent to {}", toEmail);
+        } catch (MessagingException e) {
+            log.error("❌ Failed to send supplier OTP email: {}", e.getMessage());
+        }
+    }
 
 }
