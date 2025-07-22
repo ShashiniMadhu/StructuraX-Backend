@@ -4,6 +4,7 @@ import com.structurax.root.structurax.root.dao.AdminDAO;
 import com.structurax.root.structurax.root.dto.DesignDTO;
 import com.structurax.root.structurax.root.dto.DesignFullDTO;
 import com.structurax.root.structurax.root.dto.EmployeeDTO;
+import com.structurax.root.structurax.root.dto.SupplierDTO;
 import com.structurax.root.structurax.root.util.DatabaseConnection;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
@@ -200,4 +201,45 @@ public class AdminDAOImpl implements AdminDAO {
             }
         }
     }
+
+    @Override
+    public SupplierDTO addSupplier(SupplierDTO supplierDTO) {
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
+
+        try {
+            final String sql = "INSERT INTO supplier (supplier_name, address, phone, joined_date, status, email,password) " +
+                    "VALUES (?, ?, ?, ?, ?, ?,?)";
+
+            connection = databaseConnection.getConnection();
+            preparedStatement = connection.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS);
+
+            preparedStatement.setString(1, supplierDTO.getSupplier_name());
+            preparedStatement.setString(2, supplierDTO.getAddress());
+            preparedStatement.setString(3, supplierDTO.getPhone());
+            preparedStatement.setDate(4, supplierDTO.getJoined_date());
+            preparedStatement.setString(5, supplierDTO.getStatus());
+            preparedStatement.setString(6, supplierDTO.getEmail());
+            preparedStatement.setString(7,supplierDTO.getPassword());
+
+            int rowsAffected = preparedStatement.executeUpdate();
+            if (rowsAffected == 0) {
+                throw new RuntimeException("Failed to add supplier");
+            }
+
+            // Get generated supplier_id
+            ResultSet generatedKeys = preparedStatement.getGeneratedKeys();
+            if (generatedKeys.next()) {
+                supplierDTO.setSupplier_id(generatedKeys.getInt(1));
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Error inserting supplier: " + e.getMessage(), e);
+        } finally {
+            closeResources(preparedStatement, connection);
+        }
+
+        return supplierDTO;
+    }
+
 }
