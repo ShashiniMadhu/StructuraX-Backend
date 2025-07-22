@@ -48,4 +48,6 @@ public class ProjectInitiateDTO {
 
     private String image_url;
 
+    private String first_name;
+
 }
