@@ -6,6 +6,6 @@ import java.util.List;
 public interface SupplierService {
     CatalogDTO createCatalog(CatalogDTO dto);
     List<CatalogDTO> getAllCatalogs();
-    void deactivateCatalog(Integer catalogId);
-    CatalogDTO getCatalogById(Integer id);
+    void deleteCatalog(Integer itemId);
+    CatalogDTO getCatalogById(Integer itemId);
 }

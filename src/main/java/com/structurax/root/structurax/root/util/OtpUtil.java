@@ -5,7 +5,7 @@ import java.util.Random;
 public class OtpUtil {
 
     public static String generateOtp(){
-            int otpLength = 6;
+            int otpLength = 8;
 
             Random random = new Random();
 

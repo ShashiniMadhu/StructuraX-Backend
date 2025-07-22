@@ -3,6 +3,7 @@ package com.structurax.root.structurax.root.dao;
 import com.structurax.root.structurax.root.dto.DesignDTO;
 import com.structurax.root.structurax.root.dto.DesignFullDTO;
 import com.structurax.root.structurax.root.dto.EmployeeDTO;
+import com.structurax.root.structurax.root.dto.SupplierDTO;
 
 import java.util.List;
 
@@ -28,4 +29,6 @@ public interface AdminDAO {
      * @return EmployeeDTO
      */
     EmployeeDTO getEmployeeById(String id);
+
+    SupplierDTO addSupplier(SupplierDTO supplierDTO);
 }

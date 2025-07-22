@@ -10,7 +10,7 @@ public interface SupplierDAO {
 
     List<CatalogDTO> getAllCatalogs();
 
-    void deactivateCatalog(Integer catalogId);
+    void deleteCatalog(Integer itemId);
 
-    CatalogDTO getCatalogById(Integer id);
+    CatalogDTO getCatalogById(Integer itemId);
 }

@@ -7,9 +7,6 @@ import lombok.NoArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.math.BigDecimal;
-import java.text.DecimalFormat;
-
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -20,14 +17,23 @@ public class CatalogDTO {
 
     @JsonProperty("item_id")
     private Integer itemId;
+
     private String name;
     private String description;
-    private Float rate;
-    private Boolean availability;
+    private Float rate; // Changed back to Float
+    private Boolean availability = true;
     private String category;
-//    private Boolean active;
-//    private String supplierId;
 
+    // Constructor without itemId for auto-increment scenarios
+    public CatalogDTO(String name, String description, Float rate, Boolean availability, String category) {
+        this.name = name;
+        this.description = description;
+        this.rate = rate;
+        this.availability = availability;
+        this.category = category;
+    }
+
+    // Original constructor with itemId
     public CatalogDTO(Integer itemId, String name, String description, Float rate, Boolean availability, String category) {
         this.itemId = itemId;
         this.name = name;
@@ -35,7 +41,5 @@ public class CatalogDTO {
         this.rate = rate;
         this.availability = availability;
         this.category = category;
-//        this.active = active;
-//        this.supplierId = supplierId;
     }
 }
