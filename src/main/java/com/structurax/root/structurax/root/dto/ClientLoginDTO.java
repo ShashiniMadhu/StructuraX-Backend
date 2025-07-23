@@ -8,13 +8,8 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class SiteResourceDTO {
+public class ClientLoginDTO {
 
-    private Integer id;
-    private Integer requestId;
-    private String materialName;
-    private Integer quantity;
-    private String priority;
-
-
+    private String email;
+    private String password;
 }

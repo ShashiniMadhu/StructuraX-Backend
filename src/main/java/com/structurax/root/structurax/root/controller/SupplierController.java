@@ -1,6 +1,7 @@
 package com.structurax.root.structurax.root.controller;
 
-import com.structurax.root.structurax.root.dto.CatalogDTO;
+import com.structurax.root.structurax.root.dto.*;
+import com.structurax.root.structurax.root.service.ClientService;
 import com.structurax.root.structurax.root.service.SupplierService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,6 +21,14 @@ public class SupplierController {
 
     @Autowired
     private SupplierService supplierService;
+
+
+
+    @PostMapping("/supplier/login")
+    public ResponseEntity<SupplierResponseDTO> login(@RequestBody SupplierLoginDTO loginDTO) {
+        SupplierResponseDTO response = supplierService.login(loginDTO);
+        return ResponseEntity.ok(response);
+    }
 
     @GetMapping("/supplier")
     public ResponseEntity<String> test() {

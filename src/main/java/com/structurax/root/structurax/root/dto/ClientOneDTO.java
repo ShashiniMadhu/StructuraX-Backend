@@ -35,5 +35,7 @@ public class ClientOneDTO {
 
     private String design_link;
 
+    private String role="Project_Owner";
+
 
 }
