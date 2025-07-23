@@ -1,5 +1,6 @@
 package com.structurax.root.structurax.root.controller;
 
+
 import com.structurax.root.structurax.root.dto.LegalDocumentDTO;
 import com.structurax.root.structurax.root.dto.ProjectDocumentsDTO;
 import com.structurax.root.structurax.root.service.LegalOfficerService;
@@ -12,11 +13,14 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.time.LocalDate;
+
 import java.util.List;
 
 @RestController
 @RequestMapping("/legal_officer")
+
 @CrossOrigin(origins = "http://localhost:5174")
+
 public class LegalOfficerController {
 
     @Autowired
@@ -74,6 +78,7 @@ public class LegalOfficerController {
     public List<LegalDocumentDTO> getLegalDocumentsByProjectId(@PathVariable String projectId) {
         return legalOfficerService.getLegalDocumentsByProjectId(projectId);
     }
+
 
 
 }

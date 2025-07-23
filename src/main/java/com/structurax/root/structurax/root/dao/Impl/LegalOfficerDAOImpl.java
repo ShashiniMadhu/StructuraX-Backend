@@ -1,16 +1,19 @@
 package com.structurax.root.structurax.root.dao.Impl;
 
 import com.structurax.root.structurax.root.dao.LegalOfficerDAO;
+
 import com.structurax.root.structurax.root.dto.LegalDocumentDTO;
 import com.structurax.root.structurax.root.dto.ProjectDocumentsDTO;
 import com.structurax.root.structurax.root.dto.SiteVisitLogDTO;
 import com.structurax.root.structurax.root.util.DatabaseConnection;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.sql.*;
 import java.time.LocalDate;
+
 import java.util.List;
 
 @Repository
@@ -21,6 +24,7 @@ public class LegalOfficerDAOImpl implements LegalOfficerDAO {
 
     @Autowired
     private DatabaseConnection databaseConnection;
+
 
     @Override
     public List<ProjectDocumentsDTO> findAllLegalDocuments() {
@@ -35,6 +39,7 @@ public class LegalOfficerDAOImpl implements LegalOfficerDAO {
             return dto;
         });
     }
+
 
     @Override
     public LegalDocumentDTO adddocument(LegalDocumentDTO dto) {
@@ -81,3 +86,5 @@ public class LegalOfficerDAOImpl implements LegalOfficerDAO {
         });
     }
 }
+
+

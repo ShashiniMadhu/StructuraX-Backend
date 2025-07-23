@@ -2,6 +2,7 @@ package com.structurax.root.structurax.root.controller;
 
 import com.structurax.root.structurax.root.Constants.Constants;
 import com.structurax.root.structurax.root.dto.EmployeeDTO;
+import com.structurax.root.structurax.root.dto.SupplierDTO;
 import com.structurax.root.structurax.root.service.AdminService;
 import com.structurax.root.structurax.root.service.MailService;
 import com.structurax.root.structurax.root.util.OtpUtil;
@@ -156,6 +157,34 @@ public class AdminController {
             return ResponseEntity.ok(employee);
         } catch (Exception e) {
             return new ResponseEntity<>("Error fetching employee: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @PostMapping(value = "/add_supplier")
+    public ResponseEntity<?> addSupplier(@RequestBody SupplierDTO supplierDTO){
+        try{
+            // Generate OTP for the supplier
+            String otp = OtpUtil.generateOtp();
+
+            // Set the OTP as password in the DTO (will be hashed in service/DAO layer)
+            supplierDTO.setPassword(otp); // Assuming SupplierDTO has a password field
+
+            // Save supplier
+            SupplierDTO savedSupplier = adminService.addSupplier(supplierDTO);
+
+            // Send OTP email to supplier
+            mailService.sendSupplierOtp(
+                    savedSupplier.getEmail(),
+                    savedSupplier.getSupplier_name(), // Assuming this is the field name
+                    otp
+            );
+
+            log.info("📦 Supplier created successfully: {} and OTP email sent", savedSupplier.getSupplier_name());
+
+            return ResponseEntity.ok(savedSupplier);
+        }catch (Exception e){
+            log.error("❌ Error adding supplier: {}", e.getMessage());
+            return new ResponseEntity<>("Error adding supplier: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
