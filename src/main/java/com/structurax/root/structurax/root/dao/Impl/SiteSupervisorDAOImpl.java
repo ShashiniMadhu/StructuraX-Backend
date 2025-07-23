@@ -459,7 +459,7 @@ public class SiteSupervisorDAOImpl implements SiteSupervisorDAO {
             connection.setAutoCommit(false);  // begin transaction
 
             final String sqlUpdateRequest = "UPDATE request_site_resources SET is_received = ?, project_id = ? " +
-            "WHERE site_supervisor_id = ? AND pm_approval = 0 AND qs_approval = 0";;
+            "WHERE site_supervisor_id = ? AND pm_approval = 'pending' AND qs_approval = 'pending'";;
             try (PreparedStatement psPlan = connection.prepareStatement(sqlUpdateRequest)) {
 
                 psPlan.setBoolean(1, requestSiteResourcesDTO.getIsReceived());
