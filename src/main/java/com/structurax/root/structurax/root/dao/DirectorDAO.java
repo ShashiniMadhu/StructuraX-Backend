@@ -2,6 +2,7 @@ package com.structurax.root.structurax.root.dao;
 
 import com.structurax.root.structurax.root.dto.*;
 
+import java.sql.SQLException;
 import java.util.List;
 
 public interface DirectorDAO {
@@ -17,7 +18,7 @@ public interface DirectorDAO {
 
     List<ProjectInitiateDTO> getPendingProjects();
 
-    void startProject(String projectId, ProjectStartDTO projectStartDTO);
+    void startProject(String projectId, ProjectStartDTO projectStartDTO) throws SQLException;
 
 
 }
