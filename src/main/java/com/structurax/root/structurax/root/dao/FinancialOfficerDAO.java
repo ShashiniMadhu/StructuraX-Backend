@@ -1,9 +1,8 @@
 package com.structurax.root.structurax.root.dao;
 
-import com.structurax.root.structurax.root.dto.InstallmentDTO;
-import com.structurax.root.structurax.root.dto.PaymentPlanDTO;
-import com.structurax.root.structurax.root.dto.ProjectDTO;
+import com.structurax.root.structurax.root.dto.*;
 
+import java.util.Date;
 import java.util.List;
 
 public interface FinancialOfficerDAO {
@@ -13,6 +12,7 @@ public interface FinancialOfficerDAO {
     ProjectDTO getProjectById(String id);
 
 
+
     //PaymentPlanDTO createPaymentPlan(PaymentPlanDTO paymentPlanDTO);
 
     PaymentPlanDTO getPaymentPlanById(Integer id);
@@ -20,6 +20,8 @@ public interface FinancialOfficerDAO {
    // PaymentPlanDTO updatePaymentPlan(PaymentPlanDTO paymentPlanDTO);
 
     PaymentPlanDTO deletePaymentPlanById(String id);
+
+
 
 
 
@@ -44,4 +46,16 @@ public interface FinancialOfficerDAO {
     PaymentPlanDTO updateFullPaymentPlan(PaymentPlanDTO paymentPlanDTO);
 
 
+    /* labor salary */
+    List<LaborAttendanceDTO> getLaborAttendanceByProjectId(String projectId, Date date);
+
+    LaborAttendanceDTO getAttendanceById(int attendanceId);
+
+    LaborSalaryDTO insertSalary(LaborSalaryDTO laborSalaryDTO);
+
+    LaborSalaryDTO getSalaryRecordById(int salaryId);
+
+    LaborSalaryDTO deleteSalaryRecordById(int attendanceId);
+
+    List<LaborSalaryDTO> updateSalaryRecord(List<LaborSalaryDTO> laborSalaryDTO);
 }

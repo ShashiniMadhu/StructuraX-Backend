@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.sql.Date;
 import java.time.LocalDate;
 
@@ -19,5 +20,9 @@ public class LaborAttendanceDTO {
     private String labor_type;
     private Integer count;
     private String company;
+
+    private LaborSalaryDTO salary;
+
+
 
 }
