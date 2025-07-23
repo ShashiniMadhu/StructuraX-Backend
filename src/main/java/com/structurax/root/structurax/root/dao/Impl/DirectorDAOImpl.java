@@ -177,7 +177,7 @@ public class DirectorDAOImpl implements DirectorDAO {
     @Override
     public List<ProjectInitiateDTO> getAllProjects() {
         List<ProjectInitiateDTO> projectList =  new ArrayList<>();
-        final String sql = "SELECT p.*,pi.image_url FROM  project p LEFT JOIN project_images pi ON p.project_id = pi.project_id";
+        final String sql = "SELECT p.*,pi.image_url,c.first_name FROM  project p LEFT JOIN project_images pi ON p.project_id = pi.project_id LEFT JOIN client c ON p.client_id=c.client_id";
 
         try(
                 Connection connection = databaseConnection.getConnection();
@@ -200,7 +200,8 @@ public class DirectorDAOImpl implements DirectorDAO {
                         resultSet.getString("qs_id"),
                         resultSet.getString("pm_id"),
                         resultSet.getString("category"),
-                        resultSet.getString("image_url")
+                        resultSet.getString("image_url"),
+                        resultSet.getString("first_name")
 
                 );
                 projectList.add(project);
@@ -215,7 +216,7 @@ public class DirectorDAOImpl implements DirectorDAO {
     @Override
     public ProjectInitiateDTO getProjectById(String id) {
 
-        final String sql = "SELECT p.*,pi.image_url FROM  project p LEFT JOIN project_images pi ON p.project_id = pi.project_id WHERE p.project_id = ?" ;
+        final String sql = "SELECT p.*,pi.image_url,c.first_name FROM  project p LEFT JOIN project_images pi ON p.project_id = pi.project_id LEFT JOIN client c ON p.client_id=c.client_id WHERE p.project_id = ?" ;
         try(
 
                 Connection connection = databaseConnection.getConnection();
@@ -240,7 +241,8 @@ public class DirectorDAOImpl implements DirectorDAO {
                         resultSet.getString("qs_id"),
                         resultSet.getString("pm_id"),
                         resultSet.getString("category"),
-                        resultSet.getString("image_url")
+                        resultSet.getString("image_url"),
+                        resultSet.getString("first_name")
                 );
             }else {
                 return null;
@@ -254,7 +256,7 @@ public class DirectorDAOImpl implements DirectorDAO {
     @Override
     public List<ProjectInitiateDTO> getPendingProjects() {
         List<ProjectInitiateDTO> projectList =  new ArrayList<>();
-        final String sql = "SELECT p.*,pi.image_url FROM  project p LEFT JOIN project_images pi ON p.project_id = pi.project_id WHERE p.status = ? " ;
+        final String sql = "SELECT p.*,pi.image_url,c.first_name FROM  project p LEFT JOIN project_images pi ON p.project_id = pi.project_id  LEFT JOIN client c ON p.client_id = c.client_id WHERE p.status = ? " ;
         try(
 
                 Connection connection = databaseConnection.getConnection();
@@ -279,7 +281,9 @@ public class DirectorDAOImpl implements DirectorDAO {
                         resultSet.getString("qs_id"),
                         resultSet.getString("pm_id"),
                         resultSet.getString("category"),
-                        resultSet.getString("image_url")
+                        resultSet.getString("image_url"),
+                        resultSet.getString("first_name")
+
 
                 );
                 projectList.add(project);
