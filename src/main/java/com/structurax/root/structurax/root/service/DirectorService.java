@@ -6,6 +6,7 @@ import com.structurax.root.structurax.root.dto.ProjectInitiateDTO;
 import com.structurax.root.structurax.root.dto.ProjectStartDTO;
 import org.springframework.stereotype.Service;
 
+import java.sql.SQLException;
 import java.util.List;
 
 @Service
@@ -18,6 +19,6 @@ public interface DirectorService {
     List<ProjectInitiateDTO> getAllProjects();
     ProjectInitiateDTO getProjectById(String id);
     List<ProjectInitiateDTO> getPendingProjects();
-    void startProject(String projectId, ProjectStartDTO projectStartDTO);
+    void startProject(String projectId, ProjectStartDTO projectStartDTO) throws SQLException;
 
 }
