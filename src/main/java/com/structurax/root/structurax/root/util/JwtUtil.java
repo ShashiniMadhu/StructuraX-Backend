@@ -34,6 +34,17 @@ public class JwtUtil {
                 .compact();
     }
 
+    public String generateTokenForSupplier(String email,String role,int supplierId) {
+        return Jwts.builder()
+                .setSubject(email)
+                .claim("role", role)
+                .claim("supplier_id", supplierId)
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + expirationMs))
+                .signWith(Keys.hmacShaKeyFor(secret.getBytes()))
+                .compact();
+    }
+
     public boolean validateToken(String token) {
         try {
             Jwts.parserBuilder().setSigningKey(secret.getBytes()).build().parseClaimsJws(token);
