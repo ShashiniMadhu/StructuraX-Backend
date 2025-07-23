@@ -1,14 +1,14 @@
 package com.structurax.root.structurax.root.service.Impl;
 
 import com.structurax.root.structurax.root.dao.AdminDAO;
-import com.structurax.root.structurax.root.dto.DesignDTO;
-import com.structurax.root.structurax.root.dto.DesignFullDTO;
-import com.structurax.root.structurax.root.dto.EmployeeDTO;
-import com.structurax.root.structurax.root.dto.SupplierDTO;
+import com.structurax.root.structurax.root.dao.ClientDAO;
+import com.structurax.root.structurax.root.dto.*;
 import com.structurax.root.structurax.root.service.AdminService;
+import com.structurax.root.structurax.root.util.JwtUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -20,6 +20,33 @@ public class AdminServiceImpl implements AdminService {
 
     @Autowired
     private AdminDAO adminDAO;
+
+    @Autowired
+    private JwtUtil jwtUtil;
+
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @Override
+    public AdminResponseDTO login(AdminLoginDTO loginDTO) {
+        AdminDTO admin = adminDAO.findByEmail(loginDTO.getEmail())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (!passwordEncoder.matches(loginDTO.getPassword(), admin.getPassword())) {
+            throw new RuntimeException("Invalid password");
+        }
+
+        String token = jwtUtil.generateTokenForAdmin(admin.getEmail(), admin.getRole(), admin.getAdminId());
+
+        return new AdminResponseDTO(
+                admin.getAdminId(),
+
+                admin.getEmail(),
+                admin.getRole(),
+                token
+        );
+    }
 
     @Override
     public EmployeeDTO createEmployee(EmployeeDTO employeeDTO){

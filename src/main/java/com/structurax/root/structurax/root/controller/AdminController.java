@@ -1,8 +1,7 @@
 package com.structurax.root.structurax.root.controller;
 
 import com.structurax.root.structurax.root.Constants.Constants;
-import com.structurax.root.structurax.root.dto.EmployeeDTO;
-import com.structurax.root.structurax.root.dto.SupplierDTO;
+import com.structurax.root.structurax.root.dto.*;
 import com.structurax.root.structurax.root.service.AdminService;
 import com.structurax.root.structurax.root.service.MailService;
 import com.structurax.root.structurax.root.util.OtpUtil;
@@ -33,6 +32,12 @@ public class AdminController {
 
     @Autowired
     private MailService mailService;
+
+    @PostMapping("/login")
+    public ResponseEntity<AdminResponseDTO> login(@RequestBody AdminLoginDTO loginDTO) {
+        AdminResponseDTO response = adminService.login(loginDTO);
+        return ResponseEntity.ok(response);
+    }
 
     @PostMapping(value = "/add_employee", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> createEmployee(

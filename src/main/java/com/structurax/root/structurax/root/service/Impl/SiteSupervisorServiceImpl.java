@@ -76,6 +76,16 @@ public class SiteSupervisorServiceImpl implements SiteSupervisorService {
     }
 
     @Override
+    public RequestSiteResourcesDTO getRequestById(Integer requestId) {
+        return siteSupervisorDAO.getRequestById(requestId);
+    }
+
+    @Override
+    public RequestSiteResourcesDTO deleteRequest(int requestId) {
+        return siteSupervisorDAO.deleteRequest(requestId);
+    }
+
+    @Override
     public TodoDTO createToDo(TodoDTO todoDTO) {
         TodoDTO todo=siteSupervisorDAO.createToDo(todoDTO);
         return todo;

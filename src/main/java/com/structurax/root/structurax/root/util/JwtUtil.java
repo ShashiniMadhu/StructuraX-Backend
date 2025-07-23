@@ -45,6 +45,17 @@ public class JwtUtil {
                 .compact();
     }
 
+    public String generateTokenForAdmin(String email,String role,String adminId) {
+        return Jwts.builder()
+                .setSubject(email)
+                .claim("role", role)
+                .claim("admin_id", adminId)
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + expirationMs))
+                .signWith(Keys.hmacShaKeyFor(secret.getBytes()))
+                .compact();
+    }
+
     public boolean validateToken(String token) {
         try {
             Jwts.parserBuilder().setSigningKey(secret.getBytes()).build().parseClaimsJws(token);

@@ -33,6 +33,10 @@ public interface SiteSupervisorService {
 
     RequestSiteResourcesDTO updateRequest(RequestSiteResourcesDTO requestSiteResourcesDTO);
 
+    RequestSiteResourcesDTO getRequestById(Integer requestId);
+
+    RequestSiteResourcesDTO deleteRequest(int requestId);
+
 
     //to-do list
     TodoDTO createToDo(TodoDTO todoDTO);

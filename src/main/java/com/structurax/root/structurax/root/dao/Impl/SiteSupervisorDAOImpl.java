@@ -332,8 +332,8 @@ public class SiteSupervisorDAOImpl implements SiteSupervisorDAO {
             while (rs.next()) {
                 RequestSiteResourcesDTO request = new RequestSiteResourcesDTO(
                         rs.getInt("request_id"),
-                        rs.getBoolean("pm_approval"),
-                        rs.getBoolean("qs_approval"),
+                        rs.getString("pm_approval"),
+                        rs.getString("qs_approval"),
                         rs.getString("request_type"),
                         rs.getDate("date"),
                         rs.getString("project_id"),
@@ -369,8 +369,8 @@ public class SiteSupervisorDAOImpl implements SiteSupervisorDAO {
             while (rs.next()) {
                 RequestSiteResourcesDTO request = new RequestSiteResourcesDTO(
                         rs.getInt("request_id"),
-                        rs.getBoolean("pm_approval"),
-                        rs.getBoolean("qs_approval"),
+                        rs.getString("pm_approval"),
+                        rs.getString("qs_approval"),
                         rs.getString("request_type"),
                         rs.getDate("date"),
                         rs.getString("project_id"),
@@ -405,8 +405,8 @@ public class SiteSupervisorDAOImpl implements SiteSupervisorDAO {
                 PreparedStatement planStmt = connection.prepareStatement(planSql, Statement.RETURN_GENERATED_KEYS)
         ) {
             // 1. Insert request
-            planStmt.setBoolean(1, requestDTO.getPmApproval());
-            planStmt.setBoolean(2, requestDTO.getQsApproval());
+            planStmt.setString(1, requestDTO.getPmApproval());
+            planStmt.setString(2, requestDTO.getQsApproval());
             planStmt.setString(3, requestDTO.getRequestType());
             planStmt.setDate(4,requestDTO.getDate());
             planStmt.setString(5,requestDTO.getProjectId());
@@ -459,13 +459,13 @@ public class SiteSupervisorDAOImpl implements SiteSupervisorDAO {
             connection.setAutoCommit(false);  // begin transaction
 
             final String sqlUpdateRequest = "UPDATE request_site_resources SET is_received = ?, project_id = ? " +
-            "WHERE site_supervisor_id = ? AND pm_approval = 'pending' AND qs_approval = 'pending'";;
+            "WHERE request_id = ? AND pm_approval = 'pending' AND qs_approval = 'pending'";;
             try (PreparedStatement psPlan = connection.prepareStatement(sqlUpdateRequest)) {
 
                 psPlan.setBoolean(1, requestSiteResourcesDTO.getIsReceived());
 
                 psPlan.setString(2, requestSiteResourcesDTO.getProjectId());
-                psPlan.setString(3, requestSiteResourcesDTO.getSiteSupervisorId());
+                psPlan.setInt(3, requestSiteResourcesDTO.getRequestId());
 
 
                 int updatedRequestRows = psPlan.executeUpdate();
@@ -517,6 +517,72 @@ public class SiteSupervisorDAOImpl implements SiteSupervisorDAO {
         }
 
         return requestSiteResourcesDTO;
+    }
+
+    @Override
+    public RequestSiteResourcesDTO getRequestById(int requestId) {
+        final String sql = "SELECT * FROM request_site_resources WHERE request_id = ?";
+
+        try (
+                Connection connection = databaseConnection.getConnection();
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)
+        ) {
+            preparedStatement.setInt(1, requestId);
+            try (ResultSet rs = preparedStatement.executeQuery()) {
+                if (rs.next()) {
+                    return new RequestSiteResourcesDTO(
+                            rs.getInt("request_id"),
+                            rs.getString("pm_approval"),
+                            rs.getString("qs_approval"),
+                            rs.getString("request_type"),
+                            rs.getDate("date"),
+                            rs.getString("project_id"),
+                            rs.getString("site_supervisor_id"),
+                            rs.getString("qs_id"),
+                            rs.getBoolean("is_received")
+
+                    );
+
+
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error fetching payment plan by ID: " + e.getMessage(), e);
+        }
+
+        return null;
+    }
+
+    @Override
+    public RequestSiteResourcesDTO deleteRequest(int requestId) {
+        RequestSiteResourcesDTO request = getRequestById(requestId);
+        if (request == null) {
+            throw new RuntimeException("No request found with project id : " + requestId);
+        }
+
+        try (Connection connection = databaseConnection.getConnection()) {
+            connection.setAutoCommit(false); // start transaction
+
+            // Delete installments first
+            final String sqlDeleteInstallments = "DELETE FROM site_resources WHERE request_id = ?";
+            try (PreparedStatement psInstallments = connection.prepareStatement(sqlDeleteInstallments)) {
+                psInstallments.setInt(1, request.getRequestId());
+                psInstallments.executeUpdate();
+            }
+
+            // Delete payment plan
+            final String sqlDeletePaymentPlan = "DELETE FROM request_site_resources WHERE request_id = ?";
+            try (PreparedStatement psPlan = connection.prepareStatement(sqlDeletePaymentPlan)) {
+                psPlan.setInt(1, requestId);
+                psPlan.executeUpdate();
+            }
+
+            connection.commit();
+        } catch (SQLException e) {
+            throw new RuntimeException("Error deleting request: " + e.getMessage(), e);
+        }
+
+        return request;
     }
 
     @Override
