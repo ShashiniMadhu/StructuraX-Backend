@@ -35,6 +35,10 @@ public interface SiteSupervisorDAO {
 
     RequestSiteResourcesDTO updateRequest(RequestSiteResourcesDTO requestSiteResourcesDTO);
 
+    RequestSiteResourcesDTO getRequestById(int requestId);
+
+    RequestSiteResourcesDTO deleteRequest(int requestId);
+
 
     //todo
     TodoDTO createToDo(TodoDTO todoDTO);

@@ -146,6 +146,12 @@ public class SiteSupervisorController {
         return new ResponseEntity<>(requestSiteResourcesDTO,HttpStatus.OK);
     }
 
+    @DeleteMapping("/request/{requestId}")
+    public ResponseEntity<RequestSiteResourcesDTO> deleteRequest(@PathVariable int requestId){
+        RequestSiteResourcesDTO request = siteSupervisorService.deleteRequest(requestId);
+        return new ResponseEntity<>(request, HttpStatus.OK);
+    }
+
 
 
 
