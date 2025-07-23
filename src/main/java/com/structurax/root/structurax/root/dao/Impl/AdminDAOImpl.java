@@ -1,12 +1,12 @@
 package com.structurax.root.structurax.root.dao.Impl;
 
 import com.structurax.root.structurax.root.dao.AdminDAO;
-import com.structurax.root.structurax.root.dto.DesignDTO;
-import com.structurax.root.structurax.root.dto.DesignFullDTO;
-import com.structurax.root.structurax.root.dto.EmployeeDTO;
-import com.structurax.root.structurax.root.dto.SupplierDTO;
+import com.structurax.root.structurax.root.dto.*;
 import com.structurax.root.structurax.root.util.DatabaseConnection;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.jdbc.core.BeanPropertyRowMapper;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
@@ -16,12 +16,27 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
 public class AdminDAOImpl implements AdminDAO {
     @Autowired
     private DatabaseConnection databaseConnection;
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
+    @Override
+    public Optional<AdminDTO> findByEmail(String email) {
+        String sql = "SELECT * FROM admin WHERE email = ?";
+        try {
+            AdminDTO admin = jdbcTemplate.queryForObject(sql, new BeanPropertyRowMapper<>(AdminDTO.class), email);
+            return Optional.ofNullable(admin);
+        } catch (EmptyResultDataAccessException e) {
+            return Optional.empty();
+        }
+    }
 
     @Override
     public EmployeeDTO createEmployee(EmployeeDTO employeeDTO) {
@@ -206,6 +221,9 @@ public class AdminDAOImpl implements AdminDAO {
     public SupplierDTO addSupplier(SupplierDTO supplierDTO) {
         Connection connection = null;
         PreparedStatement preparedStatement = null;
+        // BCrypt encoder
+        BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+        String hashedPassword = passwordEncoder.encode(supplierDTO.getPassword());
 
         try {
             final String sql = "INSERT INTO supplier (supplier_name, address, phone, joined_date, status, email,password) " +
@@ -220,7 +238,7 @@ public class AdminDAOImpl implements AdminDAO {
             preparedStatement.setDate(4, supplierDTO.getJoined_date());
             preparedStatement.setString(5, supplierDTO.getStatus());
             preparedStatement.setString(6, supplierDTO.getEmail());
-            preparedStatement.setString(7,supplierDTO.getPassword());
+            preparedStatement.setString(7,hashedPassword);
 
             int rowsAffected = preparedStatement.executeUpdate();
             if (rowsAffected == 0) {

@@ -1,11 +1,9 @@
 package com.structurax.root.structurax.root.dao;
 
-import com.structurax.root.structurax.root.dto.DesignDTO;
-import com.structurax.root.structurax.root.dto.DesignFullDTO;
-import com.structurax.root.structurax.root.dto.EmployeeDTO;
-import com.structurax.root.structurax.root.dto.SupplierDTO;
+import com.structurax.root.structurax.root.dto.*;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface AdminDAO {
     /**
@@ -19,6 +17,8 @@ public interface AdminDAO {
      * get the all employees
      * @return EmployeeDTO
      */
+    Optional<AdminDTO> findByEmail(String email);
+
     List<EmployeeDTO> getAllEmployees();
 
     void removeEmployeePassword(String empId);
