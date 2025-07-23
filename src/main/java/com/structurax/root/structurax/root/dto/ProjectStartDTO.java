@@ -16,6 +16,9 @@ public class ProjectStartDTO {
     @JsonProperty("pm_id")
     private String pmId;
 
+    @JsonProperty("ss_id")
+    private String ssId;
+
     private String status;
 
 }

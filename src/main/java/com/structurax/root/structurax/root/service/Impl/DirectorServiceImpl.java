@@ -11,6 +11,7 @@ import com.structurax.root.structurax.root.util.OtpUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.sql.SQLException;
 import java.util.List;
 
 @Service
@@ -70,7 +71,7 @@ public class DirectorServiceImpl implements DirectorService {
     }
 
     @Override
-    public void startProject(String projectId, ProjectStartDTO projectStartDTO) {
+    public void startProject(String projectId, ProjectStartDTO projectStartDTO) throws SQLException {
         directorDAO.startProject(projectId, projectStartDTO);
     }
 
