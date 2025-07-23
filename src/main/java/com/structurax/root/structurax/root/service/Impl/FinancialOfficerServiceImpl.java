@@ -1,13 +1,12 @@
 package com.structurax.root.structurax.root.service.Impl;
 
 import com.structurax.root.structurax.root.dao.FinancialOfficerDAO;
-import com.structurax.root.structurax.root.dto.InstallmentDTO;
-import com.structurax.root.structurax.root.dto.PaymentPlanDTO;
-import com.structurax.root.structurax.root.dto.ProjectDTO;
+import com.structurax.root.structurax.root.dto.*;
 import com.structurax.root.structurax.root.service.FinancialOfficerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Date;
 import java.util.List;
 
 @Service
@@ -23,7 +22,7 @@ public class FinancialOfficerServiceImpl implements FinancialOfficerService {
     }
 
     @Override
-    public ProjectDTO getProjectById(Integer id) {
+    public ProjectDTO getProjectById(String id) {
         return financialOfficerDAO.getProjectById(id);
     }
 
@@ -45,7 +44,7 @@ public class FinancialOfficerServiceImpl implements FinancialOfficerService {
     }
 
     @Override
-    public PaymentPlanDTO getPaymentPlanByProjectId(Integer id) {
+    public PaymentPlanDTO getPaymentPlanByProjectId(String id) {
         return financialOfficerDAO.getPaymentPlanByProjectId(id);
     }
 
@@ -56,7 +55,7 @@ public class FinancialOfficerServiceImpl implements FinancialOfficerService {
     }
 
     @Override
-    public PaymentPlanDTO deletePaymentPlanById(Integer id) {
+    public PaymentPlanDTO deletePaymentPlanById(String id) {
         return financialOfficerDAO.deletePaymentPlanById(id);
     }
 
@@ -64,6 +63,41 @@ public class FinancialOfficerServiceImpl implements FinancialOfficerService {
     public PaymentPlanDTO updateFullPaymentPlan(PaymentPlanDTO paymentPlanDTO) {
         return financialOfficerDAO.updateFullPaymentPlan(paymentPlanDTO);
     }
+
+    @Override
+    public List<LaborAttendanceDTO> getLaborAttendanceByProjectId(String projectId, Date date) {
+        return financialOfficerDAO.getLaborAttendanceByProjectId(projectId,date);
+    }
+
+    @Override
+    public LaborAttendanceDTO getAttendanceById(int attendanceId) {
+        return  financialOfficerDAO.getAttendanceById(attendanceId);
+    }
+
+    @Override
+    public LaborSalaryDTO insertSalary(LaborSalaryDTO laborSalaryDTO) {
+        LaborSalaryDTO laborSalary=financialOfficerDAO.insertSalary(laborSalaryDTO);
+        return laborSalary;
+    }
+
+    @Override
+    public LaborSalaryDTO getSalaryRecordById(int salaryId) {
+        return financialOfficerDAO.getSalaryRecordById(salaryId);
+    }
+
+    @Override
+    public List<LaborSalaryDTO> updateSalaryRecord(List<LaborSalaryDTO> laborSalaryDTO) {
+        return financialOfficerDAO.updateSalaryRecord(laborSalaryDTO);
+    }
+
+    @Override
+    public LaborSalaryDTO deleteSalaryRecordById(int salaryId) {
+        return financialOfficerDAO.deleteSalaryRecordById(salaryId);
+    }
+
+
+
+
 
 
 

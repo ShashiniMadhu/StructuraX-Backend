@@ -1,16 +1,16 @@
 package com.structurax.root.structurax.root.dao;
 
-import com.structurax.root.structurax.root.dto.InstallmentDTO;
-import com.structurax.root.structurax.root.dto.PaymentPlanDTO;
-import com.structurax.root.structurax.root.dto.ProjectDTO;
+import com.structurax.root.structurax.root.dto.*;
 
+import java.util.Date;
 import java.util.List;
 
 public interface FinancialOfficerDAO {
 
     List<ProjectDTO> getAllProjects();
 
-    ProjectDTO getProjectById(Integer id);
+    ProjectDTO getProjectById(String id);
+
 
 
     //PaymentPlanDTO createPaymentPlan(PaymentPlanDTO paymentPlanDTO);
@@ -19,7 +19,9 @@ public interface FinancialOfficerDAO {
 
    // PaymentPlanDTO updatePaymentPlan(PaymentPlanDTO paymentPlanDTO);
 
-    PaymentPlanDTO deletePaymentPlanById(Integer id);
+    PaymentPlanDTO deletePaymentPlanById(String id);
+
+
 
 
 
@@ -37,11 +39,23 @@ public interface FinancialOfficerDAO {
 
     //InstallmentDTO deleteInstallmentById(Integer id);
 
-    PaymentPlanDTO getPaymentPlanByProjectId(Integer id);
+    PaymentPlanDTO getPaymentPlanByProjectId(String id);
 
     PaymentPlanDTO createFullPaymentPlan(PaymentPlanDTO paymentPlanDTO);
 
     PaymentPlanDTO updateFullPaymentPlan(PaymentPlanDTO paymentPlanDTO);
 
 
+    /* labor salary */
+    List<LaborAttendanceDTO> getLaborAttendanceByProjectId(String projectId, Date date);
+
+    LaborAttendanceDTO getAttendanceById(int attendanceId);
+
+    LaborSalaryDTO insertSalary(LaborSalaryDTO laborSalaryDTO);
+
+    LaborSalaryDTO getSalaryRecordById(int salaryId);
+
+    LaborSalaryDTO deleteSalaryRecordById(int attendanceId);
+
+    List<LaborSalaryDTO> updateSalaryRecord(List<LaborSalaryDTO> laborSalaryDTO);
 }

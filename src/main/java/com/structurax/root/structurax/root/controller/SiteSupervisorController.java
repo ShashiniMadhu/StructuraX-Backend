@@ -25,6 +25,11 @@ public class SiteSupervisorController {
         return ResponseEntity.ok(savedAttendance);
     }
 
+    @GetMapping("/projects/{id}")
+    public ResponseEntity<List<ProjectDTO>> getProjectsBySsId(@PathVariable String id){
+        List<ProjectDTO> projects = siteSupervisorService.getProjectsBySsId(id);
+        return new ResponseEntity<>(projects, HttpStatus.OK);
+    }
 
     /*@GetMapping
     public ResponseEntity<List<LaborAttendanceDTO>> getAttendanceByProjectIdAndDate(
@@ -55,7 +60,7 @@ public class SiteSupervisorController {
 
     @DeleteMapping
     public ResponseEntity<List<LaborAttendanceDTO>> deleteLaborAttendance(
-            @RequestParam("projectId") Integer projectId,
+            @RequestParam("projectId") String projectId,
             @RequestParam("date") String dateStr) {
 
         java.sql.Date date = java.sql.Date.valueOf(dateStr); // Converts string to java.sql.Date
@@ -72,15 +77,15 @@ public class SiteSupervisorController {
     }
 
     @GetMapping("/material_requests")
-    public ResponseEntity<List<RequestDTO>> getAllMaterialRequests(){
-        List<RequestDTO> requestDTOS = siteSupervisorService.getAllMaterialRequests();
+    public ResponseEntity<List<RequestSiteResourcesDTO>> getAllMaterialRequests(){
+        List<RequestSiteResourcesDTO> requestDTOS = siteSupervisorService.getAllMaterialRequests();
         System.out.println("Endpoint hit");
         return new ResponseEntity<>(requestDTOS, HttpStatus.OK);
     }
 
     @GetMapping("/tool_requests")
-    public ResponseEntity<List<RequestDTO>> getAllToolRequests(){
-        List<RequestDTO> requestDTOS = siteSupervisorService.getAllToolRequests();
+    public ResponseEntity<List<RequestSiteResourcesDTO>> getAllToolRequests(){
+        List<RequestSiteResourcesDTO> requestDTOS = siteSupervisorService.getAllToolRequests();
         System.out.println("Endpoint hit");
         return new ResponseEntity<>(requestDTOS, HttpStatus.OK);
     }
@@ -92,7 +97,7 @@ public class SiteSupervisorController {
     }*/
 
     @PostMapping("/material_request")
-    public ResponseEntity<RequestDTO> createMaterialRequest(@RequestBody RequestDTO requestDTO){
+    public ResponseEntity<RequestSiteResourcesDTO> createMaterialRequest(@RequestBody RequestSiteResourcesDTO requestDTO){
         siteSupervisorService.createMaterialRequest(requestDTO);
         ///System.out.println("Received projectId: " + paymentPlanDTO.getProjectId());
         return new ResponseEntity<>(requestDTO, HttpStatus.OK);
@@ -133,6 +138,12 @@ public class SiteSupervisorController {
         } else {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Task not found.");
         }
+    }
+
+    @PutMapping("request/update")
+    public ResponseEntity<RequestSiteResourcesDTO> updateRequest(@RequestBody RequestSiteResourcesDTO requestSiteResourcesDTO){
+        siteSupervisorService.updateRequest(requestSiteResourcesDTO);
+        return new ResponseEntity<>(requestSiteResourcesDTO,HttpStatus.OK);
     }
 
 

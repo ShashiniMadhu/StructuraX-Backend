@@ -25,4 +25,6 @@ public class SupplierDTO {
     private String email;
 
     private String password;
+
+    private String role="Supplier";
 }
