@@ -2,15 +2,21 @@ package com.structurax.root.structurax.root.dao.Impl;
 
 import com.structurax.root.structurax.root.dao.SupplierDAO;
 import com.structurax.root.structurax.root.dto.CatalogDTO;
+import com.structurax.root.structurax.root.dto.ClientOneDTO;
+import com.structurax.root.structurax.root.dto.SupplierDTO;
 import com.structurax.root.structurax.root.util.DatabaseConnection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.jdbc.core.BeanPropertyRowMapper;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public class SupplierDAOImpl implements SupplierDAO {
@@ -19,6 +25,20 @@ public class SupplierDAOImpl implements SupplierDAO {
 
     @Autowired
     private DatabaseConnection databaseConnection;
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
+    @Override
+    public Optional<SupplierDTO> findByEmail(String email) {
+        String sql = "SELECT * FROM supplier WHERE email = ?";
+        try {
+            SupplierDTO supplier = jdbcTemplate.queryForObject(sql, new BeanPropertyRowMapper<>(SupplierDTO.class), email);
+            return Optional.ofNullable(supplier);
+        } catch (EmptyResultDataAccessException e) {
+            return Optional.empty();
+        }
+    }
 
     @Override
     public CatalogDTO createCatalog(CatalogDTO catalogDTO) {

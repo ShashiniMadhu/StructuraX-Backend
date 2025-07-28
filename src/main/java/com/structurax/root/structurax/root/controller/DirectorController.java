@@ -12,6 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.sql.SQLException;
 import java.util.List;
 
 @RestController
@@ -44,9 +45,9 @@ public class DirectorController {
     }
 
     @PostMapping("/initiate_project")
-    public String initiateProject(@RequestBody ProjectInitiateDTO projectInitiateDTO) {
-        directorService.initializeProject(projectInitiateDTO);
-        return "project initiated successfully";
+    public ResponseEntity<ProjectInitiateDTO> initiateProject(@RequestBody ProjectInitiateDTO projectInitiateDTO) {
+        ProjectInitiateDTO savedProject= directorService.initializeProject(projectInitiateDTO);
+        return new ResponseEntity<>(savedProject, HttpStatus.OK);
     }
 
     @GetMapping("get_all_projects")
@@ -68,8 +69,7 @@ public class DirectorController {
     @PutMapping("/start_project/{projectId}")
     public ResponseEntity<String> startProject(
             @PathVariable String projectId,
-            @RequestBody ProjectStartDTO projectStartDTO)
-    {
+            @RequestBody ProjectStartDTO projectStartDTO) throws SQLException {
         directorService.startProject(projectId, projectStartDTO);
         return new ResponseEntity<>("Project started successfully", HttpStatus.OK);
     }

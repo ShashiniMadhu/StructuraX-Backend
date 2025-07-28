@@ -1,22 +1,55 @@
 package com.structurax.root.structurax.root.service.Impl;
 
+import com.structurax.root.structurax.root.dao.ClientDAO;
 import com.structurax.root.structurax.root.dao.SupplierDAO;
-import com.structurax.root.structurax.root.dto.CatalogDTO;
+import com.structurax.root.structurax.root.dto.*;
 import com.structurax.root.structurax.root.service.SupplierService;
+import com.structurax.root.structurax.root.util.JwtUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
 public class SupplierServiceImpl implements SupplierService {
+    @Autowired
+    private JwtUtil jwtUtil;
+
+    @Autowired
+    private ClientDAO clientDAO;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+
 
     private static final Logger logger = LoggerFactory.getLogger(SupplierServiceImpl.class);
 
     @Autowired
     private SupplierDAO supplierDAO;
+
+    @Override
+    public SupplierResponseDTO login(SupplierLoginDTO loginDTO) {
+        SupplierDTO supplierDTO = supplierDAO.findByEmail(loginDTO.getEmail())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (!passwordEncoder.matches(loginDTO.getPassword(), supplierDTO.getPassword())) {
+            throw new RuntimeException("Invalid password");
+        }
+
+        String token = jwtUtil.generateTokenForSupplier(supplierDTO.getEmail(), supplierDTO.getRole(), supplierDTO.getSupplier_id());
+
+        return new SupplierResponseDTO(
+                supplierDTO.getSupplier_id(),
+
+                supplierDTO.getEmail(),
+                supplierDTO.getRole(),
+                token
+        );
+    }
 
     @Override
     public CatalogDTO createCatalog(CatalogDTO catalogDTO) {

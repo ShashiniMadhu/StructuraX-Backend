@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
 @Data
 @AllArgsConstructor
@@ -44,8 +45,13 @@ public class ProjectInitiateDTO {
     @JsonProperty("pm_id")
     private String pmId;
 
+    @JsonProperty("ss_id")
+    private String ssId;
+
     private String category;
 
-    private String image_url;
+    private List<String> image_url;
+
+    private String first_name;
 
 }
