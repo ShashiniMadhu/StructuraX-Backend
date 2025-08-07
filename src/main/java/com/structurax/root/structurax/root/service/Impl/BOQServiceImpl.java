@@ -52,4 +52,29 @@ public class BOQServiceImpl implements BOQService {
             return false;
         }
     }
+
+    // SQS specific methods implementation
+    @Override
+    public List<BOQWithItemsDTO> getAllBOQs() {
+        List<BOQDTO> boqs = boqDAO.getAllBOQs();
+        List<BOQWithItemsDTO> boqWithItemsList = new java.util.ArrayList<>();
+        
+        for (BOQDTO boq : boqs) {
+            List<BOQitemDTO> items = boqDAO.getBOQItemsByBOQId(boq.getBoqId());
+            BOQWithItemsDTO boqWithItems = new BOQWithItemsDTO(boq, items);
+            boqWithItemsList.add(boqWithItems);
+        }
+        
+        return boqWithItemsList;
+    }
+
+    @Override
+    public boolean updateBOQStatus(String boqId, BOQDTO.Status status) {
+        return boqDAO.updateBOQStatus(boqId, status);
+    }
+
+    @Override
+    public List<com.structurax.root.structurax.root.dto.BOQWithProjectDTO> getAllBOQsWithProjectInfo() {
+        return boqDAO.getAllBOQsWithProjectInfo();
+    }
 }

@@ -65,10 +65,17 @@ public class SQSDAOImpl implements SQSDAO {
     }
 
     /**
-     * Get projects where qs_id is null or empty, returning project name, category, and client_id.
+     * Get projects where qs_id is null or empty, returning project name, category, client_id, and client name.
      */
+    @Override
     public java.util.List<ProjectInfo> getProjectsWithoutQs() {
-        String sql = "SELECT project_id, name, category, client_id FROM project WHERE qs_id IS NULL OR qs_id = ''";
+        String sql = """
+            SELECT p.project_id, p.name, p.category, p.client_id, 
+                   CONCAT(c.first_name, ' ', c.last_name) as client_name
+            FROM project p
+            LEFT JOIN client c ON p.client_id = c.client_id
+            WHERE p.qs_id IS NULL OR p.qs_id = ''
+            """;
         java.util.List<ProjectInfo> projects = new java.util.ArrayList<>();
         try (Connection conn = databaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql);
@@ -79,6 +86,7 @@ public class SQSDAOImpl implements SQSDAO {
                 info.setName(rs.getString("name"));
                 info.setCategory(rs.getString("category"));
                 info.setClientId(rs.getString("client_id"));
+                info.setClientName(rs.getString("client_name"));
                 projects.add(info);
             }
         } catch (SQLException e) {
@@ -137,6 +145,7 @@ public class SQSDAOImpl implements SQSDAO {
         private String name;
         private String category;
         private String clientId;
+        private String clientName;
 
         public String getProjectId() {
             return projectId;
@@ -168,6 +177,14 @@ public class SQSDAOImpl implements SQSDAO {
 
         public void setClientId(String clientId) {
             this.clientId = clientId;
+        }
+
+        public String getClientName() {
+            return clientName;
+        }
+
+        public void setClientName(String clientName) {
+            this.clientName = clientName;
         }
     }
 
