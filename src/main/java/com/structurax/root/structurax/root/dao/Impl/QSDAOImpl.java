@@ -7,16 +7,18 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.structurax.root.structurax.root.dao.QSDAO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
+import com.structurax.root.structurax.root.dao.QSDAO;
 import com.structurax.root.structurax.root.dto.BOQDTO;
 import com.structurax.root.structurax.root.dto.BOQWithItemsDTO;
 import com.structurax.root.structurax.root.dto.BOQitemDTO;
 import com.structurax.root.structurax.root.dto.ClientDTO;
 import com.structurax.root.structurax.root.dto.Project1DTO;
 import com.structurax.root.structurax.root.dto.ProjectWithClientAndBOQDTO;
+import com.structurax.root.structurax.root.dto.RequestSiteResourcesDTO;
+import com.structurax.root.structurax.root.dto.SiteResourceDTO;
 import com.structurax.root.structurax.root.util.DatabaseConnection;
 
 @Repository
@@ -137,5 +139,80 @@ public class QSDAOImpl implements QSDAO {
             System.err.println("Error fetching BOQ for project " + projectId + ": " + e.getMessage());
         }
         return null;
+    }
+
+    @Override
+    public List<RequestSiteResourcesDTO> getRequestsByQSId(String qsId) {
+        List<RequestSiteResourcesDTO> requests = new ArrayList<>();
+        final String sql = "SELECT * FROM request_site_resources WHERE qs_id = ? AND pm_approval = '1'";
+        
+        try (Connection connection = databaseConnection.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+            preparedStatement.setString(1, qsId);
+            try (ResultSet rs = preparedStatement.executeQuery()) {
+                while (rs.next()) {
+                    RequestSiteResourcesDTO request = new RequestSiteResourcesDTO(
+                            rs.getInt("request_id"),
+                            rs.getString("pm_approval"),
+                            rs.getString("qs_approval"),
+                            rs.getString("request_type"),
+                            rs.getDate("date"),
+                            rs.getString("project_id"),
+                            rs.getString("site_supervisor_id"),
+                            rs.getString("qs_id"),
+                            rs.getBoolean("is_received")
+                    );
+                    
+                    // Get materials/resources for this request
+                    List<SiteResourceDTO> materials = getMaterialsByRequestId(request.getRequestId());
+                    request.setMaterials(materials);
+                    
+                    requests.add(request);
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error fetching site resource requests by QS ID: " + e.getMessage(), e);
+        }
+        return requests;
+    }
+    
+    private List<SiteResourceDTO> getMaterialsByRequestId(Integer requestId) {
+        final String sql = "SELECT * FROM site_resources WHERE request_id = ?";
+        List<SiteResourceDTO> materialList = new ArrayList<>();
+
+        try (Connection connection = databaseConnection.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+            preparedStatement.setInt(1, requestId);
+            try (ResultSet rs = preparedStatement.executeQuery()) {
+                while (rs.next()) {
+                    SiteResourceDTO dto = new SiteResourceDTO();
+                    dto.setId(rs.getInt("id"));
+                    dto.setMaterialName(rs.getString("name"));
+                    dto.setQuantity(rs.getInt("quantity"));
+                    dto.setPriority(rs.getString("priority"));
+                    dto.setRequestId(rs.getInt("request_id"));
+                    materialList.add(dto);
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error fetching materials by request ID: " + e.getMessage(), e);
+        }
+        return materialList;
+    }
+    
+    @Override
+    public boolean updateRequestQSApproval(Integer requestId, String qsApproval) {
+        final String sql = "UPDATE request_site_resources SET qs_approval = ? WHERE request_id = ?";
+        
+        try (Connection connection = databaseConnection.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+            preparedStatement.setString(1, qsApproval);
+            preparedStatement.setInt(2, requestId);
+            
+            int rowsAffected = preparedStatement.executeUpdate();
+            return rowsAffected > 0;
+        } catch (SQLException e) {
+            throw new RuntimeException("Error updating QS approval for request ID " + requestId + ": " + e.getMessage(), e);
+        }
     }
 }
