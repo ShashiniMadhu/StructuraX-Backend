@@ -7,6 +7,7 @@ import com.structurax.root.structurax.root.dto.BOQDTO;
 import com.structurax.root.structurax.root.dto.BOQWithItemsDTO;
 import com.structurax.root.structurax.root.dto.BOQWithProjectDTO;
 import com.structurax.root.structurax.root.dto.Project1DTO;
+import com.structurax.root.structurax.root.dto.RequestSiteResourcesDTO;
 
 public interface SQSService {
     Project1DTO getProjectById(String id);
@@ -21,6 +22,11 @@ public interface SQSService {
      * Get all QS Officers from the employee table.
      */
     java.util.List<com.structurax.root.structurax.root.dto.EmployeeDTO> getQSOfficers();
+    
+    /**
+     * Get all requests in the system
+     */
+    List<RequestSiteResourcesDTO> getAllRequests();
     
     // BOQ management methods for SQS
     /**
