@@ -144,7 +144,14 @@ public class QSDAOImpl implements QSDAO {
     @Override
     public List<RequestSiteResourcesDTO> getRequestsByQSId(String qsId) {
         List<RequestSiteResourcesDTO> requests = new ArrayList<>();
-        final String sql = "SELECT * FROM request_site_resources WHERE qs_id = ? AND pm_approval = '1'";
+        final String sql = "SELECT rsr.*, p.name as project_name, " +
+                          "ss.name as site_supervisor_name, " +
+                          "qs.name as qs_officer_name " +
+                          "FROM request_site_resources rsr " +
+                          "LEFT JOIN project p ON rsr.project_id = p.project_id " +
+                          "LEFT JOIN employee ss ON rsr.site_supervisor_id = ss.employee_id " +
+                          "LEFT JOIN employee qs ON rsr.qs_id = qs.employee_id " +
+                          "WHERE rsr.qs_id = ? AND rsr.pm_approval = '1'";
         
         try (Connection connection = databaseConnection.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
@@ -160,7 +167,10 @@ public class QSDAOImpl implements QSDAO {
                             rs.getString("project_id"),
                             rs.getString("site_supervisor_id"),
                             rs.getString("qs_id"),
-                            rs.getBoolean("is_received")
+                            rs.getBoolean("is_received"),
+                            rs.getString("site_supervisor_name"),
+                            rs.getString("project_name"),
+                            rs.getString("qs_officer_name")
                     );
                     
                     // Get materials/resources for this request
