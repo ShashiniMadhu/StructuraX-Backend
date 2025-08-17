@@ -78,6 +78,19 @@ public class SQSController {
         }
     }
 
+    /**
+     * Endpoint to get all requests in the system.
+     */
+    @GetMapping(value = "/requests", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> getAllRequests() {
+        try {
+            List<com.structurax.root.structurax.root.dto.RequestSiteResourcesDTO> requests = sqsService.getAllRequests();
+            return ResponseEntity.ok(requests);
+        } catch (Exception e) {
+            return new ResponseEntity<>("Error fetching requests: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
     // BOQ Management Endpoints for SQS
 
     /**

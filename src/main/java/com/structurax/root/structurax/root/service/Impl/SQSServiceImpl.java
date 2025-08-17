@@ -41,6 +41,11 @@ public class SQSServiceImpl implements SQSService {
         return sqsDAO.getQSOfficers();
     }
     
+    @Override
+    public List<com.structurax.root.structurax.root.dto.RequestSiteResourcesDTO> getAllRequests() {
+        return sqsDAO.getAllRequests();
+    }
+    
     // BOQ management methods implementation
     @Override
     public List<BOQWithItemsDTO> getAllBOQs() {

@@ -129,6 +129,82 @@ public class SQSDAOImpl implements SQSDAO {
         return officers;
     }
 
+    /**
+     * Get all requests in the system
+     */
+    @Override
+    public java.util.List<com.structurax.root.structurax.root.dto.RequestSiteResourcesDTO> getAllRequests() {
+        java.util.List<com.structurax.root.structurax.root.dto.RequestSiteResourcesDTO> requests = new java.util.ArrayList<>();
+        String sql = "SELECT rsr.*, p.name as project_name, " +
+                    "ss.name as site_supervisor_name, " +
+                    "qs.name as qs_officer_name " +
+                    "FROM request_site_resources rsr " +
+                    "LEFT JOIN project p ON rsr.project_id = p.project_id " +
+                    "LEFT JOIN employee ss ON rsr.site_supervisor_id = ss.employee_id " +
+                    "LEFT JOIN employee qs ON rsr.qs_id = qs.employee_id " +
+                    "ORDER BY rsr.date DESC";
+        
+        try (Connection conn = databaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+            while (rs.next()) {
+                com.structurax.root.structurax.root.dto.RequestSiteResourcesDTO request = 
+                    new com.structurax.root.structurax.root.dto.RequestSiteResourcesDTO(
+                        rs.getInt("request_id"),
+                        rs.getString("pm_approval"),
+                        rs.getString("qs_approval"),
+                        rs.getString("request_type"),
+                        rs.getDate("date"),
+                        rs.getString("project_id"),
+                        rs.getString("site_supervisor_id"),
+                        rs.getString("qs_id"),
+                        rs.getBoolean("is_received"),
+                        rs.getString("site_supervisor_name"),
+                        rs.getString("project_name"),
+                        rs.getString("qs_officer_name")
+                    );
+                
+                // Get materials for this request
+                java.util.List<com.structurax.root.structurax.root.dto.SiteResourceDTO> materials = 
+                    getMaterialsByRequestId(request.getRequestId());
+                request.setMaterials(materials);
+                
+                requests.add(request);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return requests;
+    }
+
+    /**
+     * Helper method to get materials by request ID
+     */
+    private java.util.List<com.structurax.root.structurax.root.dto.SiteResourceDTO> getMaterialsByRequestId(Integer requestId) {
+        java.util.List<com.structurax.root.structurax.root.dto.SiteResourceDTO> materials = new java.util.ArrayList<>();
+        String sql = "SELECT * FROM site_resources WHERE request_id = ?";
+        
+        try (Connection conn = databaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, requestId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    com.structurax.root.structurax.root.dto.SiteResourceDTO material = 
+                        new com.structurax.root.structurax.root.dto.SiteResourceDTO();
+                    material.setId(rs.getInt("id"));
+                    material.setMaterialName(rs.getString("name"));
+                    material.setQuantity(rs.getInt("quantity"));
+                    material.setPriority(rs.getString("priority"));
+                    material.setRequestId(rs.getInt("request_id"));
+                    materials.add(material);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return materials;
+    }
+
 
 
 
