@@ -19,6 +19,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.structurax.root.structurax.root.dto.QuotationDTO;
 import com.structurax.root.structurax.root.dto.QuotationItemDTO;
+import com.structurax.root.structurax.root.dto.QuotationResponseDTO;
+import com.structurax.root.structurax.root.dto.QuotationResponseWithSupplierDTO;
+import com.structurax.root.structurax.root.service.QuotationResponseService;
 import com.structurax.root.structurax.root.service.QuotationService;
 
 @RestController
@@ -28,6 +31,9 @@ public class QuotationController {
     
     @Autowired
     private QuotationService quotationService;
+    
+    @Autowired
+    private QuotationResponseService quotationResponseService;
 
     /**
      * Create a new quotation with items
@@ -398,6 +404,244 @@ public class QuotationController {
         } catch (Exception e) {
             response.put("success", false);
             response.put("message", "Error deleting quotation item: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    // ============ QUOTATION RESPONSE METHODS ============
+
+    /**
+     * Test database connection for quotation responses
+     */
+    @GetMapping("/responses/test")
+    public ResponseEntity<Map<String, Object>> testQuotationResponseDatabase() {
+        Map<String, Object> response = new HashMap<>();
+        
+        try {
+            List<QuotationResponseDTO> basicResponses = quotationResponseService.getAllQuotationResponses();
+            List<QuotationResponseWithSupplierDTO> responsesWithSupplier = 
+                quotationResponseService.getAllQuotationResponsesWithSupplier();
+            
+            response.put("success", true);
+            response.put("basicResponsesCount", basicResponses.size());
+            response.put("responsesWithSupplierCount", responsesWithSupplier.size());
+            response.put("basicResponses", basicResponses);
+            response.put("responsesWithSupplier", responsesWithSupplier);
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("error", e.getMessage());
+            response.put("errorClass", e.getClass().getSimpleName());
+            if (e.getCause() != null) {
+                response.put("cause", e.getCause().getMessage());
+            }
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    /**
+     * Get all quotation responses with supplier details
+     */
+    @GetMapping("/responses/all")
+    public ResponseEntity<Map<String, Object>> getAllQuotationResponsesWithSupplier() {
+        Map<String, Object> response = new HashMap<>();
+        
+        try {
+            List<QuotationResponseWithSupplierDTO> responses = 
+                quotationResponseService.getAllQuotationResponsesWithSupplier();
+            response.put("success", true);
+            response.put("responses", responses);
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "Error fetching quotation responses: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    /**
+     * Get quotation responses for a specific quotation with supplier details
+     */
+    @GetMapping("/{qId}/responses")
+    public ResponseEntity<Map<String, Object>> getQuotationResponsesByQuotationId(@PathVariable Integer qId) {
+        Map<String, Object> response = new HashMap<>();
+        
+        try {
+            List<QuotationResponseWithSupplierDTO> responses = 
+                quotationResponseService.getQuotationResponsesWithSupplierByQuotationId(qId);
+            response.put("success", true);
+            response.put("responses", responses);
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "Error fetching quotation responses: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    /**
+     * Get quotation responses by supplier with supplier details
+     */
+    @GetMapping("/responses/supplier/{supplierId}")
+    public ResponseEntity<Map<String, Object>> getQuotationResponsesBySupplierId(@PathVariable Integer supplierId) {
+        Map<String, Object> response = new HashMap<>();
+        
+        try {
+            List<QuotationResponseWithSupplierDTO> responses = 
+                quotationResponseService.getQuotationResponsesWithSupplierBySupplierId(supplierId);
+            response.put("success", true);
+            response.put("responses", responses);
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "Error fetching quotation responses for supplier: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    /**
+     * Get quotation response by ID with supplier details
+     */
+    @GetMapping("/responses/{responseId}")
+    public ResponseEntity<Map<String, Object>> getQuotationResponseById(@PathVariable Integer responseId) {
+        Map<String, Object> response = new HashMap<>();
+        
+        try {
+            QuotationResponseWithSupplierDTO quotationResponse = 
+                quotationResponseService.getQuotationResponseWithSupplierById(responseId);
+            
+            if (quotationResponse != null) {
+                response.put("success", true);
+                response.put("response", quotationResponse);
+                return ResponseEntity.ok(response);
+            } else {
+                response.put("success", false);
+                response.put("message", "Quotation response not found");
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+            }
+            
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "Error fetching quotation response: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    /**
+     * Create a new quotation response
+     */
+    @PostMapping("/responses")
+    public ResponseEntity<Map<String, Object>> createQuotationResponse(@RequestBody QuotationResponseDTO quotationResponse) {
+        Map<String, Object> response = new HashMap<>();
+        
+        try {
+            Integer responseId = quotationResponseService.createQuotationResponse(quotationResponse);
+            
+            if (responseId != null) {
+                response.put("success", true);
+                response.put("message", "Quotation response created successfully");
+                response.put("responseId", responseId);
+                return ResponseEntity.ok(response);
+            } else {
+                response.put("success", false);
+                response.put("message", "Failed to create quotation response");
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+            }
+            
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "Error creating quotation response: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    /**
+     * Update quotation response status
+     */
+    @PutMapping("/responses/{responseId}/status")
+    public ResponseEntity<Map<String, Object>> updateQuotationResponseStatus(
+            @PathVariable Integer responseId, 
+            @RequestBody Map<String, String> request) {
+        Map<String, Object> response = new HashMap<>();
+        
+        try {
+            String status = request.get("status");
+            boolean updated = quotationResponseService.updateQuotationResponseStatus(responseId, status);
+            
+            if (updated) {
+                response.put("success", true);
+                response.put("message", "Quotation response status updated successfully");
+                return ResponseEntity.ok(response);
+            } else {
+                response.put("success", false);
+                response.put("message", "Failed to update quotation response status");
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+            }
+            
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "Error updating quotation response status: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    /**
+     * Update quotation response
+     */
+    @PutMapping("/responses/{responseId}")
+    public ResponseEntity<Map<String, Object>> updateQuotationResponse(
+            @PathVariable Integer responseId,
+            @RequestBody QuotationResponseDTO quotationResponse) {
+        Map<String, Object> response = new HashMap<>();
+        
+        try {
+            quotationResponse.setResponseId(responseId);
+            boolean updated = quotationResponseService.updateQuotationResponse(quotationResponse);
+            
+            if (updated) {
+                response.put("success", true);
+                response.put("message", "Quotation response updated successfully");
+                return ResponseEntity.ok(response);
+            } else {
+                response.put("success", false);
+                response.put("message", "Failed to update quotation response");
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+            }
+            
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "Error updating quotation response: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    /**
+     * Delete quotation response
+     */
+    @DeleteMapping("/responses/{responseId}")
+    public ResponseEntity<Map<String, Object>> deleteQuotationResponse(@PathVariable Integer responseId) {
+        Map<String, Object> response = new HashMap<>();
+        
+        try {
+            boolean deleted = quotationResponseService.deleteQuotationResponse(responseId);
+            
+            if (deleted) {
+                response.put("success", true);
+                response.put("message", "Quotation response deleted successfully");
+                return ResponseEntity.ok(response);
+            } else {
+                response.put("success", false);
+                response.put("message", "Failed to delete quotation response");
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+            }
+            
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "Error deleting quotation response: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
