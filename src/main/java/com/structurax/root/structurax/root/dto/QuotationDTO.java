@@ -5,19 +5,35 @@ import java.time.LocalDate;
 public class QuotationDTO {
     private Integer qId;
     private String projectId;
+    private String projectName;
+    private String qsId;
     private LocalDate date;
     private LocalDate deadline;
     private String status; // 'pending', 'sent', 'received', 'closed'
+    private String description;
 
     public QuotationDTO() {
     }
 
-    public QuotationDTO(Integer qId, String projectId, LocalDate date, LocalDate deadline, String status) {
+    public QuotationDTO(Integer qId, String projectId, String projectName, String qsId, LocalDate date, LocalDate deadline, String status) {
         this.qId = qId;
         this.projectId = projectId;
+        this.projectName = projectName;
+        this.qsId = qsId;
         this.date = date;
         this.deadline = deadline;
         this.status = status;
+    }
+
+    public QuotationDTO(Integer qId, String projectId, String projectName, String qsId, LocalDate date, LocalDate deadline, String status, String description) {
+        this.qId = qId;
+        this.projectId = projectId;
+        this.projectName = projectName;
+        this.qsId = qsId;
+        this.date = date;
+        this.deadline = deadline;
+        this.status = status;
+        this.description = description;
     }
 
     // Getters and Setters
@@ -35,6 +51,22 @@ public class QuotationDTO {
 
     public void setProjectId(String projectId) {
         this.projectId = projectId;
+    }
+
+    public String getProjectName() {
+        return projectName;
+    }
+
+    public void setProjectName(String projectName) {
+        this.projectName = projectName;
+    }
+
+    public String getQsId() {
+        return qsId;
+    }
+
+    public void setQsId(String qsId) {
+        this.qsId = qsId;
     }
 
     public LocalDate getDate() {
@@ -61,14 +93,25 @@ public class QuotationDTO {
         this.status = status;
     }
 
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
     @Override
     public String toString() {
         return "QuotationDTO{" +
                 "qId=" + qId +
                 ", projectId='" + projectId + '\'' +
+                ", projectName='" + projectName + '\'' +
+                ", qsId='" + qsId + '\'' +
                 ", date=" + date +
                 ", deadline=" + deadline +
                 ", status='" + status + '\'' +
+                ", description='" + description + '\'' +
                 '}';
     }
 }
