@@ -645,4 +645,67 @@ public class QuotationController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
+
+    // ============ PURCHASE ORDER METHODS ============
+
+    /**
+     * Convert quotation response to purchase order
+     */
+    @PostMapping("/responses/{responseId}/create-purchase-order")
+    public ResponseEntity<Map<String, Object>> createPurchaseOrderFromResponse(
+            @PathVariable Integer responseId,
+            @RequestBody(required = false) Map<String, Object> request) {
+        Map<String, Object> response = new HashMap<>();
+        
+        try {
+            // Extract additional purchase order details (all optional)
+            String deliveryDateStr = null;
+            String paymentStatus = "pending";
+            Boolean orderStatus = false;
+            
+            if (request != null) {
+                deliveryDateStr = (String) request.get("estimatedDeliveryDate");
+                String requestPaymentStatus = (String) request.get("paymentStatus");
+                Boolean requestOrderStatus = (Boolean) request.get("orderStatus");
+                
+                if (requestPaymentStatus != null && !requestPaymentStatus.isEmpty()) {
+                    paymentStatus = requestPaymentStatus;
+                }
+                if (requestOrderStatus != null) {
+                    orderStatus = requestOrderStatus;
+                }
+            }
+            
+            java.time.LocalDate deliveryDate = null;
+            if (deliveryDateStr != null && !deliveryDateStr.isEmpty()) {
+                try {
+                    deliveryDate = java.time.LocalDate.parse(deliveryDateStr);
+                } catch (Exception e) {
+                    response.put("success", false);
+                    response.put("message", "Invalid delivery date format. Use YYYY-MM-DD format.");
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+                }
+            }
+            
+            // Create purchase order from quotation response
+            Integer purchaseOrderId = quotationResponseService.createPurchaseOrderFromResponse(
+                responseId, deliveryDate, paymentStatus, orderStatus);
+            
+            if (purchaseOrderId != null) {
+                response.put("success", true);
+                response.put("message", "Purchase order created successfully from quotation response");
+                response.put("purchaseOrderId", purchaseOrderId);
+                return ResponseEntity.ok(response);
+            } else {
+                response.put("success", false);
+                response.put("message", "Failed to create purchase order from quotation response");
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+            }
+            
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "Error creating purchase order: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
 }
