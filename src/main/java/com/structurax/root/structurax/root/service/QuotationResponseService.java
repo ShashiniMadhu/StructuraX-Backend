@@ -1,5 +1,6 @@
 package com.structurax.root.structurax.root.service;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import com.structurax.root.structurax.root.dto.QuotationResponseDTO;
@@ -28,4 +29,8 @@ public interface QuotationResponseService {
     // Delete operations
     boolean deleteQuotationResponse(Integer responseId);
     void deleteQuotationResponsesByQuotationId(Integer qId);
+    
+    // Purchase order operations
+    Integer createPurchaseOrderFromResponse(Integer responseId, LocalDate estimatedDeliveryDate, 
+                                          String paymentStatus, Boolean orderStatus);
 }
