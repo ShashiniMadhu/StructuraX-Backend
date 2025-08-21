@@ -9,8 +9,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.structurax.root.structurax.root.dao.PurchaseOrderDAO;
 import com.structurax.root.structurax.root.dao.QuotationResponseDAO;
+import com.structurax.root.structurax.root.dto.OrderItemDTO;
 import com.structurax.root.structurax.root.dto.PurchaseOrderDTO;
 import com.structurax.root.structurax.root.dto.QuotationDTO;
+import com.structurax.root.structurax.root.dto.QuotationItemDTO;
 import com.structurax.root.structurax.root.dto.QuotationResponseDTO;
 import com.structurax.root.structurax.root.dto.QuotationResponseWithSupplierDTO;
 import com.structurax.root.structurax.root.service.QuotationResponseService;
@@ -136,6 +138,30 @@ public class QuotationResponseServiceImpl implements QuotationResponseService {
         
         if (purchaseOrderId == null) {
             throw new RuntimeException("Failed to create purchase order");
+        }
+        
+        // Get quotation items and convert them to order items
+        List<QuotationItemDTO> quotationItems = 
+            quotationService.getQuotationItemsByQuotationId(response.getQId());
+        
+        if (quotationItems != null && !quotationItems.isEmpty()) {
+            List<OrderItemDTO> orderItems = new java.util.ArrayList<>();
+            
+            for (QuotationItemDTO quotationItem : quotationItems) {
+                OrderItemDTO orderItem = new OrderItemDTO();
+                orderItem.setOrderId(purchaseOrderId);
+                orderItem.setItemId(quotationItem.getItemId());
+                orderItem.setDescription(quotationItem.getDescription());
+                orderItem.setUnitPrice(quotationItem.getAmount()); // Using amount as unit price
+                orderItem.setQuantity(quotationItem.getQuantity());
+                orderItems.add(orderItem);
+            }
+            
+            // Insert order items
+            boolean itemsInserted = purchaseOrderDAO.insertPurchaseOrderItems(purchaseOrderId, orderItems);
+            if (!itemsInserted) {
+                throw new RuntimeException("Failed to insert purchase order items");
+            }
         }
         
         // Update quotation response status to "accepted" or "purchased"
