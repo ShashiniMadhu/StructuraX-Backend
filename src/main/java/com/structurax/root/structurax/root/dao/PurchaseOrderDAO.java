@@ -17,6 +17,7 @@ public interface PurchaseOrderDAO {
     List<PurchaseOrderDTO> getPurchaseOrdersByProjectId(String projectId);
     List<PurchaseOrderDTO> getPurchaseOrdersBySupplierId(Integer supplierId);
     List<PurchaseOrderDTO> getAllPurchaseOrders();
+    List<PurchaseOrderDTO> getPurchaseOrdersByQsId(String qsId);
     
     // Get purchase order items
     List<OrderItemDTO> getPurchaseOrderItemsByOrderId(Integer orderId);

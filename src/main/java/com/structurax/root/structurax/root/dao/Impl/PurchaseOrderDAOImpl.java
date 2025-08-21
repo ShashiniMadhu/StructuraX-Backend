@@ -146,6 +146,28 @@ public class PurchaseOrderDAOImpl implements PurchaseOrderDAO {
     }
 
     @Override
+    public List<PurchaseOrderDTO> getPurchaseOrdersByQsId(String qsId) {
+        String sql = "SELECT po.order_id, po.project_id, po.supplier_id, po.response_id, po.payment_status, " +
+                    "po.estimated_delivery_date, po.order_date, po.order_status " +
+                    "FROM purchase_order po " +
+                    "INNER JOIN quotation_response qr ON po.response_id = qr.response_id " +
+                    "INNER JOIN quotation q ON qr.q_id = q.q_id " +
+                    "WHERE q.qs_id = ?";
+        return jdbcTemplate.query(sql, (rs, rowNum) -> {
+            PurchaseOrderDTO order = new PurchaseOrderDTO();
+            order.setOrderId(rs.getInt("order_id"));
+            order.setProjectId(rs.getString("project_id"));
+            order.setSupplierId(rs.getInt("supplier_id"));
+            order.setResponseId(rs.getInt("response_id"));
+            order.setPaymentStatus(rs.getString("payment_status"));
+            order.setEstimatedDeliveryDate(rs.getObject("estimated_delivery_date", java.time.LocalDate.class));
+            order.setOrderDate(rs.getObject("order_date", java.time.LocalDate.class));
+            order.setOrderStatus(rs.getBoolean("order_status"));
+            return order;
+        }, qsId);
+    }
+
+    @Override
     public List<OrderItemDTO> getPurchaseOrderItemsByOrderId(Integer orderId) {
         String sql = "SELECT order_id, item_id, description, unit_price, quantity " +
                     "FROM order_item WHERE order_id = ?";

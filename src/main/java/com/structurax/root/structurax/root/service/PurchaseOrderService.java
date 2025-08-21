@@ -12,6 +12,9 @@ public interface PurchaseOrderService {
     List<PurchaseOrderDTO> getPurchaseOrdersBySupplierId(Integer supplierId);
     List<PurchaseOrderDTO> getAllPurchaseOrders();
     
+    // Get purchase orders by QS ID
+    List<PurchaseOrderDTO> getPurchaseOrdersByQsId(String qsId);
+    
     // Get purchase order items
     List<OrderItemDTO> getPurchaseOrderItemsByOrderId(Integer orderId);
     

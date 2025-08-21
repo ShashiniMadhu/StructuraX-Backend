@@ -37,6 +37,11 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
     }
 
     @Override
+    public List<PurchaseOrderDTO> getPurchaseOrdersByQsId(String qsId) {
+        return purchaseOrderDAO.getPurchaseOrdersByQsId(qsId);
+    }
+
+    @Override
     public List<OrderItemDTO> getPurchaseOrderItemsByOrderId(Integer orderId) {
         return purchaseOrderDAO.getPurchaseOrderItemsByOrderId(orderId);
     }

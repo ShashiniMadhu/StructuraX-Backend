@@ -17,8 +17,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.structurax.root.structurax.root.dto.OrderItemDTO;
+import com.structurax.root.structurax.root.dto.Project1DTO;
 import com.structurax.root.structurax.root.dto.PurchaseOrderDTO;
+import com.structurax.root.structurax.root.dto.QuotationResponseWithSupplierDTO;
 import com.structurax.root.structurax.root.service.PurchaseOrderService;
+import com.structurax.root.structurax.root.service.QuotationResponseService;
+import com.structurax.root.structurax.root.service.SQSService;
 
 @RestController
 @RequestMapping("/purchase-order")
@@ -27,9 +31,15 @@ public class PurchaseOrderController {
     
     @Autowired
     private PurchaseOrderService purchaseOrderService;
+    
+    @Autowired
+    private QuotationResponseService quotationResponseService;
+    
+    @Autowired
+    private SQSService sqsService;
 
     /**
-     * Get all purchase orders
+     * Get all purchase orders with enhanced details
      */
     @GetMapping("/all")
     public ResponseEntity<Map<String, Object>> getAllPurchaseOrders() {
@@ -37,8 +47,17 @@ public class PurchaseOrderController {
         
         try {
             List<PurchaseOrderDTO> orders = purchaseOrderService.getAllPurchaseOrders();
+            
+            // Enhance each order with additional details
+            List<Map<String, Object>> enhancedOrders = new java.util.ArrayList<>();
+            for (PurchaseOrderDTO order : orders) {
+                Map<String, Object> enhancedOrder = createEnhancedOrderResponse(order);
+                enhancedOrders.add(enhancedOrder);
+            }
+            
             response.put("success", true);
-            response.put("orders", orders);
+            response.put("orders", enhancedOrders);
+            response.put("totalCount", orders.size());
             return ResponseEntity.ok(response);
             
         } catch (Exception e) {
@@ -49,7 +68,7 @@ public class PurchaseOrderController {
     }
 
     /**
-     * Get purchase order by ID
+     * Get purchase order by ID with complete details
      */
     @GetMapping("/{orderId}")
     public ResponseEntity<Map<String, Object>> getPurchaseOrderById(@PathVariable Integer orderId) {
@@ -59,8 +78,9 @@ public class PurchaseOrderController {
             PurchaseOrderDTO order = purchaseOrderService.getPurchaseOrderById(orderId);
             
             if (order != null) {
+                Map<String, Object> enhancedOrder = createEnhancedOrderResponse(order);
                 response.put("success", true);
-                response.put("order", order);
+                response.put("order", enhancedOrder);
                 return ResponseEntity.ok(response);
             } else {
                 response.put("success", false);
@@ -76,7 +96,7 @@ public class PurchaseOrderController {
     }
 
     /**
-     * Get purchase orders by project ID
+     * Get purchase orders by project ID with enhanced details
      */
     @GetMapping("/project/{projectId}")
     public ResponseEntity<Map<String, Object>> getPurchaseOrdersByProjectId(@PathVariable String projectId) {
@@ -84,8 +104,18 @@ public class PurchaseOrderController {
         
         try {
             List<PurchaseOrderDTO> orders = purchaseOrderService.getPurchaseOrdersByProjectId(projectId);
+            
+            // Enhance each order with additional details
+            List<Map<String, Object>> enhancedOrders = new java.util.ArrayList<>();
+            for (PurchaseOrderDTO order : orders) {
+                Map<String, Object> enhancedOrder = createEnhancedOrderResponse(order);
+                enhancedOrders.add(enhancedOrder);
+            }
+            
             response.put("success", true);
-            response.put("orders", orders);
+            response.put("orders", enhancedOrders);
+            response.put("projectId", projectId);
+            response.put("totalCount", orders.size());
             return ResponseEntity.ok(response);
             
         } catch (Exception e) {
@@ -96,7 +126,7 @@ public class PurchaseOrderController {
     }
 
     /**
-     * Get purchase orders by supplier ID
+     * Get purchase orders by supplier ID with enhanced details
      */
     @GetMapping("/supplier/{supplierId}")
     public ResponseEntity<Map<String, Object>> getPurchaseOrdersBySupplierId(@PathVariable Integer supplierId) {
@@ -104,13 +134,83 @@ public class PurchaseOrderController {
         
         try {
             List<PurchaseOrderDTO> orders = purchaseOrderService.getPurchaseOrdersBySupplierId(supplierId);
+            
+            // Enhance each order with additional details
+            List<Map<String, Object>> enhancedOrders = new java.util.ArrayList<>();
+            for (PurchaseOrderDTO order : orders) {
+                Map<String, Object> enhancedOrder = createEnhancedOrderResponse(order);
+                enhancedOrders.add(enhancedOrder);
+            }
+            
             response.put("success", true);
-            response.put("orders", orders);
+            response.put("orders", enhancedOrders);
+            response.put("supplierId", supplierId);
+            response.put("totalCount", orders.size());
             return ResponseEntity.ok(response);
             
         } catch (Exception e) {
             response.put("success", false);
             response.put("message", "Error fetching purchase orders for supplier: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    /**
+     * Get purchase orders by QS ID with items and supplier details
+     */
+    @GetMapping("/qs/{qsId}")
+    public ResponseEntity<Map<String, Object>> getPurchaseOrdersByQsId(@PathVariable String qsId) {
+        Map<String, Object> response = new HashMap<>();
+        
+        try {
+            List<PurchaseOrderDTO> orders = purchaseOrderService.getPurchaseOrdersByQsId(qsId);
+            
+            // Enhance each order with supplier details and items
+            List<Map<String, Object>> enhancedOrders = new java.util.ArrayList<>();
+            for (PurchaseOrderDTO order : orders) {
+                Map<String, Object> enhancedOrder = createEnhancedOrderResponseWithSupplier(order);
+                enhancedOrders.add(enhancedOrder);
+            }
+            
+            response.put("success", true);
+            response.put("orders", enhancedOrders);
+            response.put("qsId", qsId);
+            response.put("totalCount", orders.size());
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "Error fetching purchase orders for QS: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    /**
+     * Get purchase order with items by order ID
+     */
+    @GetMapping("/{orderId}/with-items")
+    public ResponseEntity<Map<String, Object>> getPurchaseOrderWithItems(@PathVariable Integer orderId) {
+        Map<String, Object> response = new HashMap<>();
+        
+        try {
+            PurchaseOrderDTO order = purchaseOrderService.getPurchaseOrderById(orderId);
+            List<OrderItemDTO> items = purchaseOrderService.getPurchaseOrderItemsByOrderId(orderId);
+            
+            if (order != null) {
+                response.put("success", true);
+                response.put("order", order);
+                response.put("items", items);
+                response.put("itemCount", items != null ? items.size() : 0);
+                return ResponseEntity.ok(response);
+            } else {
+                response.put("success", false);
+                response.put("message", "Purchase order not found");
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+            }
+            
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "Error fetching purchase order with items: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
@@ -249,6 +349,179 @@ public class PurchaseOrderController {
             response.put("success", false);
             response.put("message", "Error deleting purchase order: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    /**
+     * Get purchase orders summary by status
+     */
+    @GetMapping("/summary")
+    public ResponseEntity<Map<String, Object>> getPurchaseOrdersSummary() {
+        Map<String, Object> response = new HashMap<>();
+        
+        try {
+            List<PurchaseOrderDTO> allOrders = purchaseOrderService.getAllPurchaseOrders();
+            
+            // Create summary statistics
+            Map<String, Object> summary = new HashMap<>();
+            int totalOrders = allOrders.size();
+            int completedOrders = 0;
+            int pendingOrders = 0;
+            int pendingPayments = 0;
+            int partialPayments = 0;
+            int paidOrders = 0;
+            
+            for (PurchaseOrderDTO order : allOrders) {
+                // Fixed: true = completed, false/null = pending
+                if (order.getOrderStatus() != null && order.getOrderStatus()) {
+                    completedOrders++;
+                } else {
+                    pendingOrders++;
+                }
+                
+                String paymentStatus = order.getPaymentStatus();
+                if ("pending".equals(paymentStatus)) {
+                    pendingPayments++;
+                } else if ("partial".equals(paymentStatus)) {
+                    partialPayments++;
+                } else if ("paid".equals(paymentStatus)) {
+                    paidOrders++;
+                }
+            }
+            
+            summary.put("totalOrders", totalOrders);
+            summary.put("completedOrders", completedOrders);
+            summary.put("pendingOrders", pendingOrders);
+            summary.put("pendingPayments", pendingPayments);
+            summary.put("partialPayments", partialPayments);
+            summary.put("paidOrders", paidOrders);
+            
+            response.put("success", true);
+            response.put("summary", summary);
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "Error fetching purchase orders summary: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    // ============ HELPER METHODS ============
+
+    /**
+     * Create enhanced order response with additional details
+     */
+    private Map<String, Object> createEnhancedOrderResponse(PurchaseOrderDTO order) {
+        Map<String, Object> enhancedOrder = new HashMap<>();
+        
+        // Basic order information
+        enhancedOrder.put("orderId", order.getOrderId());
+        enhancedOrder.put("projectId", order.getProjectId());
+        enhancedOrder.put("supplierId", order.getSupplierId());
+        enhancedOrder.put("responseId", order.getResponseId());
+        enhancedOrder.put("paymentStatus", order.getPaymentStatus());
+        enhancedOrder.put("estimatedDeliveryDate", order.getEstimatedDeliveryDate());
+        enhancedOrder.put("orderDate", order.getOrderDate());
+        enhancedOrder.put("orderStatus", order.getOrderStatus());
+        
+        // Add project name
+        try {
+            Project1DTO project = sqsService.getProjectById(order.getProjectId());
+            if (project != null) {
+                enhancedOrder.put("projectName", project.getName());
+                enhancedOrder.put("projectLocation", project.getLocation());
+                enhancedOrder.put("projectCategory", project.getCategory());
+            }
+        } catch (Exception e) {
+            enhancedOrder.put("projectError", "Error loading project details: " + e.getMessage());
+        }
+        
+        // Add order items
+        try {
+            List<OrderItemDTO> items = purchaseOrderService.getPurchaseOrderItemsByOrderId(order.getOrderId());
+            enhancedOrder.put("items", items);
+            enhancedOrder.put("itemCount", items != null ? items.size() : 0);
+            
+            // Calculate total amount from items
+            java.math.BigDecimal totalAmount = java.math.BigDecimal.ZERO;
+            if (items != null) {
+                for (OrderItemDTO item : items) {
+                    if (item.getUnitPrice() != null && item.getQuantity() != null) {
+                        java.math.BigDecimal lineTotal = item.getUnitPrice()
+                            .multiply(java.math.BigDecimal.valueOf(item.getQuantity()));
+                        totalAmount = totalAmount.add(lineTotal);
+                    }
+                }
+            }
+            enhancedOrder.put("totalAmount", totalAmount);
+            
+        } catch (Exception e) {
+            enhancedOrder.put("items", new java.util.ArrayList<>());
+            enhancedOrder.put("itemCount", 0);
+            enhancedOrder.put("totalAmount", java.math.BigDecimal.ZERO);
+            enhancedOrder.put("itemsError", "Error loading items: " + e.getMessage());
+        }
+        
+        // Add status descriptions - Fixed: 0 = pending, 1 = completed
+        enhancedOrder.put("orderStatusText", getOrderStatusText(order.getOrderStatus()));
+        enhancedOrder.put("paymentStatusText", getPaymentStatusText(order.getPaymentStatus()));
+        
+        return enhancedOrder;
+    }
+
+    /**
+     * Create enhanced order response with supplier details
+     */
+    private Map<String, Object> createEnhancedOrderResponseWithSupplier(PurchaseOrderDTO order) {
+        Map<String, Object> enhancedOrder = createEnhancedOrderResponse(order);
+        
+        // Add supplier details from quotation response
+        try {
+            QuotationResponseWithSupplierDTO responseWithSupplier = 
+                quotationResponseService.getQuotationResponseWithSupplierById(order.getResponseId());
+            
+            if (responseWithSupplier != null) {
+                Map<String, Object> supplierDetails = new HashMap<>();
+                supplierDetails.put("supplierId", responseWithSupplier.getSupplierId());
+                supplierDetails.put("supplierName", responseWithSupplier.getSupplierName());
+                supplierDetails.put("supplierEmail", responseWithSupplier.getSupplierEmail());
+                supplierDetails.put("supplierPhone", responseWithSupplier.getSupplierPhone());
+                supplierDetails.put("supplierAddress", responseWithSupplier.getSupplierAddress());
+                
+                enhancedOrder.put("supplierDetails", supplierDetails);
+                enhancedOrder.put("quotationId", responseWithSupplier.getQId());
+                enhancedOrder.put("quotationResponseStatus", responseWithSupplier.getStatus());
+                enhancedOrder.put("originalDeliveryDate", responseWithSupplier.getDeliveryDate());
+                enhancedOrder.put("totalQuotationAmount", responseWithSupplier.getTotalAmount());
+            }
+        } catch (Exception e) {
+            enhancedOrder.put("supplierDetailsError", "Error loading supplier details: " + e.getMessage());
+        }
+        
+        return enhancedOrder;
+    }
+
+    /**
+     * Get human-readable order status text
+     */
+    private String getOrderStatusText(Boolean orderStatus) {
+        if (orderStatus == null) return "Unknown";
+        // Fixed: 0 (false) = pending, 1 (true) = completed
+        return orderStatus ? "Completed" : "Pending";
+    }
+
+    /**
+     * Get human-readable payment status text
+     */
+    private String getPaymentStatusText(String paymentStatus) {
+        if (paymentStatus == null) return "Unknown";
+        
+        switch (paymentStatus.toLowerCase()) {
+            case "pending": return "Payment Pending";
+            case "partial": return "Partially Paid";
+            case "paid": return "Fully Paid";
+            default: return paymentStatus;
         }
     }
 }
