@@ -17,6 +17,11 @@ public class SiteSupervisorServiceImpl implements SiteSupervisorService {
     private SiteSupervisorDAO siteSupervisorDAO;
 
 
+    @Override
+    public List<ProjectDTO> getProjectsBySsId(String id) {
+        return siteSupervisorDAO.getProjectsBySsId(id);
+    }
+
     public List<LaborAttendanceDTO> createLaborAttendance(List<LaborAttendanceDTO> laborAttendanceList) {
         return siteSupervisorDAO.createLaborAttendance(laborAttendanceList);
     }
@@ -28,7 +33,7 @@ public class SiteSupervisorServiceImpl implements SiteSupervisorService {
     }
 
     @Override
-    public List<LaborAttendanceDTO> getAttendanceByProjectIdAndDate(Integer project_id, Date date) {
+    public List<LaborAttendanceDTO> getAttendanceByProjectIdAndDate(String project_id, Date date) {
         return siteSupervisorDAO.getAttendanceByProjectIdAndDate(project_id,date);
     }
 
@@ -39,7 +44,7 @@ public class SiteSupervisorServiceImpl implements SiteSupervisorService {
 
 
     @Override
-    public List<LaborAttendanceDTO> deleteLaborAttendanceRecord(Integer project_id, Date date) {
+    public List<LaborAttendanceDTO> deleteLaborAttendanceRecord(String project_id, Date date) {
         return siteSupervisorDAO.deleteLaborAttendanceRecord(project_id, date);
     }
 
@@ -49,19 +54,35 @@ public class SiteSupervisorServiceImpl implements SiteSupervisorService {
     }
 
     @Override
-    public List<RequestDTO> getAllMaterialRequests() {
+    public List<RequestSiteResourcesDTO> getAllMaterialRequests() {
         return siteSupervisorDAO.getAllMaterialRequests();
     }
 
     @Override
-    public List<RequestDTO> getAllToolRequests() {
+    public List<RequestSiteResourcesDTO> getAllToolRequests() {
         return siteSupervisorDAO.getAllToolRequests();
     }
 
     @Override
-    public RequestDTO createMaterialRequest(RequestDTO requestDTO) {
-        RequestDTO request=siteSupervisorDAO.createMaterialRequest(requestDTO);
+    public RequestSiteResourcesDTO createMaterialRequest(RequestSiteResourcesDTO requestDTO) {
+        RequestSiteResourcesDTO request=siteSupervisorDAO.createMaterialRequest(requestDTO);
         return request;
+    }
+
+    @Override
+    public RequestSiteResourcesDTO updateRequest(RequestSiteResourcesDTO requestSiteResourcesDTO) {
+        RequestSiteResourcesDTO request = siteSupervisorDAO.updateRequest(requestSiteResourcesDTO);
+        return request;
+    }
+
+    @Override
+    public RequestSiteResourcesDTO getRequestById(Integer requestId) {
+        return siteSupervisorDAO.getRequestById(requestId);
+    }
+
+    @Override
+    public RequestSiteResourcesDTO deleteRequest(int requestId) {
+        return siteSupervisorDAO.deleteRequest(requestId);
     }
 
     @Override

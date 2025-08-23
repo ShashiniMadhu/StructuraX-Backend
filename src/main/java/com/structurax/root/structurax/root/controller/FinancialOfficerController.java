@@ -1,15 +1,15 @@
 package com.structurax.root.structurax.root.controller;
 
 
-import com.structurax.root.structurax.root.dto.InstallmentDTO;
-import com.structurax.root.structurax.root.dto.PaymentPlanDTO;
-import com.structurax.root.structurax.root.dto.ProjectDTO;
+import com.structurax.root.structurax.root.dto.*;
 import com.structurax.root.structurax.root.service.FinancialOfficerService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Date;
 import java.util.List;
 
 @CrossOrigin(origins = "http://localhost:5173")
@@ -29,7 +29,7 @@ public class FinancialOfficerController {
 
 
     @GetMapping("/project/{id}")
-    public ResponseEntity<ProjectDTO> getProjectById(@PathVariable Integer id){
+    public ResponseEntity<ProjectDTO> getProjectById(@PathVariable String id){
         ProjectDTO project = financialOfficerService.getProjectById(id);
         return new ResponseEntity<>(project,HttpStatus.OK);
     }
@@ -54,7 +54,7 @@ public class FinancialOfficerController {
     }
 
     @GetMapping("/payment_plan/full/{id}")
-    public ResponseEntity<PaymentPlanDTO> getPaymentPlanByProjectId(@PathVariable Integer id){
+    public ResponseEntity<PaymentPlanDTO> getPaymentPlanByProjectId(@PathVariable String id){
         PaymentPlanDTO paymentPlan = financialOfficerService.getPaymentPlanByProjectId(id);
         return new ResponseEntity<>(paymentPlan,HttpStatus.OK);
     }
@@ -107,5 +107,61 @@ public class FinancialOfficerController {
         InstallmentDTO installmentDTO = financialOfficerService.deleteInstallmentById(id);
         return new ResponseEntity<>(installmentDTO, HttpStatus.OK);
     }*/
+
+
+    @DeleteMapping("/payment_plan/{projectId}")
+    public ResponseEntity<PaymentPlanDTO> deletePaymentPlanByProjectId(@PathVariable String projectId) {
+        System.out.println("DELETE called for projectId: " + projectId);
+        try {
+            PaymentPlanDTO deletedPlan = financialOfficerService.deletePaymentPlanById(projectId);
+            return new ResponseEntity<>(deletedPlan, HttpStatus.OK);
+        } catch (RuntimeException ex) {
+            System.out.println("Delete failed: " + ex.getMessage());
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+    }
+
+
+    /*------labor salary-----*/
+    @GetMapping("/attendance/{projectId}/date")
+    public ResponseEntity<List<LaborAttendanceDTO>> getLaborAttendanceByProjectId(
+            @PathVariable String projectId,
+            @RequestParam("date") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Date date) {
+
+        List<LaborAttendanceDTO> attendance = financialOfficerService.getLaborAttendanceByProjectId(projectId, date);
+        if (attendance == null || attendance.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(attendance);
+    }
+
+
+    @GetMapping("/attendance/{id}")
+    public ResponseEntity<LaborAttendanceDTO> getAttendanceById(@PathVariable int id){
+        LaborAttendanceDTO attendance = financialOfficerService.getAttendanceById(id);
+        return new ResponseEntity<>(attendance,HttpStatus.OK);
+    }
+
+
+    @PostMapping("/labor_salary")
+    public ResponseEntity<LaborSalaryDTO> insertSalary(@RequestBody LaborSalaryDTO laborSalaryDTO){
+        financialOfficerService.insertSalary(laborSalaryDTO);
+        return new ResponseEntity<>(laborSalaryDTO, HttpStatus.OK);
+    }
+
+    @DeleteMapping("/labor_salary/{salaryId}")
+    public ResponseEntity<LaborSalaryDTO> deleteSalaryRecordById(@PathVariable int salaryId){
+        LaborSalaryDTO salaryRecord = financialOfficerService.deleteSalaryRecordById(salaryId);
+        return new ResponseEntity<>(salaryRecord, HttpStatus.OK);
+    }
+
+    @PutMapping("/labor_salary")
+    public ResponseEntity<List<LaborSalaryDTO>> updateSalaryRecord(@RequestBody List<LaborSalaryDTO> laborSalaryDTOList) {
+        List<LaborSalaryDTO> updatedList = financialOfficerService.updateSalaryRecord(laborSalaryDTOList);
+        return new ResponseEntity<>(updatedList, HttpStatus.OK);
+    }
+
+
+
 
 }

@@ -1,16 +1,16 @@
 package com.structurax.root.structurax.root.dao.Impl;
 
 import com.structurax.root.structurax.root.dao.FinancialOfficerDAO;
-import com.structurax.root.structurax.root.dto.InstallmentDTO;
-import com.structurax.root.structurax.root.dto.PaymentPlanDTO;
-import com.structurax.root.structurax.root.dto.ProjectDTO;
+import com.structurax.root.structurax.root.dto.*;
 import com.structurax.root.structurax.root.util.DatabaseConnection;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Date;
 
 @Repository
 public class FinancialOfficerDAOImpl implements FinancialOfficerDAO {
@@ -31,12 +31,12 @@ public class FinancialOfficerDAOImpl implements FinancialOfficerDAO {
         ) {
             while (rs.next()) {
                 ProjectDTO project = new ProjectDTO();
-                project.setProjectId(rs.getInt("project_id"));
+                project.setProjectId(rs.getString("project_id"));
                 project.setName(rs.getString("name"));
                 project.setDescription(rs.getString("description"));
                 project.setLocation(rs.getString("location"));
                 project.setStatus(rs.getString("status"));
-                project.setType(rs.getString("type"));
+                project.setCategory(rs.getString("category"));
 
                 if (rs.getDate("start_date") != null) {
                     project.setStartDate(rs.getDate("start_date").toLocalDate());
@@ -47,13 +47,13 @@ public class FinancialOfficerDAOImpl implements FinancialOfficerDAO {
                 }
 
                 project.setEstimatedValue(rs.getBigDecimal("estimated_value"));
-                project.setAmountSpent(rs.getBigDecimal("amount_spent"));
-                project.setBaseAmount(rs.getBigDecimal("base_amount"));
-                project.setOwnerId(rs.getInt("owner_id"));
-                project.setQsId(rs.getInt("qs_id"));
-                project.setSqsId(rs.getInt("sqs_id"));
-                project.setSpId(rs.getInt("sp_id"));
-                project.setPlanId(rs.getInt("plan_id"));
+                project.setBudget(rs.getBigDecimal("budget"));
+
+                project.setClientId(rs.getString("client_id"));
+                project.setQsId(rs.getString("qs_id"));
+                project.setPmId(rs.getString("pm_id"));
+                project.setSsId(rs.getString("ss_id"));
+
 
                 projectList.add(project);
             }
@@ -65,22 +65,22 @@ public class FinancialOfficerDAOImpl implements FinancialOfficerDAO {
     }
 
     @Override
-    public ProjectDTO getProjectById(Integer id) {
+    public ProjectDTO getProjectById(String id) {
         final String sql = "SELECT * FROM project WHERE project_id = ?";
         try (
                 Connection connection = databaseConnection.getConnection();
                 PreparedStatement preparedStatement = connection.prepareStatement(sql)
         ) {
-            preparedStatement.setInt(1, id);
+            preparedStatement.setString(1, id);
             try (ResultSet rs = preparedStatement.executeQuery()) {
                 if (rs.next()) {
                     ProjectDTO project = new ProjectDTO();
-                    project.setProjectId(rs.getInt("project_id"));
+                    project.setProjectId(rs.getString("project_id"));
                     project.setName(rs.getString("name"));
                     project.setDescription(rs.getString("description"));
                     project.setLocation(rs.getString("location"));
                     project.setStatus(rs.getString("status"));
-                    project.setType(rs.getString("type"));
+                    project.setCategory(rs.getString("category"));
 
                     if (rs.getDate("start_date") != null)
                         project.setStartDate(rs.getDate("start_date").toLocalDate());
@@ -89,13 +89,13 @@ public class FinancialOfficerDAOImpl implements FinancialOfficerDAO {
                         project.setDueDate(rs.getDate("due_date").toLocalDate());
 
                     project.setEstimatedValue(rs.getBigDecimal("estimated_value"));
-                    project.setAmountSpent(rs.getBigDecimal("amount_spent"));
-                    project.setBaseAmount(rs.getBigDecimal("base_amount"));
-                    project.setOwnerId(rs.getInt("owner_id"));
-                    project.setQsId(rs.getInt("qs_id"));
-                    project.setSqsId(rs.getInt("sqs_id"));
-                    project.setSpId(rs.getInt("sp_id"));
-                    project.setPlanId(rs.getInt("plan_id"));
+
+                    project.setBudget(rs.getBigDecimal("budget"));
+                    project.setClientId(rs.getString("client_id"));
+                    project.setQsId(rs.getString("qs_id"));
+                    project.setPmId(rs.getString("pm_id"));
+                    project.setSsId(rs.getString("ss_id"));
+
 
                     return project;
                 }
@@ -158,12 +158,13 @@ public class FinancialOfficerDAOImpl implements FinancialOfficerDAO {
                 if (rs.next()) {
                     return new PaymentPlanDTO(
                             rs.getInt("payment_plan_id"),
+                            rs.getString("project_id"),
                             rs.getDate("created_date"),
                             rs.getDouble("total_amount"),
                             rs.getDate("start_date"),
                             rs.getDate("end_date"),
-                            rs.getInt("no_of_installments"),
-                            rs.getInt("project_id")
+                            rs.getInt("no_of_installments")
+
                     );
 
 
@@ -246,13 +247,16 @@ public class FinancialOfficerDAOImpl implements FinancialOfficerDAO {
                     InstallmentDTO dto = new InstallmentDTO();
                     dto.setInstallmentId(rs.getInt("installment_id"));
                     dto.setPaymentPlanId(rs.getInt("payment_plan_id"));
-                    dto.setMilestone(rs.getString("milestone"));
+
                     dto.setAmount(rs.getDouble("amount"));
                     dto.setDueDate(rs.getDate("due_date"));
                     dto.setStatus(rs.getString("status"));
+                    dto.setPaidDate(rs.getDate("paid_date"));
 
                     installmentList.add(dto);
-                  ;
+
+                   // System.out.println("Installments fetched: " + installmentList);
+
                 }
             }
         } catch (SQLException e) {
@@ -367,25 +371,26 @@ public class FinancialOfficerDAOImpl implements FinancialOfficerDAO {
 
     /*---------CRUD for full payment plan with installments ------------*/
     @Override
-    public PaymentPlanDTO getPaymentPlanByProjectId(Integer projectId) {
+    public PaymentPlanDTO getPaymentPlanByProjectId(String projectId) {
         final String sql = "SELECT * FROM payment_plan WHERE project_id = ?";
 
         try (
                 Connection connection = databaseConnection.getConnection();
                 PreparedStatement preparedStatement = connection.prepareStatement(sql)
         ) {
-            preparedStatement.setInt(1, projectId);
+            preparedStatement.setString(1, projectId);
 
             try (ResultSet rs = preparedStatement.executeQuery()) {
                 if (rs.next()) {
                     PaymentPlanDTO paymentPlan = new PaymentPlanDTO(
                             rs.getInt("payment_plan_id"),
+                            rs.getString("project_id"),
                             rs.getDate("created_date"),
                             rs.getDouble("total_amount"),
                             rs.getDate("start_date"),
                             rs.getDate("end_date"),
-                            rs.getInt("no_of_installments"),
-                            rs.getInt("project_id")
+                            rs.getInt("no_of_installments")
+
                     );
 
                     // ✅ Fetch Installments for this Payment Plan
@@ -417,7 +422,7 @@ public class FinancialOfficerDAOImpl implements FinancialOfficerDAO {
             planStmt.setDate(3, paymentPlanDTO.getStartDate());
             planStmt.setDate(4, paymentPlanDTO.getEndDate());
             planStmt.setInt(5, paymentPlanDTO.getNumberOfInstallments());
-            planStmt.setInt(6,paymentPlanDTO.getProjectId());
+            planStmt.setString(6,paymentPlanDTO.getProjectId());
 
             int rows = planStmt.executeUpdate();
             if (rows == 0) throw new SQLException("Creating payment plan failed.");
@@ -429,16 +434,17 @@ public class FinancialOfficerDAOImpl implements FinancialOfficerDAO {
                     paymentPlanDTO.setPaymentPlanId(generatedPlanId);
 
                     // 3. Insert each installment
-                    String installmentSql = "INSERT INTO installment (payment_plan_id, milestone, amount, due_date, status) " +
+                    String installmentSql = "INSERT INTO installment (payment_plan_id, amount, due_date, status,paid_date) " +
                             "VALUES (?, ?, ?, ?, ?)";
 
                     try (PreparedStatement installmentStmt = connection.prepareStatement(installmentSql)) {
                         for (InstallmentDTO installment : paymentPlanDTO.getInstallments()) {
                             installmentStmt.setInt(1, generatedPlanId);
-                            installmentStmt.setString(2, installment.getMilestone());
-                            installmentStmt.setDouble(3, installment.getAmount());
-                            installmentStmt.setDate(4, new java.sql.Date(installment.getDueDate().getTime()));
-                            installmentStmt.setString(5, installment.getStatus() != null ? installment.getStatus() : "Pending");
+                            //installmentStmt.setString(2, installment.getMilestone());
+                            installmentStmt.setDouble(2, installment.getAmount());
+                            installmentStmt.setDate(3, new java.sql.Date(installment.getDueDate().getTime()));
+                            installmentStmt.setString(4, installment.getStatus() != null ? installment.getStatus() : "Pending");
+                            installmentStmt.setDate(5, new java.sql.Date(installment.getPaidDate().getTime()));
                             installmentStmt.addBatch(); // Batch insert for efficiency
                         }
                         installmentStmt.executeBatch();
@@ -463,27 +469,25 @@ public class FinancialOfficerDAOImpl implements FinancialOfficerDAO {
             connection = databaseConnection.getConnection();
             connection.setAutoCommit(false);  // begin transaction
 
+            // Update payment plan
             final String sqlUpdatePlan = "UPDATE payment_plan SET created_date = ?, total_amount = ?, start_date = ?, end_date = ?, no_of_installments = ? WHERE project_id = ?";
             try (PreparedStatement psPlan = connection.prepareStatement(sqlUpdatePlan)) {
                 java.sql.Date currentDate = new java.sql.Date(System.currentTimeMillis());
                 psPlan.setDate(1, currentDate);
 
                 psPlan.setDouble(2, paymentPlanDTO.getTotalAmount());
-                // If startDate is null, use current date instead
                 if (paymentPlanDTO.getStartDate() != null) {
                     psPlan.setDate(3, new java.sql.Date(paymentPlanDTO.getStartDate().getTime()));
                 } else {
-                    psPlan.setDate(3, currentDate);  // <-- fallback to current date
+                    psPlan.setDate(3, currentDate);
                 }
-
-                // For endDate, allow null, or set date
                 if (paymentPlanDTO.getEndDate() != null) {
                     psPlan.setDate(4, new java.sql.Date(paymentPlanDTO.getEndDate().getTime()));
                 } else {
                     psPlan.setDate(4, currentDate);
                 }
                 psPlan.setInt(5, paymentPlanDTO.getNumberOfInstallments());
-                psPlan.setInt(6, paymentPlanDTO.getProjectId());
+                psPlan.setString(6, paymentPlanDTO.getProjectId());
 
                 int updatedPlanRows = psPlan.executeUpdate();
                 if (updatedPlanRows == 0) {
@@ -491,24 +495,41 @@ public class FinancialOfficerDAOImpl implements FinancialOfficerDAO {
                 }
             }
 
-            final String sqlUpdateInstallment = "UPDATE installment SET milestone = ?, amount = ?, due_date = ?, status = ? WHERE installment_id = ?";
-            try (PreparedStatement psInstallment = connection.prepareStatement(sqlUpdateInstallment)) {
+            // Prepare statements for insert and update installments
+            final String sqlUpdateInstallment = "UPDATE installment SET amount = ?, due_date = ?, status = ?, paid_date = ? WHERE installment_id = ?";
+            final String sqlInsertInstallment = "INSERT INTO installment (payment_plan_id, amount, due_date, status, paid_date) VALUES (?, ?, ?, ?, ?)";
+
+            try (
+                    PreparedStatement psUpdate = connection.prepareStatement(sqlUpdateInstallment);
+                    PreparedStatement psInsert = connection.prepareStatement(sqlInsertInstallment)
+            ) {
                 for (InstallmentDTO installment : paymentPlanDTO.getInstallments()) {
                     if (installment.getInstallmentId() == 0) {
-                        throw new RuntimeException("Invalid installment ID for update: " + installment);
-                    }
+                        // Insert new installment
+                        psInsert.setInt(1, paymentPlanDTO.getPaymentPlanId()); // make sure this is set correctly
+                        psInsert.setDouble(2, installment.getAmount());
+                        psInsert.setDate(3, installment.getDueDate());
+                        psInsert.setString(4, installment.getStatus());
+                        psInsert.setDate(5, installment.getPaidDate());
 
-                    psInstallment.setString(1, installment.getMilestone());
-                    psInstallment.setDouble(2, installment.getAmount());
-                    psInstallment.setDate(3, installment.getDueDate());
-                    psInstallment.setString(4, installment.getStatus());
-                    psInstallment.setInt(5, installment.getInstallmentId());
+                        psInsert.addBatch();
+                        System.out.println("Inserting new installment with amount: " + installment.getAmount());
+                    } else {
+                        // Update existing installment
+                        psUpdate.setDouble(1, installment.getAmount());
+                        psUpdate.setDate(2, installment.getDueDate());
+                        psUpdate.setString(3, installment.getStatus());
+                        psUpdate.setDate(4, installment.getPaidDate());
+                        psUpdate.setInt(5, installment.getInstallmentId());
 
-                    int updatedInstallmentRows = psInstallment.executeUpdate();
-                    if (updatedInstallmentRows == 0) {
-                        throw new RuntimeException("Installment update failed. ID may not exist: " + installment.getInstallmentId());
+                        psUpdate.addBatch();
+                        System.out.println("Updating installment ID: " + installment.getInstallmentId());
                     }
                 }
+
+
+                psUpdate.executeBatch();
+                psInsert.executeBatch();
             }
 
             connection.commit();
@@ -534,29 +555,263 @@ public class FinancialOfficerDAOImpl implements FinancialOfficerDAO {
     }
 
 
-
-
     @Override
-    public PaymentPlanDTO deletePaymentPlanById(Integer id) {
-        PaymentPlanDTO paymentPlan = getPaymentPlanByProjectId(id);
-        if (paymentPlan == null) {
-            throw new RuntimeException("No payment plan found with project id : " + id);
-        }
+    public List<LaborAttendanceDTO> getLaborAttendanceByProjectId(String projectId, Date date) {
+        final String sql = "SELECT la.*,ls.* FROM labor_attendance la " +
+                "LEFT JOIN labor_salary ls ON ls.attendance_id=la.attendance_id WHERE la.project_id=? AND la.date =?";
 
-        final String sql = "DELETE FROM payment_plan WHERE project_id = ?";
+        List<LaborAttendanceDTO> attendanceList = new ArrayList<>();
 
         try (
                 Connection connection = databaseConnection.getConnection();
                 PreparedStatement preparedStatement = connection.prepareStatement(sql)
         ) {
-            preparedStatement.setInt(1, id);
+            preparedStatement.setString(1, projectId);
+            preparedStatement.setDate(2,new java.sql.Date(date.getTime()));
+
+            try (ResultSet rs = preparedStatement.executeQuery()) {
+                while (rs.next()) {
+                    LaborAttendanceDTO dto = new LaborAttendanceDTO();
+                    dto.setId(rs.getInt("attendance_id"));
+                    dto.setProject_id(rs.getString("project_id"));
+
+                    dto.setDate(rs.getDate("date"));
+                    dto.setHiring_type(rs.getString("hiring_type"));
+                    dto.setLabor_type(rs.getString("labor_type"));
+                    dto.setCount(rs.getInt("count"));
+                    dto.setCompany(rs.getString("company_name"));
+
+                    BigDecimal cost = rs.getBigDecimal("cost");
+
+                    if (cost != null) {
+                        LaborSalaryDTO laborSalaryDTO = new LaborSalaryDTO();
+                        laborSalaryDTO.setSalaryId(rs.getInt("salary_id"));
+                        laborSalaryDTO.setCost(cost);
+                        laborSalaryDTO.setAttendanceId(rs.getInt("attendance_id"));
+                        laborSalaryDTO.setProjectId(rs.getString("project_id"));
+                        laborSalaryDTO.setLaborRate(rs.getBigDecimal("labor_rate"));
+                        dto.setSalary(laborSalaryDTO);
+                    }
+
+                    attendanceList.add(dto);
+
+                    // System.out.println("Installments fetched: " + installmentList);
+
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error fetching installments by Payment Plan ID: " + e.getMessage(), e);
+        }
+
+        return attendanceList;
+    }
+
+    @Override
+    public LaborAttendanceDTO getAttendanceById(int attendanceId) {
+        final String sql = "SELECT la.*, ls.cost  FROM labor_attendance la " +
+                "LEFT JOIN labor_salary ls ON ls.attendance_id = la.attendance_id " +
+                "WHERE la.attendance_id = ?";
+        try (
+                Connection connection = databaseConnection.getConnection();
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)
+        ) {
+            preparedStatement.setInt(1, attendanceId);
+            try (ResultSet rs = preparedStatement.executeQuery()) {
+                if (rs.next()) {
+                    LaborAttendanceDTO attendance = new LaborAttendanceDTO();
+                    attendance.setId(rs.getInt("attendance_id"));
+                    attendance.setProject_id(rs.getString("project_id"));
+                    attendance.setDate(rs.getDate("date"));
+                    attendance.setHiring_type(rs.getString("hiring_type"));
+                    attendance.setLabor_type(rs.getString("labor_type"));
+                    attendance.setCount(rs.getInt("count"));
+                    attendance.setCompany(rs.getString("company_name"));
+                    // directly set salary here
+
+                    BigDecimal cost = rs.getBigDecimal("cost");
+                    if (cost != null) {
+                        LaborSalaryDTO laborSalaryDTO = new LaborSalaryDTO();
+                        laborSalaryDTO.setCost(cost);
+                        attendance.setSalary(laborSalaryDTO);
+                    }
+
+
+                    System.out.println("Returning: " + attendance.getSalary().getCost());
+
+
+                    return attendance;
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error fetching attendance by ID: " + e.getMessage(), e);
+        }
+
+        return null;
+    }
+
+    @Override
+    public LaborSalaryDTO insertSalary(LaborSalaryDTO laborSalaryDTO) {
+        final String sql = "INSERT INTO labor_salary (project_id, attendance_id, labor_rate) " +
+                "VALUES (?, ?, ?)"; // No cost here
+
+        try (
+                Connection connection = databaseConnection.getConnection();
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)
+        ) {
+            preparedStatement.setString(1, laborSalaryDTO.getProjectId());
+            preparedStatement.setInt(2, laborSalaryDTO.getAttendanceId());
+            preparedStatement.setBigDecimal(3, laborSalaryDTO.getLaborRate());
+
             preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException("Error inserting labor salary: " + e.getMessage(), e);
+        }
+
+        return laborSalaryDTO;
+    }
+
+    @Override
+    public LaborSalaryDTO getSalaryRecordById(int salaryId) {
+        final String sql = "SELECT * FROM labor_salary WHERE salary_id = ?";
+
+        try (
+                Connection connection = databaseConnection.getConnection();
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)
+        ) {
+            preparedStatement.setInt(1, salaryId);
+
+            try (ResultSet rs = preparedStatement.executeQuery()) {
+                if (rs.next()) {
+                    return new LaborSalaryDTO(
+                            rs.getInt("salary_id"),
+
+                            rs.getInt("attendance_id"),
+                            rs.getString("project_id"),
+                            rs.getBigDecimal("labor_rate"),
+                            rs.getBigDecimal("cost")
+
+                    );
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error fetching salary record by ID: " + e.getMessage(), e);
+        }
+
+        return null;
+    }
+
+    @Override
+    public LaborSalaryDTO deleteSalaryRecordById(int salaryId) {
+        LaborSalaryDTO salaryRecord = getSalaryRecordById(salaryId);
+        if (salaryRecord == null) {
+            throw new RuntimeException("No salary record found with id: " + salaryId);
+        }
+
+        final String sql = "DELETE FROM labor_salary WHERE salary_id = ?";
+
+        try (
+                Connection connection = databaseConnection.getConnection();
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)
+        ) {
+            preparedStatement.setInt(1, salaryId);
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException("Error deleting salary record: " + e.getMessage(), e);
+        }
+
+        return salaryRecord;
+    }
+
+    public Integer getSalaryIdByAttendanceId(int attendanceId) {
+        final String sql = "SELECT salary_id FROM labor_salary WHERE attendance_id = ?";
+
+        try (
+                Connection connection = databaseConnection.getConnection();
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)
+        ) {
+            preparedStatement.setInt(1, attendanceId);
+            try (ResultSet rs = preparedStatement.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("salary_id");
+                } else {
+                    return null; // no record found
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error fetching salary ID: " + e.getMessage(), e);
+        }
+    }
+
+
+    @Override
+    public List<LaborSalaryDTO> updateSalaryRecord(List<LaborSalaryDTO> laborSalaryDTOList) {
+        final String sql = "UPDATE labor_salary SET labor_rate = ? WHERE salary_id = ? AND attendance_id=?";
+
+        try (
+                Connection connection = databaseConnection.getConnection();
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)
+        ) {
+            for (LaborSalaryDTO dto : laborSalaryDTOList) {
+                // Fetch the real salaryId
+                Integer salaryId = getSalaryIdByAttendanceId(dto.getAttendanceId());
+                if (salaryId == null) {
+                    throw new RuntimeException("No salary record found for Attendance ID: " + dto.getAttendanceId());
+                }
+
+                // Set the retrieved salaryId into the DTO
+                dto.setSalaryId(salaryId);
+
+                // Perform update
+                preparedStatement.setBigDecimal(1, dto.getLaborRate());
+                preparedStatement.setInt(2, dto.getSalaryId());
+                preparedStatement.setInt(3, dto.getAttendanceId());
+
+                int rowsAffected = preparedStatement.executeUpdate();
+                if (rowsAffected == 0) {
+                    throw new RuntimeException("Update failed for Salary ID: " + dto.getSalaryId());
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error updating salary records: " + e.getMessage(), e);
+        }
+
+        return laborSalaryDTOList;
+    }
+
+
+
+    @Override
+    public PaymentPlanDTO deletePaymentPlanById(String id) {
+        PaymentPlanDTO paymentPlan = getPaymentPlanByProjectId(id);
+        if (paymentPlan == null) {
+            throw new RuntimeException("No payment plan found with project id : " + id);
+        }
+
+        try (Connection connection = databaseConnection.getConnection()) {
+            connection.setAutoCommit(false); // start transaction
+
+            // Delete installments first
+            final String sqlDeleteInstallments = "DELETE FROM installment WHERE payment_plan_id = ?";
+            try (PreparedStatement psInstallments = connection.prepareStatement(sqlDeleteInstallments)) {
+                psInstallments.setInt(1, paymentPlan.getPaymentPlanId());
+                psInstallments.executeUpdate();
+            }
+
+            // Delete payment plan
+            final String sqlDeletePaymentPlan = "DELETE FROM payment_plan WHERE project_id = ?";
+            try (PreparedStatement psPlan = connection.prepareStatement(sqlDeletePaymentPlan)) {
+                psPlan.setString(1, id);
+                psPlan.executeUpdate();
+            }
+
+            connection.commit();
         } catch (SQLException e) {
             throw new RuntimeException("Error deleting payment plan: " + e.getMessage(), e);
         }
 
         return paymentPlan;
     }
+
 
 
 

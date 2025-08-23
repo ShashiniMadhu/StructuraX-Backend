@@ -1,9 +1,6 @@
 package com.structurax.root.structurax.root.service;
 
-import com.structurax.root.structurax.root.dto.DesignDTO;
-import com.structurax.root.structurax.root.dto.DesignFullDTO;
-import com.structurax.root.structurax.root.dto.EmployeeDTO;
-import com.structurax.root.structurax.root.dto.SupplierDTO;
+import com.structurax.root.structurax.root.dto.*;
 import org.springframework.stereotype.Service;
 
 import java.awt.*;
@@ -16,6 +13,8 @@ public interface AdminService {
      * @param employeeDTO
      * @return created employee
      */
+    AdminResponseDTO login(AdminLoginDTO adminLoginDTO);
+
     EmployeeDTO createEmployee(EmployeeDTO employeeDTO);
 
     List<EmployeeDTO> getAllEmployees();
