@@ -1,8 +1,7 @@
 package com.structurax.root.structurax.root.service.Impl;
 
 import com.structurax.root.structurax.root.dao.ProjectManagerDAO;
-import com.structurax.root.structurax.root.dto.SiteVisitLogDTO;
-import com.structurax.root.structurax.root.dto.VisitRequestDTO;
+import com.structurax.root.structurax.root.dto.*;
 import com.structurax.root.structurax.root.service.ProjectManagerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -43,5 +42,52 @@ public class ProjectManagerServiceImpl implements ProjectManagerService {
     public  boolean updateVisitRequest(VisitRequestDTO dto){
         return  visitLogDAO.updateVisitRequest(dto);
     }
+    @Override
+    public List<ProjectInitiateDTO> getOngoingProjectsByPmId(String pmId){
+        return visitLogDAO.getProjectsByPmIdAndStatus(pmId , "ongoing");
+    }
+
+    @Override
+    public List<RequestSiteResourceDTO> getRequestSiteResourcesByPmId(String pmId) {
+        return visitLogDAO.getRequestSiteResourcesByPmId(pmId);
+    }
+    @Override
+    public boolean approveRequestSiteResource(Integer requestId) {
+        return visitLogDAO.updateRequestSiteResourceApproval(requestId, true);
+    }
+
+    @Override
+    public boolean rejectRequestSiteResource(Integer requestId) {
+        return visitLogDAO.updateRequestSiteResourceApproval(requestId, false);
+    }
+
+    @Override
+    public List<TodoDTO> getTodosByEmployeeId(String employeeId) {
+        return visitLogDAO.getTodosByEmployeeId(employeeId);
+    }
+
+    @Override
+    public TodoDTO createTodo(TodoDTO todo) {
+        return visitLogDAO.createTodo(todo);
+    }
+
+    @Override
+    public boolean updateTodo(TodoDTO todo) {
+        return visitLogDAO.updateTodo(todo);
+    }
+
+    @Override
+    public boolean deleteTodo(Integer taskId) {
+        return visitLogDAO.deleteTodo(taskId);
+    }
+
+    @Override
+    public List<DailyUpdatesDTO> getDailyUpdatesByPmId(String pmId) {
+        return visitLogDAO.getDailyUpdatesByPmId(pmId);
+    }
+
+
+
+
 
 }

@@ -3,7 +3,9 @@ package com.structurax.root.structurax.root.controller;
 
 import com.structurax.root.structurax.root.dto.LegalDocumentDTO;
 import com.structurax.root.structurax.root.dto.ProjectDocumentsDTO;
+import com.structurax.root.structurax.root.dto.ProjectInitiateDTO;
 import com.structurax.root.structurax.root.service.LegalOfficerService;
+import com.structurax.root.structurax.root.service.ProjectManagerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -19,7 +21,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/legal_officer")
 
-@CrossOrigin(origins = "http://localhost:5174")
+@CrossOrigin(origins = "http://localhost:5173")
 
 public class LegalOfficerController {
 
@@ -78,7 +80,5 @@ public class LegalOfficerController {
     public List<LegalDocumentDTO> getLegalDocumentsByProjectId(@PathVariable String projectId) {
         return legalOfficerService.getLegalDocumentsByProjectId(projectId);
     }
-
-
 
 }
