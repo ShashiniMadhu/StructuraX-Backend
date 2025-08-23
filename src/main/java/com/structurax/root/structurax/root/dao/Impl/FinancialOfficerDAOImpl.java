@@ -469,20 +469,18 @@ public class FinancialOfficerDAOImpl implements FinancialOfficerDAO {
             connection = databaseConnection.getConnection();
             connection.setAutoCommit(false);  // begin transaction
 
+            // Update payment plan
             final String sqlUpdatePlan = "UPDATE payment_plan SET created_date = ?, total_amount = ?, start_date = ?, end_date = ?, no_of_installments = ? WHERE project_id = ?";
             try (PreparedStatement psPlan = connection.prepareStatement(sqlUpdatePlan)) {
                 java.sql.Date currentDate = new java.sql.Date(System.currentTimeMillis());
                 psPlan.setDate(1, currentDate);
 
                 psPlan.setDouble(2, paymentPlanDTO.getTotalAmount());
-                // If startDate is null, use current date instead
                 if (paymentPlanDTO.getStartDate() != null) {
                     psPlan.setDate(3, new java.sql.Date(paymentPlanDTO.getStartDate().getTime()));
                 } else {
-                    psPlan.setDate(3, currentDate);  // <-- fallback to current date
+                    psPlan.setDate(3, currentDate);
                 }
-
-                // For endDate, allow null, or set date
                 if (paymentPlanDTO.getEndDate() != null) {
                     psPlan.setDate(4, new java.sql.Date(paymentPlanDTO.getEndDate().getTime()));
                 } else {
@@ -497,31 +495,41 @@ public class FinancialOfficerDAOImpl implements FinancialOfficerDAO {
                 }
             }
 
-            final String sqlUpdateInstallment = "UPDATE installment SET amount = ?, due_date = ?, status = ?,paid_date=? WHERE installment_id = ?";
-            try (PreparedStatement psInstallment = connection.prepareStatement(sqlUpdateInstallment)) {
+            // Prepare statements for insert and update installments
+            final String sqlUpdateInstallment = "UPDATE installment SET amount = ?, due_date = ?, status = ?, paid_date = ? WHERE installment_id = ?";
+            final String sqlInsertInstallment = "INSERT INTO installment (payment_plan_id, amount, due_date, status, paid_date) VALUES (?, ?, ?, ?, ?)";
+
+            try (
+                    PreparedStatement psUpdate = connection.prepareStatement(sqlUpdateInstallment);
+                    PreparedStatement psInsert = connection.prepareStatement(sqlInsertInstallment)
+            ) {
                 for (InstallmentDTO installment : paymentPlanDTO.getInstallments()) {
                     if (installment.getInstallmentId() == 0) {
-                        throw new RuntimeException("Invalid installment ID for update: " + installment);
-                    }
+                        // Insert new installment
+                        psInsert.setInt(1, paymentPlanDTO.getPaymentPlanId()); // make sure this is set correctly
+                        psInsert.setDouble(2, installment.getAmount());
+                        psInsert.setDate(3, installment.getDueDate());
+                        psInsert.setString(4, installment.getStatus());
+                        psInsert.setDate(5, installment.getPaidDate());
 
+                        psInsert.addBatch();
+                        System.out.println("Inserting new installment with amount: " + installment.getAmount());
+                    } else {
+                        // Update existing installment
+                        psUpdate.setDouble(1, installment.getAmount());
+                        psUpdate.setDate(2, installment.getDueDate());
+                        psUpdate.setString(3, installment.getStatus());
+                        psUpdate.setDate(4, installment.getPaidDate());
+                        psUpdate.setInt(5, installment.getInstallmentId());
 
-                    psInstallment.setDouble(1, installment.getAmount());
-                    psInstallment.setDate(2, installment.getDueDate());
-                    psInstallment.setString(3, installment.getStatus());
-                    psInstallment.setDate(4,installment.getPaidDate());
-                    psInstallment.setInt(5, installment.getInstallmentId());
-
-                    System.out.println("Updating installment: " + installment.getInstallmentId() +
-                            ", amount: " + installment.getAmount() +
-                            ", dueDate: " + installment.getDueDate() +
-                            ", paidDate: " + installment.getPaidDate() +
-                            ", status: " + installment.getStatus());
-
-                    int updatedInstallmentRows = psInstallment.executeUpdate();
-                    if (updatedInstallmentRows == 0) {
-                        throw new RuntimeException("Installment update failed. ID may not exist: " + installment.getInstallmentId());
+                        psUpdate.addBatch();
+                        System.out.println("Updating installment ID: " + installment.getInstallmentId());
                     }
                 }
+
+
+                psUpdate.executeBatch();
+                psInsert.executeBatch();
             }
 
             connection.commit();
@@ -545,6 +553,7 @@ public class FinancialOfficerDAOImpl implements FinancialOfficerDAO {
 
         return paymentPlanDTO;
     }
+
 
     @Override
     public List<LaborAttendanceDTO> getLaborAttendanceByProjectId(String projectId, Date date) {

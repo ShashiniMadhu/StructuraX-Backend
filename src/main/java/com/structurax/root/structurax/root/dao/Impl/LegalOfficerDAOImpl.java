@@ -4,7 +4,6 @@ import com.structurax.root.structurax.root.dao.LegalOfficerDAO;
 
 import com.structurax.root.structurax.root.dto.LegalDocumentDTO;
 import com.structurax.root.structurax.root.dto.ProjectDocumentsDTO;
-import com.structurax.root.structurax.root.dto.SiteVisitLogDTO;
 import com.structurax.root.structurax.root.util.DatabaseConnection;
 
 import org.springframework.beans.factory.annotation.Autowired;
