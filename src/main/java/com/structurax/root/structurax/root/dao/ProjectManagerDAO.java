@@ -18,6 +18,7 @@ public interface ProjectManagerDAO {
     TodoDTO createTodo(TodoDTO todo);
     boolean updateTodo(TodoDTO todo);
     boolean deleteTodo(Integer taskId);
+    List<DailyUpdatesDTO> getDailyUpdatesByPmId(String pmId);
 
 
 

@@ -316,6 +316,41 @@ public class ProjectManagerDAOImpl implements ProjectManagerDAO {
         }
     }
 
+    @Override
+    public List<DailyUpdatesDTO> getDailyUpdatesByPmId(String pmId) {
+        String sql = "SELECT du.update_id, du.project_id, du.date, du.note, du.employee_id " +
+                "FROM daily_updates du " +
+                "INNER JOIN project p ON du.project_id = p.project_id " +
+                "WHERE p.pm_id = ? " +
+                "ORDER BY du.date DESC";
+
+        List<DailyUpdatesDTO> dailyUpdates = new ArrayList<>();
+
+        try (Connection conn = databaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, pmId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    DailyUpdatesDTO update = new DailyUpdatesDTO(
+                            rs.getInt("update_id"),
+                            rs.getString("project_id"),
+                            rs.getDate("date").toLocalDate(),
+                            rs.getString("note"),
+                            rs.getString("employee_id")
+                    );
+                    dailyUpdates.add(update);
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error fetching daily updates for PM " + pmId, e);
+        }
+
+        return dailyUpdates;
+    }
+
+
 
 
 

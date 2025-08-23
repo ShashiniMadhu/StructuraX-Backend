@@ -81,6 +81,11 @@ public class ProjectManagerServiceImpl implements ProjectManagerService {
         return visitLogDAO.deleteTodo(taskId);
     }
 
+    @Override
+    public List<DailyUpdatesDTO> getDailyUpdatesByPmId(String pmId) {
+        return visitLogDAO.getDailyUpdatesByPmId(pmId);
+    }
+
 
 
 

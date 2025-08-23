@@ -128,6 +128,15 @@ public class ProjectManagerController {
         return ProjectManagerService.deleteTodo(taskId) ? ResponseEntity.ok("Todo deleted") : ResponseEntity.notFound().build();
     }
 
+    @GetMapping("/daily-updates/{pm_id}")
+    public ResponseEntity<List<DailyUpdatesDTO>> getDailyUpdatesByPmId(@PathVariable("pm_id") String pmId) {
+        List<DailyUpdatesDTO> updates = ProjectManagerService.getDailyUpdatesByPmId(pmId);
+        if (updates.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.ok(updates);
+    }
+
 
 
 
