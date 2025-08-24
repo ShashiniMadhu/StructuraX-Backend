@@ -2,6 +2,7 @@ package com.structurax.root.structurax.root.controller;
 
 
 import com.structurax.root.structurax.root.dto.LegalDocumentDTO;
+import com.structurax.root.structurax.root.dto.LegalProcessDTO;
 import com.structurax.root.structurax.root.dto.ProjectDocumentsDTO;
 import com.structurax.root.structurax.root.dto.ProjectInitiateDTO;
 import com.structurax.root.structurax.root.service.LegalOfficerService;
@@ -80,5 +81,49 @@ public class LegalOfficerController {
     public List<LegalDocumentDTO> getLegalDocumentsByProjectId(@PathVariable String projectId) {
         return legalOfficerService.getLegalDocumentsByProjectId(projectId);
     }
+
+    @PostMapping("/add_legal_process")
+    public ResponseEntity<?> addLegalProcess(@RequestBody LegalProcessDTO legalProcessDTO) {
+        try {
+            LegalProcessDTO newProcess = legalOfficerService.addLegalProcess(legalProcessDTO);
+            return ResponseEntity.ok(newProcess);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity<>("Error: " + e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    @GetMapping("/legal_processes/{projectId}")
+    public List<LegalProcessDTO> getLegalProcessesByProjectId(@PathVariable String projectId) {
+        return legalOfficerService.getLegalProcessesByProjectId(projectId);
+    }
+
+    @PutMapping("/update_legal_process/{id}")
+    public ResponseEntity<?> updateLegalProcess(@PathVariable int id, @RequestBody LegalProcessDTO legalProcessDTO) {
+        try {
+            legalProcessDTO.setId(id); // Ensure the ID from URL is used
+            LegalProcessDTO updatedProcess = legalOfficerService.updateLegalProcess(legalProcessDTO);
+            return ResponseEntity.ok(updatedProcess);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity<>("Error: " + e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    @DeleteMapping("/delete_legal_process/{id}")
+    public ResponseEntity<?> deleteLegalProcess(@PathVariable int id) {
+        try {
+            boolean deleted = legalOfficerService.deleteLegalProcess(id);
+            if (deleted) {
+                return ResponseEntity.ok("Legal process deleted successfully");
+            } else {
+                return new ResponseEntity<>("Legal process not found", HttpStatus.NOT_FOUND);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity<>("Error: " + e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+    }
+
 
 }
