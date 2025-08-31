@@ -334,7 +334,7 @@ public class QuotationController {
     }
 
     /**
-     * Add supplier to existing quotation
+     * Add supplier to existing quotation5
      */
     @PostMapping("/{qId}/suppliers")
     public ResponseEntity<Map<String, Object>> addQuotationSupplier(
