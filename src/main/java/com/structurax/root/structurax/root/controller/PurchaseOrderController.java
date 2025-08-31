@@ -365,18 +365,14 @@ public class PurchaseOrderController {
             // Create summary statistics
             Map<String, Object> summary = new HashMap<>();
             int totalOrders = allOrders.size();
-            int completedOrders = 0;
-            int pendingOrders = 0;
+            int activeOrders = 0;
             int pendingPayments = 0;
             int partialPayments = 0;
             int paidOrders = 0;
             
             for (PurchaseOrderDTO order : allOrders) {
-                // Fixed: true = completed, false/null = pending
                 if (order.getOrderStatus() != null && order.getOrderStatus()) {
-                    completedOrders++;
-                } else {
-                    pendingOrders++;
+                    activeOrders++;
                 }
                 
                 String paymentStatus = order.getPaymentStatus();
@@ -390,8 +386,8 @@ public class PurchaseOrderController {
             }
             
             summary.put("totalOrders", totalOrders);
-            summary.put("completedOrders", completedOrders);
-            summary.put("pendingOrders", pendingOrders);
+            summary.put("activeOrders", activeOrders);
+            summary.put("inactiveOrders", totalOrders - activeOrders);
             summary.put("pendingPayments", pendingPayments);
             summary.put("partialPayments", partialPayments);
             summary.put("paidOrders", paidOrders);
@@ -425,16 +421,15 @@ public class PurchaseOrderController {
         enhancedOrder.put("orderDate", order.getOrderDate());
         enhancedOrder.put("orderStatus", order.getOrderStatus());
         
-        // Add project name
+        // Add project name for better context
         try {
             Project1DTO project = sqsService.getProjectById(order.getProjectId());
             if (project != null) {
                 enhancedOrder.put("projectName", project.getName());
-                enhancedOrder.put("projectLocation", project.getLocation());
-                enhancedOrder.put("projectCategory", project.getCategory());
             }
         } catch (Exception e) {
-            enhancedOrder.put("projectError", "Error loading project details: " + e.getMessage());
+            // If we can't get project name, continue without it (don't break the response)
+            enhancedOrder.put("projectNameError", "Error loading project name: " + e.getMessage());
         }
         
         // Add order items
@@ -463,8 +458,8 @@ public class PurchaseOrderController {
             enhancedOrder.put("itemsError", "Error loading items: " + e.getMessage());
         }
         
-        // Add status descriptions - Fixed: 0 = pending, 1 = completed
-        enhancedOrder.put("orderStatusText", getOrderStatusText(order.getOrderStatus()));
+        // Add status descriptions
+        enhancedOrder.put("orderStatusText", order.getOrderStatus() != null && order.getOrderStatus() ? "Active" : "Inactive");
         enhancedOrder.put("paymentStatusText", getPaymentStatusText(order.getPaymentStatus()));
         
         return enhancedOrder;
@@ -499,16 +494,26 @@ public class PurchaseOrderController {
             enhancedOrder.put("supplierDetailsError", "Error loading supplier details: " + e.getMessage());
         }
         
+        // Add project details including project name
+        try {
+            Project1DTO project = sqsService.getProjectById(order.getProjectId());
+            if (project != null) {
+                Map<String, Object> projectDetails = new HashMap<>();
+                projectDetails.put("projectId", project.getProjectId());
+                projectDetails.put("projectName", project.getName());
+                projectDetails.put("projectDescription", project.getDescription());
+                projectDetails.put("projectLocation", project.getLocation());
+                projectDetails.put("projectStatus", project.getStatus());
+                projectDetails.put("projectCategory", project.getCategory());
+                
+                enhancedOrder.put("projectDetails", projectDetails);
+                enhancedOrder.put("projectName", project.getName()); // Add project name directly for easy access
+            }
+        } catch (Exception e) {
+            enhancedOrder.put("projectDetailsError", "Error loading project details: " + e.getMessage());
+        }
+        
         return enhancedOrder;
-    }
-
-    /**
-     * Get human-readable order status text
-     */
-    private String getOrderStatusText(Boolean orderStatus) {
-        if (orderStatus == null) return "Unknown";
-        // Fixed: 0 (false) = pending, 1 (true) = completed
-        return orderStatus ? "Completed" : "Pending";
     }
 
     /**
