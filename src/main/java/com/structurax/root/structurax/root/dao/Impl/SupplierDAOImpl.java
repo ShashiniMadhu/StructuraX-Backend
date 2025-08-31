@@ -1,10 +1,14 @@
 package com.structurax.root.structurax.root.dao.Impl;
 
-import com.structurax.root.structurax.root.dao.SupplierDAO;
-import com.structurax.root.structurax.root.dto.CatalogDTO;
-import com.structurax.root.structurax.root.dto.ClientOneDTO;
-import com.structurax.root.structurax.root.dto.SupplierDTO;
-import com.structurax.root.structurax.root.util.DatabaseConnection;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,10 +17,10 @@ import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
-import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import com.structurax.root.structurax.root.dao.SupplierDAO;
+import com.structurax.root.structurax.root.dto.CatalogDTO;
+import com.structurax.root.structurax.root.dto.SupplierDTO;
+import com.structurax.root.structurax.root.util.DatabaseConnection;
 
 @Repository
 public class SupplierDAOImpl implements SupplierDAO {
@@ -158,5 +162,19 @@ public class SupplierDAOImpl implements SupplierDAO {
             throw new RuntimeException("Error retrieving catalog by item_id: " + e.getMessage(), e);
         }
         return catalog;
+    }
+    
+    @Override
+    public SupplierDTO getSupplierById(Integer supplierId) {
+        String sql = "SELECT * FROM supplier WHERE supplier_id = ?";
+        try {
+            return jdbcTemplate.queryForObject(sql, new BeanPropertyRowMapper<>(SupplierDTO.class), supplierId);
+        } catch (EmptyResultDataAccessException e) {
+            logger.warn("No supplier found with supplier_id: {}", supplierId);
+            return null;
+        } catch (Exception e) {
+            logger.error("Error retrieving supplier by supplier_id {}: {}", supplierId, e.getMessage(), e);
+            throw new RuntimeException("Error retrieving supplier by supplier_id: " + e.getMessage(), e);
+        }
     }
 }
