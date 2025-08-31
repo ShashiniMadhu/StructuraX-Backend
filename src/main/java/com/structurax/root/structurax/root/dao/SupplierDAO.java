@@ -1,11 +1,10 @@
 package com.structurax.root.structurax.root.dao;
 
-import com.structurax.root.structurax.root.dto.CatalogDTO;
-import com.structurax.root.structurax.root.dto.ClientOneDTO;
-import com.structurax.root.structurax.root.dto.SupplierDTO;
-
 import java.util.List;
 import java.util.Optional;
+
+import com.structurax.root.structurax.root.dto.CatalogDTO;
+import com.structurax.root.structurax.root.dto.SupplierDTO;
 
 public interface SupplierDAO {
 
@@ -18,4 +17,6 @@ public interface SupplierDAO {
     CatalogDTO getCatalogById(Integer itemId);
 
     Optional<SupplierDTO> findByEmail(String email);
+    
+    SupplierDTO getSupplierById(Integer supplierId);
 }
