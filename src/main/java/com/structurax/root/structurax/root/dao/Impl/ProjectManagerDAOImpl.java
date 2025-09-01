@@ -548,6 +548,43 @@ public class ProjectManagerDAOImpl implements ProjectManagerDAO {
         return boqItems;
     }
 
+    @Override
+    public PaymentDTO getPaymentByProjectId(String projectId) {
+        String sql = """
+        SELECT p.* FROM payment p 
+        INNER JOIN payment_confirmation pc ON p.payment_id = pc.payment_id 
+        WHERE pc.project_id = ?
+    """;
+
+        try (Connection connection = databaseConnection.getConnection();
+             PreparedStatement stmt = connection.prepareStatement(sql)) {
+
+            stmt.setString(1, projectId);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    PaymentDTO payment = new PaymentDTO();
+                    payment.setPaymentId(rs.getInt("payment_id"));
+                    payment.setInvoiceId(rs.getInt("invoice_id"));
+                    payment.setDuedate(rs.getDate("due_date").toLocalDate());
+
+                    Date paidDate = rs.getDate("paid_date");
+                    if (paidDate != null) {
+                        payment.setPaiddate(paidDate.toLocalDate());
+                    }
+
+                    payment.setStatus(rs.getString("status"));
+                    payment.setAmount(rs.getDouble("amount"));
+                    return payment;
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+
 
 
 

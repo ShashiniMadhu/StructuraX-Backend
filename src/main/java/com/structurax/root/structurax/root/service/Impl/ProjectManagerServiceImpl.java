@@ -120,5 +120,10 @@ public class ProjectManagerServiceImpl implements ProjectManagerService {
     public List<BOQitemDTO> getBOQItemsByProjectId(String projectId) {
         return visitLogDAO.getBOQItemsByProjectId(projectId);
     }
+    @Override
+    public PaymentDTO getPaymentByProjectId(String projectId) {
+        return visitLogDAO.getPaymentByProjectId(projectId);
+    }
+
 
 }
