@@ -199,6 +199,15 @@ public class ProjectManagerController {
         return ResponseEntity.ok(boqItems);
     }
 
+    @GetMapping("/payment/{project_id}")
+    public ResponseEntity<PaymentDTO> getPaymentByProjectId(@PathVariable("project_id") String projectId) {
+        PaymentDTO payment = ProjectManagerService.getPaymentByProjectId(projectId);
+        if (payment != null) {
+            return ResponseEntity.ok(payment);
+        }
+        return ResponseEntity.notFound().build();
+    }
+
 
 
 

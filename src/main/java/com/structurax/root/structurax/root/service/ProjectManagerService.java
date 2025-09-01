@@ -27,5 +27,6 @@ public interface ProjectManagerService {
     String getDesignLink(String pmId);
     List<WBSDTO> getWBSByProjectId(String projectId);
     List<BOQitemDTO> getBOQItemsByProjectId(String projectId);
+    PaymentDTO getPaymentByProjectId(String projectId);
 
 }
