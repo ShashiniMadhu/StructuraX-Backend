@@ -86,8 +86,39 @@ public class ProjectManagerServiceImpl implements ProjectManagerService {
         return visitLogDAO.getDailyUpdatesByPmId(pmId);
     }
 
+    @Override
+    public List<ProjectInitiateDTO> getNullLocationProjectsByPmId(String pmId) {
+        return visitLogDAO.getProjectsWithNullLocationByPmId(pmId);
+    }
 
+    @Override
+    public boolean updateProjectLocation(String projectId, String location) {
+        return visitLogDAO.updateProjectLocation(projectId, location);
+    }
 
+    @Override
+    public boolean insertProjectMaterials(ProjectMaterialsDTO projectMaterials) {
+        return visitLogDAO.insertProjectMaterials(projectMaterials);
+    }
 
+    @Override
+    public List<ProjectInitiateDTO> getCompletedProjectsByPmId(String pmId) {
+        return visitLogDAO.getCompletedProjectsByPmId(pmId);
+    }
+
+    @Override
+    public String getDesignLink(String pmId) {
+        return visitLogDAO.getDesignLink(pmId);
+    }
+
+    @Override
+    public List<WBSDTO> getWBSByProjectId(String projectId) {
+        return visitLogDAO.getWBSByProjectId(projectId);
+    }
+
+    @Override
+    public List<BOQitemDTO> getBOQItemsByProjectId(String projectId) {
+        return visitLogDAO.getBOQItemsByProjectId(projectId);
+    }
 
 }
