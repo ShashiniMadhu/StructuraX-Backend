@@ -20,7 +20,12 @@ public interface ProjectManagerService {
     boolean updateTodo(TodoDTO todo);
     boolean deleteTodo(Integer taskId);
     List<DailyUpdatesDTO> getDailyUpdatesByPmId(String pmId);
-
-
+    List<ProjectInitiateDTO> getNullLocationProjectsByPmId(String pmId);
+    boolean updateProjectLocation(String projectId, String location);
+    boolean insertProjectMaterials(ProjectMaterialsDTO projectMaterials);
+    List<ProjectInitiateDTO> getCompletedProjectsByPmId(String pmId);
+    String getDesignLink(String pmId);
+    List<WBSDTO> getWBSByProjectId(String projectId);
+    List<BOQitemDTO> getBOQItemsByProjectId(String projectId);
 
 }

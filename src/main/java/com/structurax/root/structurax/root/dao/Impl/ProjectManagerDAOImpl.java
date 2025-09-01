@@ -179,7 +179,7 @@ public class ProjectManagerDAOImpl implements ProjectManagerDAO {
    @Override
     public List<ProjectInitiateDTO> getProjectsByPmIdAndStatus(String pmId , String status){
         List<ProjectInitiateDTO> projects = new ArrayList<>();
-        String sql = "SELECT project_id, name FROM project WHERE pm_id = ? AND status = ?";
+        String sql = "SELECT project_id, name ,status ,budget,description,location,category,estimated_value,start_date,due_date,client_id,qs_id,pm_id,ss_id FROM project WHERE pm_id = ? AND status = ?";
         try (Connection conn = databaseConnection.getConnection();
         PreparedStatement pstmt = conn.prepareStatement(sql)){
             pstmt.setString(1,pmId);
@@ -189,6 +189,25 @@ public class ProjectManagerDAOImpl implements ProjectManagerDAO {
                 ProjectInitiateDTO project = new ProjectInitiateDTO();
                 project.setProjectId(rs.getString("project_id"));
                 project.setName(rs.getString("name"));
+                project.setStatus(rs.getString("status"));
+                project.setBudget(rs.getBigDecimal("budget"));
+                project.setDescription(rs.getString("description"));
+                project.setLocation(rs.getString("location"));
+                project.setCategory(rs.getString("category"));
+                project.setEstimatedValue(rs.getBigDecimal("estimated_value"));
+                Date startDate = rs.getDate("start_date");
+                if (startDate != null) {
+                    project.setStartDate(startDate.toLocalDate());
+                }
+                Date dueDate = rs.getDate("due_date");
+                if (dueDate != null) {
+                    project.setDueDate(dueDate.toLocalDate());
+
+                }
+                project.setClientId(rs.getString("client_id"));
+                project.setQsId(rs.getString("qs_id"));
+                project.setPmId(rs.getString("pm_id"));
+                project.setSsId(rs.getString("ss_id"));
                 projects.add(project);
             }
         } catch (Exception e) {
@@ -349,6 +368,187 @@ public class ProjectManagerDAOImpl implements ProjectManagerDAO {
 
         return dailyUpdates;
     }
+
+    @Override
+    public List<ProjectInitiateDTO> getProjectsWithNullLocationByPmId(String pmId) {
+        List<ProjectInitiateDTO> projects = new ArrayList<>();
+        String sql = "SELECT project_id, name, status, budget, description, location, " +
+                "estimated_value, start_date, due_date, client_id, qs_id, pm_id, ss_id, category " +
+                "FROM project WHERE pm_id = ? AND (location IS NULL OR location = '')";
+
+        try (Connection conn = databaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, pmId);
+            ResultSet rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                ProjectInitiateDTO project = new ProjectInitiateDTO();
+                project.setProjectId(rs.getString("project_id"));
+                project.setName(rs.getString("name"));
+                project.setStatus(rs.getString("status"));
+                project.setBudget(rs.getBigDecimal("budget"));
+                project.setDescription(rs.getString("description"));
+                project.setLocation(rs.getString("location"));
+                project.setEstimatedValue(rs.getBigDecimal("estimated_value"));
+
+                // Handle dates safely
+                Date startDate = rs.getDate("start_date");
+                if (startDate != null) {
+                    project.setStartDate(startDate.toLocalDate());
+                }
+
+                Date dueDate = rs.getDate("due_date");
+                if (dueDate != null) {
+                    project.setDueDate(dueDate.toLocalDate());
+                }
+
+                project.setClientId(rs.getString("client_id"));
+                project.setQsId(rs.getString("qs_id"));
+                project.setPmId(rs.getString("pm_id"));
+                project.setSsId(rs.getString("ss_id"));
+                project.setCategory(rs.getString("category"));
+
+                projects.add(project);
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error fetching projects with null location for PM: " + pmId, e);
+        }
+
+        return projects;
+    }
+
+    @Override
+    public boolean updateProjectLocation(String projectId, String location) {
+        String sql = "UPDATE project SET location = ? WHERE project_id = ?";
+
+        try (Connection conn = databaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, location);
+            ps.setString(2, projectId);
+
+            int rowsAffected = ps.executeUpdate();
+            return rowsAffected > 0;
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Error updating project location for project: " + projectId, e);
+        }
+    }
+
+
+    @Override
+    public boolean insertProjectMaterials(ProjectMaterialsDTO projectMaterials) {
+        String sql = "INSERT INTO project_materials (project_id, tools) VALUES (?, ?)";
+
+        try (Connection conn = databaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, projectMaterials.getProjectId());
+            ps.setString(2, projectMaterials.getTools());
+
+            int rowsAffected = ps.executeUpdate();
+            return rowsAffected > 0;
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Error inserting project material for project: " + projectMaterials.getProjectId(), e);
+        }
+    }
+
+    @Override
+    public List<ProjectInitiateDTO> getCompletedProjectsByPmId(String pmId) {
+        return getProjectsByPmIdAndStatus(pmId, "completed");
+    }
+
+    @Override
+    public String getDesignLink(String pmId) {
+        String sql = "SELECT d.design_link FROM design d WHERE d.employee_id = ?";
+        try (Connection connection = databaseConnection.getConnection();
+             PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setString(1, pmId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getString("design_link");
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    @Override
+    public List<WBSDTO> getWBSByProjectId(String projectId) {
+        List<WBSDTO> wbsList = new ArrayList<>();
+        String query = "SELECT * FROM wbs WHERE project_id = ?";
+
+        try (Connection connection = databaseConnection.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+
+            preparedStatement.setString(1, projectId);
+
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                while (resultSet.next()) {
+                    WBSDTO wbs = new WBSDTO();
+                    wbs.setTaskId(resultSet.getInt("task_id"));
+                    wbs.setProjectId(resultSet.getString("project_id"));
+                    wbs.setParentId(resultSet.getInt("parent_id"));
+                    wbs.setName(resultSet.getString("name"));
+                    wbs.setStatus(resultSet.getString("status"));
+                    wbs.setMilestone(resultSet.getBoolean("milestone"));
+                    wbsList.add(wbs);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            // You might want to throw a custom exception here
+        }
+
+        return wbsList;
+    }
+
+    @Override
+    public List<BOQitemDTO> getBOQItemsByProjectId(String projectId) {
+        List<BOQitemDTO> boqItems = new ArrayList<>();
+
+        try (Connection connection = databaseConnection.getConnection()) {
+            // First get the BOQ ID for the project
+            String boqQuery = "SELECT boq_id FROM boq WHERE project_id = ?";
+            PreparedStatement boqStmt = connection.prepareStatement(boqQuery);
+            boqStmt.setString(1, projectId);
+            ResultSet boqRs = boqStmt.executeQuery();
+
+            if (boqRs.next()) {
+                String boqId = boqRs.getString("boq_id");
+
+                // Then get all BOQ items for this BOQ ID
+                String itemsQuery = "SELECT * FROM boq_item WHERE boq_id = ?";
+                PreparedStatement itemsStmt = connection.prepareStatement(itemsQuery);
+                itemsStmt.setString(1, boqId);
+                ResultSet itemsRs = itemsStmt.executeQuery();
+
+                while (itemsRs.next()) {
+                    BOQitemDTO item = new BOQitemDTO(
+                            itemsRs.getString("item_id"),
+                            itemsRs.getString("boq_id"),
+                            itemsRs.getString("item_description"),
+                            itemsRs.getDouble("rate"),
+                            itemsRs.getString("unit"),
+                            itemsRs.getDouble("quantity"),
+                            itemsRs.getDouble("amount")
+                    );
+                    boqItems.add(item);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            // Consider throwing a custom exception or handling the error appropriately
+        }
+
+        return boqItems;
+    }
+
+
 
 
 
