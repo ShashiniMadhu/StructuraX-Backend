@@ -11,4 +11,6 @@ public interface SupplierService {
     CatalogDTO getCatalogById(Integer itemId);
 
     SupplierResponseDTO login(SupplierLoginDTO supplierDTO);
+    SupplierDTO getSupplierById(int supplierId);
+
 }
