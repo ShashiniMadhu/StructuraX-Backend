@@ -3,8 +3,8 @@ package com.structurax.root.structurax.root.dao.Impl;
 import com.structurax.root.structurax.root.dao.LegalOfficerDAO;
 
 import com.structurax.root.structurax.root.dto.LegalDocumentDTO;
+import com.structurax.root.structurax.root.dto.LegalProcessDTO;
 import com.structurax.root.structurax.root.dto.ProjectDocumentsDTO;
-import com.structurax.root.structurax.root.dto.SiteVisitLogDTO;
 import com.structurax.root.structurax.root.util.DatabaseConnection;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -85,6 +85,110 @@ public class LegalOfficerDAOImpl implements LegalOfficerDAO {
             return dto;
         });
     }
+    @Override
+    public LegalProcessDTO addLegalProcess(LegalProcessDTO dto) {
+        String sql = "INSERT INTO legal_approval(project_id, description, status, approval_date) VALUES (?, ?, ?, ?)";
+
+        try (
+                Connection conn = databaseConnection.getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)
+        ) {
+            ps.setString(1, dto.getProjectId());
+            ps.setString(2, dto.getDescription());
+            ps.setString(3, dto.getStatus());
+            ps.setDate(4, Date.valueOf(dto.getDate() != null ? dto.getDate() : LocalDate.now()));
+
+            ps.executeUpdate();
+
+            ResultSet rs = ps.getGeneratedKeys();
+            if (rs.next()) {
+                dto.setId(rs.getInt(1));
+            }
+            rs.close();
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Database error: " + e.getMessage() + " SQL State: " + e.getSQLState(), e);
+        }
+        return dto;
+    }
+
+    @Override
+    public List<LegalProcessDTO> findLegalProcessesByProjectId(String projectId) {
+        String sql = "SELECT id, project_id, description, status, approval_date FROM legal_approval WHERE project_id = ?";
+        return jdbcTemplate.query(sql, new Object[]{projectId}, (ResultSet rs, int rowNum) -> {
+            LegalProcessDTO dto = new LegalProcessDTO();
+            dto.setId(rs.getInt("id"));
+            dto.setProjectId(rs.getString("project_id"));
+            dto.setDescription(rs.getString("description"));
+            dto.setStatus(rs.getString("status"));
+            dto.setDate(rs.getDate("approval_date").toLocalDate());
+            return dto;
+        });
+    }
+
+    @Override
+    public LegalProcessDTO findLegalProcessById(int id) {
+        String sql = "SELECT id, project_id, description, status, approval_date FROM legal_approval WHERE id = ?";
+        List<LegalProcessDTO> results = jdbcTemplate.query(sql, new Object[]{id}, (ResultSet rs, int rowNum) -> {
+            LegalProcessDTO dto = new LegalProcessDTO();
+            dto.setId(rs.getInt("id"));
+            dto.setProjectId(rs.getString("project_id"));
+            dto.setDescription(rs.getString("description"));
+            dto.setStatus(rs.getString("status"));
+            dto.setDate(rs.getDate("approval_date").toLocalDate());
+            return dto;
+        });
+        return results.isEmpty() ? null : results.get(0);
+    }
+
+
+    @Override
+    public LegalProcessDTO updateLegalProcess(LegalProcessDTO dto) {
+        String sql = "UPDATE legal_approval SET project_id = ?, description = ?, status = ?, approval_date = ? WHERE id = ?";
+
+        try (
+                Connection conn = databaseConnection.getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql)
+        ) {
+            ps.setString(1, dto.getProjectId());
+            ps.setString(2, dto.getDescription());
+            ps.setString(3, dto.getStatus());
+            ps.setDate(4, Date.valueOf(dto.getDate() != null ? dto.getDate() : LocalDate.now()));
+            ps.setInt(5, dto.getId());
+
+            int rowsAffected = ps.executeUpdate();
+            if (rowsAffected == 0) {
+                throw new RuntimeException("Legal process with id " + dto.getId() + " not found");
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Database error: " + e.getMessage() + " SQL State: " + e.getSQLState(), e);
+        }
+        return dto;
+    }
+
+    @Override
+    public boolean deleteLegalProcess(int id) {
+        String sql = "DELETE FROM legal_approval WHERE id = ?";
+
+        try (
+                Connection conn = databaseConnection.getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql)
+        ) {
+            ps.setInt(1, id);
+            int rowsAffected = ps.executeUpdate();
+            return rowsAffected > 0;
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Database error: " + e.getMessage() + " SQL State: " + e.getSQLState(), e);
+        }
+    }
+
+
+
+
+
+
 }
 
 
