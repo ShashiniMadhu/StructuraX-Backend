@@ -34,6 +34,42 @@ public class LegalOfficerController {
         return legalOfficerService.getAllLegalDocuments();
     }
 
+    @PutMapping("/document/{documentId}/accept")
+    public ResponseEntity<?> acceptDocument(@PathVariable Integer documentId) {
+        try {
+            boolean accepted = legalOfficerService.acceptDocument(documentId);
+            if (accepted) {
+                return ResponseEntity.ok("Document accepted successfully");
+            } else {
+                return ResponseEntity.notFound().build();
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error accepting document: " + e.getMessage());
+        }
+    }
+
+    @PutMapping("/document/{documentId}/reject")
+    public ResponseEntity<?> rejectDocument(@PathVariable Integer documentId) {
+        try {
+            boolean rejected = legalOfficerService.rejectDocument(documentId);
+            if (rejected) {
+                return ResponseEntity.ok("Document rejected successfully");
+            } else {
+                return ResponseEntity.notFound().build();
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error rejecting document: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/distinct-project-ids")
+    public List<String> getDistinctProjectIds() {
+        return legalOfficerService.getDistinctProjectIds();
+    }
+
+
     @PostMapping(value = "/add_document", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> adddocument(
             @RequestParam("projectId") String projectId,
