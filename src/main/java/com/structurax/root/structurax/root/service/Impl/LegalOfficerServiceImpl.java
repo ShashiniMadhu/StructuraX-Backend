@@ -59,6 +59,23 @@ public class LegalOfficerServiceImpl implements LegalOfficerService {
         return legalOfficerDAO.findLegalProcessById(id);
     }
 
+    @Override
+    public boolean acceptDocument(Integer documentId) {
+        return legalOfficerDAO.acceptDocument(documentId);
+    }
+
+    @Override
+    public boolean rejectDocument(Integer documentId) {
+        return legalOfficerDAO.rejectDocument(documentId);
+    }
+
+    @Override
+    public List<String> getDistinctProjectIds() {
+        return legalOfficerDAO.findDistinctProjectIds();
+    }
+
+
+
 
 
 }

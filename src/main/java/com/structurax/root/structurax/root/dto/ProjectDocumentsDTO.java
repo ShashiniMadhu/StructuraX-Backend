@@ -20,18 +20,22 @@ public class ProjectDocumentsDTO {
     private String documentUrl;
 
     private String description;
+
     @JsonProperty("upload_date")
     private LocalDate uploadDate;
+
+    private String status;
 
 
     public ProjectDocumentsDTO() {}
 
-        public ProjectDocumentsDTO(Integer documentId, String projectId, String documentUrl, String description, LocalDate uploadDate) {
+        public ProjectDocumentsDTO(Integer documentId, String projectId, String documentUrl, String description, String status , LocalDate uploadDate) {
         this.documentId = documentId;
         this.projectId = projectId;
         this.documentUrl = documentUrl;
         this.description = description;
         this.uploadDate = uploadDate;
+        this.status = status;
     }
 
 
