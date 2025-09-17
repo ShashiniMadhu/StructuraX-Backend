@@ -48,8 +48,8 @@ public class QuotationController {
             QuotationDTO quotation = new QuotationDTO();
             quotation.setProjectId((String) quotationData.get("projectId"));
             quotation.setQsId((String) quotationData.get("qsId"));
-            quotation.setDate(java.time.LocalDate.parse((String) quotationData.get("date")));
-            quotation.setDeadline(java.time.LocalDate.parse((String) quotationData.get("deadline")));
+            quotation.setDate(java.sql.Date.valueOf(java.time.LocalDate.parse((String) quotationData.get("date"))));
+            quotation.setDeadline(java.sql.Date.valueOf(java.time.LocalDate.parse((String) quotationData.get("deadline"))));
             quotation.setStatus((String) quotationData.get("status"));
             quotation.setDescription((String) quotationData.get("description"));
 
@@ -265,8 +265,8 @@ public class QuotationController {
             quotation.setQId(qId);
             quotation.setProjectId((String) quotationData.get("projectId"));
             quotation.setQsId((String) quotationData.get("qsId"));
-            quotation.setDate(java.time.LocalDate.parse((String) quotationData.get("date")));
-            quotation.setDeadline(java.time.LocalDate.parse((String) quotationData.get("deadline")));
+            quotation.setDate(java.sql.Date.valueOf(java.time.LocalDate.parse((String) quotationData.get("date"))));
+            quotation.setDeadline(java.sql.Date.valueOf(java.time.LocalDate.parse((String) quotationData.get("deadline"))));
             quotation.setStatus((String) quotationData.get("status"));
             quotation.setDescription((String) quotationData.get("description"));
 
@@ -706,6 +706,198 @@ public class QuotationController {
             response.put("success", false);
             response.put("message", "Error creating purchase order: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    // ============ SUPPLIER QUOTATION ENDPOINTS ============
+    // These endpoints bridge the gap between SupplierQuotationController and frontend expectations
+
+    /**
+     * Get all quotation requests for supplier dashboard
+     */
+    @GetMapping("/supplier/requests")
+    public ResponseEntity<List<QuotationDTO>> getAllQuotationRequestsForSupplier() {
+        try {
+            List<QuotationDTO> quotations = quotationService.getAllQuotations();
+            return ResponseEntity.ok(quotations);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
+    }
+
+    /**
+     * Get quotations assigned to a specific supplier
+     */
+    @GetMapping("/supplier/{supplierId}/quotations")
+    public ResponseEntity<List<QuotationDTO>> getQuotationsBySupplierId(@PathVariable Integer supplierId) {
+        try {
+            // For now, return all quotations. In a real scenario, you'd filter by supplier
+            List<QuotationDTO> quotations = quotationService.getAllQuotations();
+            return ResponseEntity.ok(quotations);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
+    }
+
+    /**
+     * Get quotation details by ID for supplier
+     */
+    @GetMapping("/supplier/quotations/{quotationId}")
+    public ResponseEntity<QuotationDTO> getSupplierQuotationById(@PathVariable Integer quotationId) {
+        try {
+            QuotationDTO quotation = quotationService.getQuotationById(quotationId);
+            if (quotation != null) {
+                return ResponseEntity.ok(quotation);
+            } else {
+                return ResponseEntity.notFound().build();
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
+    }
+
+    /**
+     * Get quotation items for a specific quotation (supplier endpoint)
+     */
+    @GetMapping("/supplier/quotations/{quotationId}/items")
+    public ResponseEntity<List<QuotationItemDTO>> getSupplierQuotationItems(@PathVariable Integer quotationId) {
+        try {
+            if (quotationId == null) {
+                return ResponseEntity.badRequest().body(null);
+            }
+            List<QuotationItemDTO> items = quotationService.getQuotationItemsByQuotationId(quotationId);
+            return ResponseEntity.ok(items);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
+    }
+
+    /**
+     * Submit quotation response (supplier endpoint)
+     */
+    @PostMapping("/supplier/quotations/respond")
+    public ResponseEntity<Map<String, Object>> submitSupplierQuotationResponse(@RequestBody QuotationResponseDTO responseDTO) {
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            // Validate required fields
+            if (responseDTO.getQId() == null || responseDTO.getQId() <= 0) {
+                response.put("success", false);
+                response.put("message", "Valid quotation ID is required");
+                return ResponseEntity.badRequest().body(response);
+            }
+
+            if (responseDTO.getSupplierId() == null || responseDTO.getSupplierId() <= 0) {
+                response.put("success", false);
+                response.put("message", "Valid supplier ID is required");
+                return ResponseEntity.badRequest().body(response);
+            }
+
+            if (responseDTO.getTotalAmount() == null || responseDTO.getTotalAmount().compareTo(java.math.BigDecimal.ZERO) <= 0) {
+                response.put("success", false);
+                response.put("message", "Valid total amount is required");
+                return ResponseEntity.badRequest().body(response);
+            }
+
+            // Set default values
+            if (responseDTO.getStatus() == null || responseDTO.getStatus().trim().isEmpty()) {
+                responseDTO.setStatus("SUBMITTED");
+            }
+
+            if (responseDTO.getRespondDate() == null) {
+                responseDTO.setRespondDate(new java.sql.Date(System.currentTimeMillis()));
+            }
+
+            Integer responseId = quotationResponseService.createQuotationResponse(responseDTO);
+
+            if (responseId != null) {
+                response.put("success", true);
+                response.put("message", "Quotation response submitted successfully");
+                response.put("responseId", responseId);
+                return ResponseEntity.ok(response);
+            } else {
+                response.put("success", false);
+                response.put("message", "Failed to create quotation response");
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+            }
+
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "Error creating quotation response: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    /**
+     * Get quotation response by quotation ID (supplier endpoint)
+     */
+    @GetMapping("/supplier/quotations/{quotationId}/response")
+    public ResponseEntity<QuotationResponseDTO> getSupplierQuotationResponse(@PathVariable Integer quotationId) {
+        try {
+            if (quotationId == null) {
+                return ResponseEntity.badRequest().body(null);
+            }
+
+            // Get responses for this quotation
+            List<QuotationResponseDTO> responses = quotationResponseService.getQuotationResponsesByQuotationId(quotationId);
+            if (!responses.isEmpty()) {
+                return ResponseEntity.ok(responses.get(0)); // Return first response
+            } else {
+                return ResponseEntity.notFound().build();
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
+    }
+
+    /**
+     * Update quotation response (supplier endpoint)
+     */
+    @PutMapping("/supplier/quotations/response")
+    public ResponseEntity<Map<String, Object>> updateSupplierQuotationResponse(@RequestBody QuotationResponseDTO responseDTO) {
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            if (responseDTO.getResponseId() == null || responseDTO.getResponseId() <= 0) {
+                response.put("success", false);
+                response.put("message", "Valid response ID is required");
+                return ResponseEntity.badRequest().body(response);
+            }
+
+            boolean updated = quotationResponseService.updateQuotationResponse(responseDTO);
+
+            if (updated) {
+                response.put("success", true);
+                response.put("message", "Quotation response updated successfully");
+                return ResponseEntity.ok(response);
+            } else {
+                response.put("success", false);
+                response.put("message", "Failed to update quotation response");
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+            }
+
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "Error updating quotation response: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    /**
+     * Get quotation responses by supplier ID
+     */
+    @GetMapping("/supplier/responses/{supplierId}")
+    public ResponseEntity<List<QuotationResponseWithSupplierDTO>> getSupplierQuotationResponses(@PathVariable Integer supplierId) {
+        try {
+            if (supplierId == null) {
+                return ResponseEntity.badRequest().body(null);
+            }
+
+            List<QuotationResponseWithSupplierDTO> responses =
+                quotationResponseService.getQuotationResponsesWithSupplierBySupplierId(supplierId);
+            return ResponseEntity.ok(responses);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
 }

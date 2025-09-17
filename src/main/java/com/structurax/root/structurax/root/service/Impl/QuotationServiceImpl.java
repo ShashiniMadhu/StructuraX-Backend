@@ -88,6 +88,23 @@ public class QuotationServiceImpl implements QuotationService {
     }
 
     @Override
+    public List<QuotationItemDTO> getEnhancedQuotationItemsByQuotationId(Integer qId) {
+        try {
+            // First try to get enhanced details
+            List<QuotationItemDTO> enhancedItems = quotationDAO.getEnhancedQuotationItemsByQuotationId(qId);
+
+            // Log the retrieval for debugging
+            System.out.println("Retrieved " + enhancedItems.size() + " enhanced items for quotation ID: " + qId);
+
+            return enhancedItems;
+        } catch (Exception e) {
+            // Fallback to regular items if enhanced query fails
+            System.err.println("Enhanced items query failed for qId " + qId + ", falling back to regular items: " + e.getMessage());
+            return quotationDAO.getQuotationItemsByQuotationId(qId);
+        }
+    }
+
+    @Override
     public List<QuotationSupplierDTO> getQuotationSuppliersByQuotationId(Integer qId) {
         return quotationDAO.getQuotationSuppliersByQuotationId(qId);
     }
