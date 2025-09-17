@@ -137,4 +137,22 @@ public class SupplierServiceImpl implements SupplierService {
             throw e;
         }
     }
+
+    @Override
+    public SupplierDTO getSupplierById(int supplierId) {
+        logger.info("Retrieving supplier with ID: {}", supplierId);
+
+        if (supplierId <= 0) {
+            logger.error("Validation failed: Valid supplier ID is required");
+            throw new IllegalArgumentException("Valid supplier ID is required");
+        }
+
+        SupplierDTO supplier = supplierDAO.getSupplierById(supplierId);
+        if (supplier == null) {
+            logger.error("Supplier not found with ID: {}", supplierId);
+            throw new RuntimeException("Supplier not found with ID: " + supplierId);
+        }
+
+        return supplier;
+    }
 }

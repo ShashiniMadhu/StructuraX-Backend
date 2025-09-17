@@ -1,31 +1,38 @@
 package com.structurax.root.structurax.root.dto;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
+import java.sql.Date;
+import java.sql.Timestamp;
 
 public class QuotationResponseDTO {
     private Integer responseId;
     private Integer qId;
     private Integer supplierId;
+    private String supplierName;
     private BigDecimal totalAmount;
-    private LocalDate deliveryDate;
+    private String status;
+    private String notes;
+    private Date responseDate;
+    private Date validUntil;
+    private Date deliveryDate;
     private String additionalNote;
-    private LocalDate respondDate;
-    private String status; // 'pending', 'accepted', 'rejected'
+    private Date respondDate;
+    private Timestamp createdAt;
+    private Timestamp updatedAt;
 
+    // Default constructor
     public QuotationResponseDTO() {
     }
 
-    public QuotationResponseDTO(Integer responseId, Integer qId, Integer supplierId, BigDecimal totalAmount, 
-                              LocalDate deliveryDate, String additionalNote, LocalDate respondDate, String status) {
+    // Constructor with essential fields
+    public QuotationResponseDTO(Integer responseId, Integer qId, Integer supplierId,
+                               BigDecimal totalAmount, String status, Date responseDate) {
         this.responseId = responseId;
         this.qId = qId;
         this.supplierId = supplierId;
         this.totalAmount = totalAmount;
-        this.deliveryDate = deliveryDate;
-        this.additionalNote = additionalNote;
-        this.respondDate = respondDate;
         this.status = status;
+        this.responseDate = responseDate;
     }
 
     // Getters and Setters
@@ -53,6 +60,14 @@ public class QuotationResponseDTO {
         this.supplierId = supplierId;
     }
 
+    public String getSupplierName() {
+        return supplierName;
+    }
+
+    public void setSupplierName(String supplierName) {
+        this.supplierName = supplierName;
+    }
+
     public BigDecimal getTotalAmount() {
         return totalAmount;
     }
@@ -61,11 +76,43 @@ public class QuotationResponseDTO {
         this.totalAmount = totalAmount;
     }
 
-    public LocalDate getDeliveryDate() {
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public String getNotes() {
+        return notes;
+    }
+
+    public void setNotes(String notes) {
+        this.notes = notes;
+    }
+
+    public Date getResponseDate() {
+        return responseDate;
+    }
+
+    public void setResponseDate(Date responseDate) {
+        this.responseDate = responseDate;
+    }
+
+    public Date getValidUntil() {
+        return validUntil;
+    }
+
+    public void setValidUntil(Date validUntil) {
+        this.validUntil = validUntil;
+    }
+
+    public Date getDeliveryDate() {
         return deliveryDate;
     }
 
-    public void setDeliveryDate(LocalDate deliveryDate) {
+    public void setDeliveryDate(Date deliveryDate) {
         this.deliveryDate = deliveryDate;
     }
 
@@ -77,20 +124,28 @@ public class QuotationResponseDTO {
         this.additionalNote = additionalNote;
     }
 
-    public LocalDate getRespondDate() {
+    public Date getRespondDate() {
         return respondDate;
     }
 
-    public void setRespondDate(LocalDate respondDate) {
+    public void setRespondDate(Date respondDate) {
         this.respondDate = respondDate;
     }
 
-    public String getStatus() {
-        return status;
+    public Timestamp getCreatedAt() {
+        return createdAt;
     }
 
-    public void setStatus(String status) {
-        this.status = status;
+    public void setCreatedAt(Timestamp createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public Timestamp getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(Timestamp updatedAt) {
+        this.updatedAt = updatedAt;
     }
 
     @Override
@@ -99,11 +154,17 @@ public class QuotationResponseDTO {
                 "responseId=" + responseId +
                 ", qId=" + qId +
                 ", supplierId=" + supplierId +
+                ", supplierName='" + supplierName + '\'' +
                 ", totalAmount=" + totalAmount +
+                ", status='" + status + '\'' +
+                ", notes='" + notes + '\'' +
+                ", responseDate=" + responseDate +
+                ", validUntil=" + validUntil +
                 ", deliveryDate=" + deliveryDate +
                 ", additionalNote='" + additionalNote + '\'' +
                 ", respondDate=" + respondDate +
-                ", status='" + status + '\'' +
+                ", createdAt=" + createdAt +
+                ", updatedAt=" + updatedAt +
                 '}';
     }
 }

@@ -15,10 +15,12 @@ public interface QuotationDAO {
     // Read operations
     QuotationDTO getQuotationById(Integer qId);
     List<QuotationItemDTO> getQuotationItemsByQuotationId(Integer qId);
+    List<QuotationItemDTO> getEnhancedQuotationItemsByQuotationId(Integer qId);
     List<QuotationSupplierDTO> getQuotationSuppliersByQuotationId(Integer qId);
     List<QuotationDTO> getAllQuotations();
     List<QuotationDTO> getQuotationsByQsId(String qsId);
-    
+    List<QuotationDTO> getQuotationsBySupplierId(Integer supplierId);
+
     // Update operations
     boolean updateQuotation(QuotationDTO quotation);
     boolean updateQuotationItem(QuotationItemDTO item);
