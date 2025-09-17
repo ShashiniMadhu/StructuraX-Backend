@@ -28,17 +28,100 @@ public class LegalOfficerDAOImpl implements LegalOfficerDAO {
 
     @Override
     public List<ProjectDocumentsDTO> findAllLegalDocuments() {
-        String sql = "SELECT document_id, project_id, document_url, description, upload_date FROM project_documents WHERE type = 'legal'";
+        String sql = "SELECT document_id, project_id, document_url, description, status, upload_date " +
+                "FROM project_documents " +
+                "WHERE type = 'legal' AND status = 'pending'";
         return jdbcTemplate.query(sql, (ResultSet rs, int rowNum) -> {
             ProjectDocumentsDTO dto = new ProjectDocumentsDTO();
             dto.setDocumentId(rs.getInt("document_id"));
             dto.setProjectId(rs.getString("project_id"));
             dto.setDocumentUrl(rs.getString("document_url"));
             dto.setDescription(rs.getString("description"));
+            dto.setStatus(rs.getString("status"));
             dto.setUploadDate(rs.getDate("upload_date").toLocalDate());
             return dto;
         });
     }
+
+    @Override
+    public boolean acceptDocument(Integer documentId) {
+        try (Connection conn = databaseConnection.getConnection()) {
+            conn.setAutoCommit(false);
+            try {
+                // 1. Get the document details
+                ProjectDocumentsDTO document = findDocumentById(documentId);
+                if (document == null) {
+                    return false;
+                }
+
+                // 2. Update status in project_documents
+                String updateSql = "UPDATE project_documents SET status = 'accept' WHERE document_id = ?";
+                try (PreparedStatement ps = conn.prepareStatement(updateSql)) {
+                    ps.setInt(1, documentId);
+                    ps.executeUpdate();
+                }
+
+                // 3. Insert into legal_document
+                String insertSql = "INSERT INTO legal_document (project_id, document_url, date, type, description) VALUES (?, ?, ?, ?, ?)";
+                try (PreparedStatement ps = conn.prepareStatement(insertSql)) {
+                    ps.setString(1, document.getProjectId());
+                    ps.setString(2, document.getDocumentUrl());
+                    ps.setDate(3, Date.valueOf(document.getUploadDate()));
+                    ps.setString(4, "legal");
+                    ps.setString(5, document.getDescription());
+                    ps.executeUpdate();
+                }
+
+                conn.commit();
+                return true;
+            } catch (SQLException e) {
+                conn.rollback();
+                throw new RuntimeException("Error accepting document: " + e.getMessage(), e);
+            } finally {
+                conn.setAutoCommit(true);
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Database error: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public boolean rejectDocument(Integer documentId) {
+        String sql = "UPDATE project_documents SET status = 'reject' WHERE document_id = ?";
+        try (
+                Connection conn = databaseConnection.getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql)
+        ) {
+            ps.setInt(1, documentId);
+            int rowsAffected = ps.executeUpdate();
+            return rowsAffected > 0;
+        } catch (SQLException e) {
+            throw new RuntimeException("Database error: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public ProjectDocumentsDTO findDocumentById(Integer documentId) {
+        String sql = "SELECT document_id, project_id, document_url, description, status, upload_date FROM project_documents WHERE document_id = ?";
+        List<ProjectDocumentsDTO> results = jdbcTemplate.query(sql, new Object[]{documentId}, (ResultSet rs, int rowNum) -> {
+            ProjectDocumentsDTO dto = new ProjectDocumentsDTO();
+            dto.setDocumentId(rs.getInt("document_id"));
+            dto.setProjectId(rs.getString("project_id"));
+            dto.setDocumentUrl(rs.getString("document_url"));
+            dto.setDescription(rs.getString("description"));
+            dto.setStatus(rs.getString("status"));
+            dto.setUploadDate(rs.getDate("upload_date").toLocalDate());
+            return dto;
+        });
+        return results.isEmpty() ? null : results.get(0);
+    }
+
+    @Override
+    public List<String> findDistinctProjectIds() {
+        String sql = "SELECT DISTINCT project_id FROM legal_document";
+        return jdbcTemplate.query(sql, (ResultSet rs, int rowNum) -> rs.getString("project_id"));
+    }
+
 
 
     @Override
