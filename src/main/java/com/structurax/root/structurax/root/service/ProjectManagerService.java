@@ -12,7 +12,6 @@ public interface ProjectManagerService {
     List<VisitRequestDTO> getAllVisitRequests();
     boolean updateVisitRequest(VisitRequestDTO dto);
     List<ProjectInitiateDTO> getOngoingProjectsByPmId(String pmId);
-    List<RequestSiteResourceDTO> getRequestSiteResourcesByPmId(String pmId);
     boolean approveRequestSiteResource(Integer requestId);
     boolean rejectRequestSiteResource(Integer requestId);
     List<TodoDTO> getTodosByEmployeeId(String employeeId);
@@ -24,9 +23,12 @@ public interface ProjectManagerService {
     boolean updateProjectLocation(String projectId, String location);
     boolean insertProjectMaterials(ProjectMaterialsDTO projectMaterials);
     List<ProjectInitiateDTO> getCompletedProjectsByPmId(String pmId);
-    String getDesignLink(String pmId);
+    List<DesignDTO> getDesignLink(String projectId);
     List<WBSDTO> getWBSByProjectId(String projectId);
     List<BOQitemDTO> getBOQItemsByProjectId(String projectId);
     PaymentDTO getPaymentByProjectId(String projectId);
+    List<RequestSiteResourceDTO> getPendingRequestsByPmId(String pmId);
+    List<SiteResourcesDTO> getSiteResourcesByRequestId(Integer requestId);
+
 
 }

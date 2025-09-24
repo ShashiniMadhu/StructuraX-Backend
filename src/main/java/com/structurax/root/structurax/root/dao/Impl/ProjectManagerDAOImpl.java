@@ -216,51 +216,84 @@ public class ProjectManagerDAOImpl implements ProjectManagerDAO {
         return projects;
    }
 
-    @Override
-    public List<RequestSiteResourceDTO> getRequestSiteResourcesByPmId(String pmId) {
-        String sql = "SELECT request_id, pm_approval, qs_approval, request_type, date, "
-                + "project_id, site_supervisor_id, qs_id, pm_id, is_received "
-                + "FROM request_site_resources "
-                + "WHERE pm_id = ? AND is_received = 'Pending'";
-
-        List<RequestSiteResourceDTO> results = new ArrayList<>();
-        try (Connection conn = databaseConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, pmId);
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    RequestSiteResourceDTO dto = new RequestSiteResourceDTO();
-                    dto.setRequestId(rs.getInt("request_id"));
-                    dto.setPmApproval(rs.getBoolean("pm_approval"));
-                    dto.setQsApproval(rs.getBoolean("qs_approval"));
-                    dto.setRequestType(rs.getString("request_type"));
-                    dto.setDate(rs.getDate("date").toLocalDate());
-                    dto.setProjectId(rs.getString("project_id"));
-                    dto.setSiteSupervisorId(rs.getString("site_supervisor_id"));
-                    dto.setQsId(rs.getString("qs_id"));
-                    dto.setPmId(rs.getString("pm_id"));
-                    dto.setIsReceived(rs.getString("is_received"));
-                    results.add(dto);
-                }
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException("Error fetching pending request-site resources for PM " + pmId, e);
-        }
-        return results;
-    }
 
     @Override
-    public boolean updateRequestSiteResourceApproval(Integer requestId, boolean pmApproval) {
+    public boolean updateRequestSiteResourceApproval(Integer requestId, String pmApproval) {
         String sql = "UPDATE request_site_resources SET pm_approval = ? WHERE request_id = ?";
         try (Connection conn = databaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setBoolean(1, pmApproval);
+            ps.setString(1, pmApproval);
             ps.setInt(2, requestId);
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
             throw new RuntimeException("Error updating pm_approval for request " + requestId, e);
         }
     }
+
+    @Override
+    public List<RequestSiteResourceDTO> getPendingRequestsByPmId(String pmId) {
+        List<RequestSiteResourceDTO> requests = new ArrayList<>();
+        String sql = """
+        SELECT request_id, project_id, date, site_supervisor_id, pm_id, pm_approval
+        FROM request_site_resources 
+        WHERE pm_id = ? AND pm_approval = 'pending'
+    """;
+
+        try (Connection conn = databaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, pmId);
+            ResultSet rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                RequestSiteResourceDTO dto = new RequestSiteResourceDTO();
+                dto.setRequestId(rs.getInt("request_id"));
+                dto.setProjectId(rs.getString("project_id"));
+                dto.setDate(rs.getDate("date").toLocalDate());
+                dto.setSiteSupervisorId(rs.getString("site_supervisor_id"));
+                dto.setPmId(rs.getString("pm_id"));
+                dto.setPmApproval(rs.getString("pm_approval"));
+                requests.add(dto);
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Error fetching pending requests for PM: " + pmId, e);
+        }
+        return requests;
+    }
+
+    @Override
+    public List<SiteResourcesDTO> getSiteResourcesByRequestId(Integer requestId) {
+        List<SiteResourcesDTO> resources = new ArrayList<>();
+        String sql = """
+        SELECT id, request_id, name, quantity, priority
+        FROM site_resources 
+        WHERE request_id = ?
+    """;
+
+        try (Connection conn = databaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, requestId);
+            ResultSet rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                SiteResourcesDTO dto = new SiteResourcesDTO();
+                dto.setId(rs.getInt("id"));
+                dto.setRequestId(rs.getInt("request_id"));
+                dto.setName(rs.getString("name"));
+                dto.setQuantity(rs.getInt("quantity"));
+                dto.setPriority(rs.getString("priority"));
+                resources.add(dto);
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Error fetching site resources for request: " + requestId, e);
+        }
+        return resources;
+    }
+
+
 
     @Override
     public List<TodoDTO> getTodosByEmployeeId(String employeeId) {
@@ -461,20 +494,31 @@ public class ProjectManagerDAOImpl implements ProjectManagerDAO {
     }
 
     @Override
-    public String getDesignLink(String pmId) {
-        String sql = "SELECT d.design_link FROM design d WHERE d.employee_id = ?";
+    public List<DesignDTO>getDesignLink(String projectId) {
+        List<DesignDTO> designLink = new ArrayList<>();
+        String sql = "SELECT d.design_link, d.description, d.due_date, d.name FROM design d WHERE d.project_id = ?";
         try (Connection connection = databaseConnection.getConnection();
-             PreparedStatement stmt = connection.prepareStatement(sql)) {
-            stmt.setString(1, pmId);
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    return rs.getString("design_link");
+             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+
+            preparedStatement.setString(1, projectId);
+
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                while (resultSet.next()) {
+                    DesignDTO design = new DesignDTO();
+                    design.setDesignLink(resultSet.getString("design_link"));
+                    design.setDescription(resultSet.getString("description"));
+                    Date dueDate = resultSet.getDate("due_date");
+                    if (dueDate != null) {
+                        design.setDueDate(dueDate);
+                    }
+                    design.setName(resultSet.getString("name"));
+                    designLink.add(design);
                 }
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        return null;
+        return designLink;
     }
 
     @Override
