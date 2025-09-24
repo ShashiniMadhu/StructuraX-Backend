@@ -12,8 +12,7 @@ public interface ProjectManagerDAO {
     List<VisitRequestDTO> getAllVisitRequests();
     boolean updateVisitRequest(VisitRequestDTO visitRequestDTO);
     List<ProjectInitiateDTO> getProjectsByPmIdAndStatus(String pmId, String status);
-    List<RequestSiteResourceDTO> getRequestSiteResourcesByPmId(String pmId);
-    boolean updateRequestSiteResourceApproval(Integer requestId, boolean pmApproval);
+    boolean updateRequestSiteResourceApproval(Integer requestId, String pmApproval);
     List<TodoDTO> getTodosByEmployeeId(String employeeId);
     TodoDTO createTodo(TodoDTO todo);
     boolean updateTodo(TodoDTO todo);
@@ -23,9 +22,12 @@ public interface ProjectManagerDAO {
     boolean updateProjectLocation(String projectId, String location);
     boolean insertProjectMaterials(ProjectMaterialsDTO projectMaterials);
     List<ProjectInitiateDTO> getCompletedProjectsByPmId(String pmId);
-    String getDesignLink(String pmId);
+    List<DesignDTO> getDesignLink(String projectId);
     List<WBSDTO> getWBSByProjectId(String projectId);
     List<BOQitemDTO> getBOQItemsByProjectId(String projectId);
     PaymentDTO getPaymentByProjectId(String projectId);
+    List<RequestSiteResourceDTO> getPendingRequestsByPmId(String pmId);
+    List<SiteResourcesDTO> getSiteResourcesByRequestId(Integer requestId);
+
 
 }

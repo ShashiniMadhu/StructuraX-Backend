@@ -48,17 +48,13 @@ public class ProjectManagerServiceImpl implements ProjectManagerService {
     }
 
     @Override
-    public List<RequestSiteResourceDTO> getRequestSiteResourcesByPmId(String pmId) {
-        return visitLogDAO.getRequestSiteResourcesByPmId(pmId);
-    }
-    @Override
     public boolean approveRequestSiteResource(Integer requestId) {
-        return visitLogDAO.updateRequestSiteResourceApproval(requestId, true);
+        return visitLogDAO.updateRequestSiteResourceApproval(requestId, "accepted");
     }
 
     @Override
     public boolean rejectRequestSiteResource(Integer requestId) {
-        return visitLogDAO.updateRequestSiteResourceApproval(requestId, false);
+        return visitLogDAO.updateRequestSiteResourceApproval(requestId, "rejected");
     }
 
     @Override
@@ -107,8 +103,8 @@ public class ProjectManagerServiceImpl implements ProjectManagerService {
     }
 
     @Override
-    public String getDesignLink(String pmId) {
-        return visitLogDAO.getDesignLink(pmId);
+    public List<DesignDTO> getDesignLink(String projectId) {
+        return visitLogDAO.getDesignLink(projectId);
     }
 
     @Override
@@ -124,6 +120,18 @@ public class ProjectManagerServiceImpl implements ProjectManagerService {
     public PaymentDTO getPaymentByProjectId(String projectId) {
         return visitLogDAO.getPaymentByProjectId(projectId);
     }
+
+    @Override
+    public List<RequestSiteResourceDTO> getPendingRequestsByPmId(String pmId) {
+        return visitLogDAO.getPendingRequestsByPmId(pmId);
+    }
+
+    @Override
+    public List<SiteResourcesDTO> getSiteResourcesByRequestId(Integer requestId) {
+        return visitLogDAO.getSiteResourcesByRequestId(requestId);
+    }
+
+
 
 
 }
