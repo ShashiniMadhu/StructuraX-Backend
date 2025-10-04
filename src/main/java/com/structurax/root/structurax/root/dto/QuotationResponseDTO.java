@@ -6,7 +6,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.math.BigDecimal;
 import java.sql.Date;
-import java.sql.Timestamp;
 
 public class QuotationResponseDTO {
 
@@ -14,14 +13,11 @@ public class QuotationResponseDTO {
     private Integer responseId;
 
     @JsonProperty("qId")
-    @JsonAlias({"quotationId"}) // Accept both qId and quotationId from JSON
+    @JsonAlias({"quotationId"})
     private Integer qId;
 
     @JsonProperty("supplierId")
     private Integer supplierId;
-
-    @JsonProperty("supplierName")
-    private String supplierName;
 
     @JsonProperty("totalAmount")
     private BigDecimal totalAmount;
@@ -29,24 +25,9 @@ public class QuotationResponseDTO {
     @JsonProperty("status")
     private String status;
 
-    @JsonProperty("notes")
-    private String notes;
-
-    @JsonProperty("responseDate")
-    @JsonFormat(pattern = "yyyy-MM-dd")
-    private Date responseDate;
-
-    @JsonProperty("validUntil")
-    @JsonFormat(pattern = "yyyy-MM-dd")
-    private Date validUntil;
-
     @JsonProperty("deliveryDate")
     @JsonFormat(pattern = "yyyy-MM-dd")
     private Date deliveryDate;
-
-    @JsonProperty("deliveryTime")
-    @JsonAlias({"deliveryTime"}) // Handle deliveryTime from frontend
-    private Integer deliveryTime;
 
     @JsonProperty("additionalNote")
     private String additionalNote;
@@ -55,49 +36,25 @@ public class QuotationResponseDTO {
     @JsonFormat(pattern = "yyyy-MM-dd")
     private Date respondDate;
 
-    @JsonProperty("createdAt")
-    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
-    private Timestamp createdAt;
-
-    @JsonProperty("updatedAt")
-    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
-    private Timestamp updatedAt;
+    @JsonProperty("deliveryTime")
+    private Integer deliveryTime;
 
     // Default constructor
     public QuotationResponseDTO() {
     }
 
-    // Constructor with essential fields
+    // Constructor matching database columns
     public QuotationResponseDTO(Integer responseId, Integer qId, Integer supplierId,
-                                BigDecimal totalAmount, String status, Date responseDate) {
+                                BigDecimal totalAmount, Date deliveryDate, String additionalNote,
+                                Date respondDate, String status) {
         this.responseId = responseId;
         this.qId = qId;
         this.supplierId = supplierId;
         this.totalAmount = totalAmount;
-        this.status = status;
-        this.responseDate = responseDate;
-    }
-
-    // All-args constructor
-    public QuotationResponseDTO(Integer responseId, Integer qId, Integer supplierId,
-                                String supplierName, BigDecimal totalAmount, String status,
-                                String notes, Date responseDate, Date validUntil,
-                                Date deliveryDate, String additionalNote, Date respondDate,
-                                Timestamp createdAt, Timestamp updatedAt) {
-        this.responseId = responseId;
-        this.qId = qId;
-        this.supplierId = supplierId;
-        this.supplierName = supplierName;
-        this.totalAmount = totalAmount;
-        this.status = status;
-        this.notes = notes;
-        this.responseDate = responseDate;
-        this.validUntil = validUntil;
         this.deliveryDate = deliveryDate;
         this.additionalNote = additionalNote;
         this.respondDate = respondDate;
-        this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
+        this.status = status;
     }
 
     // Getters and Setters
@@ -117,7 +74,6 @@ public class QuotationResponseDTO {
         this.qId = qId;
     }
 
-    // Additional setter to handle quotationId from frontend
     @JsonAlias("quotationId")
     public void setQuotationId(Integer quotationId) {
         this.qId = quotationId;
@@ -135,14 +91,6 @@ public class QuotationResponseDTO {
         this.supplierId = supplierId;
     }
 
-    public String getSupplierName() {
-        return supplierName;
-    }
-
-    public void setSupplierName(String supplierName) {
-        this.supplierName = supplierName;
-    }
-
     public BigDecimal getTotalAmount() {
         return totalAmount;
     }
@@ -157,30 +105,6 @@ public class QuotationResponseDTO {
 
     public void setStatus(String status) {
         this.status = status;
-    }
-
-    public String getNotes() {
-        return notes;
-    }
-
-    public void setNotes(String notes) {
-        this.notes = notes;
-    }
-
-    public Date getResponseDate() {
-        return responseDate;
-    }
-
-    public void setResponseDate(Date responseDate) {
-        this.responseDate = responseDate;
-    }
-
-    public Date getValidUntil() {
-        return validUntil;
-    }
-
-    public void setValidUntil(Date validUntil) {
-        this.validUntil = validUntil;
     }
 
     public Date getDeliveryDate() {
@@ -215,20 +139,14 @@ public class QuotationResponseDTO {
         this.respondDate = respondDate;
     }
 
-    public Timestamp getCreatedAt() {
-        return createdAt;
+    // Alias methods for service compatibility
+    @JsonAlias({"response_date"})
+    public Date getResponseDate() {
+        return respondDate;
     }
 
-    public void setCreatedAt(Timestamp createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public Timestamp getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(Timestamp updatedAt) {
-        this.updatedAt = updatedAt;
+    public void setResponseDate(Date responseDate) {
+        this.respondDate = responseDate;
     }
 
     @Override
@@ -237,18 +155,12 @@ public class QuotationResponseDTO {
                 "responseId=" + responseId +
                 ", qId=" + qId +
                 ", supplierId=" + supplierId +
-                ", supplierName='" + supplierName + '\'' +
                 ", totalAmount=" + totalAmount +
                 ", status='" + status + '\'' +
-                ", notes='" + notes + '\'' +
-                ", responseDate=" + responseDate +
-                ", validUntil=" + validUntil +
                 ", deliveryDate=" + deliveryDate +
                 ", deliveryTime=" + deliveryTime +
                 ", additionalNote='" + additionalNote + '\'' +
                 ", respondDate=" + respondDate +
-                ", createdAt=" + createdAt +
-                ", updatedAt=" + updatedAt +
                 '}';
     }
 }
