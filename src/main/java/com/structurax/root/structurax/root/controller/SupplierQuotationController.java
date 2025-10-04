@@ -282,34 +282,112 @@ public class SupplierQuotationController {
     @PostMapping("/respond")
     public ResponseEntity<?> respondToQuotation(@RequestBody QuotationResponseDTO responseDTO) {
         try {
-            logger.info("Creating response for quotation ID: {} by supplier ID: {}",
-                    responseDTO.getQId(), responseDTO.getSupplierId());
+            // Log the entire received DTO
+            logger.info("Received QuotationResponseDTO: {}", responseDTO);
+            logger.info("qId: {}, supplierId: {}, totalAmount: {}, deliveryTime: {}, status: {}",
+                    responseDTO.getQId(), responseDTO.getSupplierId(), responseDTO.getTotalAmount(),
+                    responseDTO.getDeliveryTime(), responseDTO.getStatus());
 
-            // Validate the response data
+            // Enhanced validation with detailed error messages
             if (responseDTO.getQId() == null || responseDTO.getQId() <= 0) {
+                String errorMsg = String.format("Valid quotation ID is required. Received qId: %s",
+                        responseDTO.getQId());
+                logger.error(errorMsg);
                 return ResponseEntity.badRequest()
-                        .body(Map.of("error", "Valid quotation ID is required"));
+                        .body(Map.of(
+                                "error", errorMsg,
+                                "receivedDTO", responseDTO.toString(),
+                                "qId", responseDTO.getQId() != null ? responseDTO.getQId() : "null"
+                        ));
             }
 
             if (responseDTO.getSupplierId() == null || responseDTO.getSupplierId() <= 0) {
+                String errorMsg = String.format("Valid supplier ID is required. Received supplierId: %s",
+                        responseDTO.getSupplierId());
+                logger.error(errorMsg);
                 return ResponseEntity.badRequest()
-                        .body(Map.of("error", "Valid supplier ID is required"));
+                        .body(Map.of("error", errorMsg));
             }
 
-            if (responseDTO.getTotalAmount() == null || responseDTO.getTotalAmount().compareTo(java.math.BigDecimal.ZERO) <= 0) {
+            if (responseDTO.getTotalAmount() == null ||
+                    responseDTO.getTotalAmount().compareTo(java.math.BigDecimal.ZERO) <= 0) {
+                String errorMsg = String.format("Valid total amount is required. Received totalAmount: %s",
+                        responseDTO.getTotalAmount());
+                logger.error(errorMsg);
                 return ResponseEntity.badRequest()
-                        .body(Map.of("error", "Valid total amount is required"));
+                        .body(Map.of("error", errorMsg));
             }
 
-            // Set default values if not provided
-            if (responseDTO.getStatus() == null || responseDTO.getStatus().trim().isEmpty()) {
-                responseDTO.setStatus("SUBMITTED");
+            // Normalize status to match database ENUM values (lowercase: pending, accepted, rejected)
+            String status = responseDTO.getStatus();
+            if (status == null || status.trim().isEmpty()) {
+                status = "pending"; // Default status
+            } else {
+                // Normalize to lowercase and map to valid ENUM values
+                status = status.trim().toLowerCase();
+                switch (status) {
+                    case "submitted":
+                    case "submit":
+                    case "new":
+                        status = "pending";
+                        break;
+                    case "accepted":
+                    case "approved":
+                    case "accept":
+                        status = "accepted";
+                        break;
+                    case "rejected":
+                    case "declined":
+                    case "reject":
+                        status = "rejected";
+                        break;
+                    case "pending":
+                        // Already valid
+                        break;
+                    default:
+                        logger.warn("Unknown status '{}', defaulting to 'pending'", status);
+                        status = "pending";
+                }
             }
+            responseDTO.setStatus(status);
+            logger.info("Normalized status to: '{}'", status);
 
             if (responseDTO.getRespondDate() == null) {
                 responseDTO.setRespondDate(new java.sql.Date(System.currentTimeMillis()));
             }
 
+            // Calculate delivery date based on delivery time (days)
+            if (responseDTO.getDeliveryDate() == null && responseDTO.getDeliveryTime() != null) {
+                java.util.Calendar calendar = java.util.Calendar.getInstance();
+                calendar.setTime(new java.util.Date());
+                calendar.add(java.util.Calendar.DAY_OF_MONTH, responseDTO.getDeliveryTime());
+                responseDTO.setDeliveryDate(new java.sql.Date(calendar.getTimeInMillis()));
+                logger.info("Calculated delivery date: {} (current date + {} days)",
+                        responseDTO.getDeliveryDate(), responseDTO.getDeliveryTime());
+            } else if (responseDTO.getDeliveryDate() == null) {
+                java.util.Calendar calendar = java.util.Calendar.getInstance();
+                calendar.setTime(new java.util.Date());
+                calendar.add(java.util.Calendar.DAY_OF_MONTH, 30);
+                responseDTO.setDeliveryDate(new java.sql.Date(calendar.getTimeInMillis()));
+                logger.warn("No delivery date or time provided, defaulting to 30 days from now");
+            }
+
+            // Set response date
+            if (responseDTO.getResponseDate() == null) {
+                responseDTO.setResponseDate(new java.sql.Date(System.currentTimeMillis()));
+            }
+
+            // Set validUntil date
+            if (responseDTO.getValidUntil() == null) {
+                java.util.Calendar calendar = java.util.Calendar.getInstance();
+                calendar.setTime(responseDTO.getResponseDate());
+                calendar.add(java.util.Calendar.DAY_OF_MONTH, 30);
+                responseDTO.setValidUntil(new java.sql.Date(calendar.getTimeInMillis()));
+                logger.info("Set validUntil date to: {}", responseDTO.getValidUntil());
+            }
+
+            logger.info("Calling service to save response - status: '{}', delivery date: {}",
+                    responseDTO.getStatus(), responseDTO.getDeliveryDate());
             QuotationResponseDTO response = quotationService.respondToQuotation(responseDTO);
 
             Map<String, Object> result = new HashMap<>();
@@ -323,10 +401,24 @@ public class SupplierQuotationController {
             logger.error("Validation error: {}", e.getMessage());
             return ResponseEntity.badRequest()
                     .body(Map.of("error", e.getMessage()));
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            logger.error("Database constraint violation: {}", e.getMessage(), e);
+            String errorMsg = "Database validation failed. ";
+            if (e.getMessage().contains("status")) {
+                errorMsg += "Status must be one of: pending, accepted, rejected";
+            }
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of(
+                            "error", errorMsg,
+                            "details", e.getMessage()
+                    ));
         } catch (Exception e) {
             logger.error("Error creating quotation response: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Failed to create quotation response: " + e.getMessage()));
+                    .body(Map.of(
+                            "error", "Failed to create quotation response: " + e.getMessage(),
+                            "exceptionType", e.getClass().getSimpleName()
+                    ));
         }
     }
 
