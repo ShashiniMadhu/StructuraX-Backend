@@ -13,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -50,11 +51,31 @@ public class SupplierQuotationController {
         try {
             logger.info("Getting quotations for supplier ID: {}", supplierId);
             List<QuotationDTO> quotations = quotationService.getQuotationsBySupplierId(supplierId);
-            return ResponseEntity.ok(quotations);
-        } catch (IllegalArgumentException e) {
-            logger.error("Validation error: {}", e.getMessage());
-            return ResponseEntity.badRequest()
-                    .body(Map.of("error", e.getMessage()));
+
+            // Map qId to id for frontend compatibility and include requested items
+            List<Map<String, Object>> response = quotations.stream().map(q -> {
+                Map<String, Object> quotationMap = new HashMap<>();
+                quotationMap.put("id", q.getQId()); // Map qId to id
+                quotationMap.put("qId", q.getQId());
+                quotationMap.put("projectName", q.getProjectName());
+
+                // Fetch requested items for this quotation
+                List<QuotationItemDTO> items = quotationDetailsService.getQuotationItemsByQuotationId(q.getQId());
+                quotationMap.put("requestedItems", items != null ? items : new ArrayList<>());
+                quotationMap.put("itemsCount", items != null ? items.size() : 0);
+
+                quotationMap.put("date", q.getDate());
+                quotationMap.put("status", q.getStatus());
+                quotationMap.put("deadline", q.getDeadline());
+                quotationMap.put("description", q.getDescription());
+                quotationMap.put("projectId", q.getProjectId());
+                quotationMap.put("createdDate", q.getCreatedAt());
+                quotationMap.put("updatedDate", q.getUpdatedAt());
+                return quotationMap;
+            }).collect(Collectors.toList());
+
+            logger.info("Successfully retrieved {} quotations with items for supplier {}", response.size(), supplierId);
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
             logger.error("Error fetching quotations for supplier {}: {}", supplierId, e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -128,17 +149,38 @@ public class SupplierQuotationController {
     @GetMapping("/{quotationId}/items")
     public ResponseEntity<?> getQuotationItems(@PathVariable Integer quotationId) {
         try {
-            // Validate quotation ID
-            if (quotationId == null || quotationId <= 0) {
+            // Enhanced validation with detailed logging
+            logger.info("Received request for quotation items with quotationId: {}", quotationId);
+
+            if (quotationId == null) {
+                logger.warn("Quotation ID is null");
+                return ResponseEntity.badRequest()
+                        .body(Map.of("error", "Quotation ID cannot be null", "receivedValue", "null"));
+            }
+
+            if (quotationId <= 0) {
                 logger.warn("Invalid quotation ID provided: {}", quotationId);
                 return ResponseEntity.badRequest()
-                        .body(Map.of("error", "Valid quotation ID is required"));
+                        .body(Map.of("error", "Valid quotation ID is required (must be > 0)", "receivedValue", quotationId));
             }
 
             logger.info("Getting enhanced items for quotation ID: {}", quotationId);
 
+            // First check if quotation exists
+            QuotationDTO quotation = quotationService.getQuotationById(quotationId);
+            if (quotation == null) {
+                logger.warn("Quotation not found for ID: {}", quotationId);
+                return ResponseEntity.notFound()
+                        .build();
+            }
+
             // Use enhanced method to get complete item details from database
             List<QuotationItemDTO> items = quotationDetailsService.getEnhancedQuotationItemsByQuotationId(quotationId);
+
+            if (items == null) {
+                logger.warn("Items list is null for quotation ID: {}", quotationId);
+                items = new ArrayList<>();
+            }
 
             // Transform items to include formatted information for frontend
             List<Map<String, Object>> enhancedItems = items.stream().map(item -> {
@@ -173,21 +215,28 @@ public class SupplierQuotationController {
 
             logger.info("Successfully retrieved {} enhanced items for quotation ID: {}", enhancedItems.size(), quotationId);
 
-            return ResponseEntity.ok(Map.of(
-                "quotationId", quotationId,
-                "itemsCount", enhancedItems.size(),
-                "items", enhancedItems,
-                "timestamp", new Date()
-            ));
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("quotationId", quotationId);
+            response.put("quotation", quotation);
+            response.put("itemsCount", enhancedItems.size());
+            response.put("items", enhancedItems);
+            response.put("timestamp", new Date());
 
-        } catch (IllegalArgumentException e) {
+            return ResponseEntity.ok(response);
+
+        } catch (NumberFormatException e) {
             logger.error("Invalid quotation ID format: {}", e.getMessage());
             return ResponseEntity.badRequest()
-                    .body(Map.of("error", "Invalid quotation ID format: " + e.getMessage()));
+                    .body(Map.of("error", "Invalid quotation ID format - must be a number", "receivedValue", quotationId));
+        } catch (IllegalArgumentException e) {
+            logger.error("Invalid quotation ID argument: {}", e.getMessage());
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "Invalid quotation ID: " + e.getMessage(), "receivedValue", quotationId));
         } catch (Exception e) {
             logger.error("Error fetching quotation items for {}: {}", quotationId, e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Failed to fetch quotation items: " + e.getMessage()));
+                    .body(Map.of("error", "Failed to fetch quotation items: " + e.getMessage(), "quotationId", quotationId));
         }
     }
 
@@ -234,7 +283,7 @@ public class SupplierQuotationController {
     public ResponseEntity<?> respondToQuotation(@RequestBody QuotationResponseDTO responseDTO) {
         try {
             logger.info("Creating response for quotation ID: {} by supplier ID: {}",
-                       responseDTO.getQId(), responseDTO.getSupplierId());
+                    responseDTO.getQId(), responseDTO.getSupplierId());
 
             // Validate the response data
             if (responseDTO.getQId() == null || responseDTO.getQId() <= 0) {
@@ -321,7 +370,18 @@ public class SupplierQuotationController {
                 return ResponseEntity.ok(Map.of("canRespond", false, "reason", "Quotation deadline has passed"));
             }
 
-            return ResponseEntity.ok(Map.of("canRespond", true, "quotation", quotation));
+            // Get quotation items
+            List<QuotationItemDTO> items = quotationDetailsService.getQuotationItemsByQuotationId(quotationId);
+
+            // Build complete response with quotation and items
+            Map<String, Object> response = new HashMap<>();
+            response.put("canRespond", true);
+            response.put("quotation", quotation);
+            response.put("items", items);
+            response.put("itemsCount", items.size());
+
+            logger.info("Supplier {} can respond to quotation {} with {} items", supplierId, quotationId, items.size());
+            return ResponseEntity.ok(response);
 
         } catch (Exception e) {
             logger.error("Error checking response eligibility: {}", e.getMessage(), e);
@@ -402,7 +462,7 @@ public class SupplierQuotationController {
             logger.info("Getting detailed quotation responses for supplier ID: {}", supplierId);
 
             List<QuotationResponseDTO> responses = quotationService.getQuotationResponsesBySupplierId(supplierId);
-            List<Map<String, Object>> detailedResponses = new java.util.ArrayList<>();
+            List<Map<String, Object>> detailedResponses = new ArrayList<>();
 
             for (QuotationResponseDTO response : responses) {
                 Map<String, Object> detailedResponse = new HashMap<>();
@@ -474,6 +534,99 @@ public class SupplierQuotationController {
             logger.error("Error fetching quotation status for supplier {}: {}", supplierId, e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "Failed to fetch quotation status: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * Debug endpoint to help identify quotation ID issues from frontend
+     */
+    @GetMapping("/debug/items/{quotationId}")
+    public ResponseEntity<?> debugQuotationItems(@PathVariable String quotationId) {
+        try {
+            logger.info("Debug endpoint called with quotationId parameter: '{}'", quotationId);
+
+            Map<String, Object> debugInfo = new HashMap<>();
+            debugInfo.put("receivedQuotationId", quotationId);
+            debugInfo.put("quotationIdType", quotationId != null ? quotationId.getClass().getSimpleName() : "null");
+            debugInfo.put("quotationIdLength", quotationId != null ? quotationId.length() : 0);
+            debugInfo.put("isNumeric", quotationId != null ? quotationId.matches("\\d+") : false);
+
+            if (quotationId == null || quotationId.trim().isEmpty() || "undefined".equals(quotationId) || "null".equals(quotationId)) {
+                debugInfo.put("issue", "Invalid quotation ID received");
+                debugInfo.put("suggestion", "Check frontend code - quotation ID is not being passed correctly");
+                return ResponseEntity.badRequest().body(debugInfo);
+            }
+
+            try {
+                Integer numericQuotationId = Integer.parseInt(quotationId);
+                debugInfo.put("parsedQuotationId", numericQuotationId);
+
+                // Try to get the quotation
+                QuotationDTO quotation = quotationService.getQuotationById(numericQuotationId);
+                if (quotation == null) {
+                    debugInfo.put("issue", "Quotation not found");
+                    debugInfo.put("suggestion", "Quotation with ID " + numericQuotationId + " does not exist");
+                    return ResponseEntity.notFound().build();
+                }
+
+                // Get items
+                List<QuotationItemDTO> items = quotationDetailsService.getQuotationItemsByQuotationId(numericQuotationId);
+                debugInfo.put("quotation", quotation);
+                debugInfo.put("itemsCount", items.size());
+                debugInfo.put("items", items);
+                debugInfo.put("status", "success");
+
+                return ResponseEntity.ok(debugInfo);
+
+            } catch (NumberFormatException e) {
+                debugInfo.put("issue", "Quotation ID is not a valid number");
+                debugInfo.put("suggestion", "Ensure the frontend passes a numeric quotation ID");
+                return ResponseEntity.badRequest().body(debugInfo);
+            }
+
+        } catch (Exception e) {
+            logger.error("Debug endpoint error: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Debug endpoint failed: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * Get all quotations with their items for a supplier (useful for debugging and as fallback)
+     */
+    @GetMapping("/supplier/{supplierId}/with-items")
+    public ResponseEntity<?> getQuotationsWithItemsBySupplierId(@PathVariable Integer supplierId) {
+        try {
+            logger.info("Getting all quotations with items for supplier ID: {}", supplierId);
+
+            List<QuotationDTO> quotations = quotationService.getQuotationsBySupplierId(supplierId);
+            List<Map<String, Object>> quotationsWithItems = new ArrayList<>();
+
+            for (QuotationDTO quotation : quotations) {
+                Map<String, Object> quotationData = new HashMap<>();
+                quotationData.put("quotation", quotation);
+
+                // Get items for each quotation
+                List<QuotationItemDTO> items = quotationDetailsService.getQuotationItemsByQuotationId(quotation.getQId());
+                quotationData.put("items", items);
+                quotationData.put("itemsCount", items.size());
+
+                quotationsWithItems.add(quotationData);
+            }
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("supplierId", supplierId);
+            response.put("quotationsCount", quotationsWithItems.size());
+            response.put("quotationsWithItems", quotationsWithItems);
+            response.put("timestamp", new Date());
+
+            logger.info("Successfully retrieved {} quotations with items for supplier {}", quotationsWithItems.size(), supplierId);
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            logger.error("Error fetching quotations with items for supplier {}: {}", supplierId, e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Failed to fetch quotations with items: " + e.getMessage()));
         }
     }
 }
