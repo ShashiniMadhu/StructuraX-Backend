@@ -18,7 +18,7 @@ import com.structurax.root.structurax.root.dto.QuotationSupplierDTO;
 
 @Repository
 public class QuotationDAOImpl implements QuotationDAO {
-    
+
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
@@ -26,7 +26,7 @@ public class QuotationDAOImpl implements QuotationDAO {
     public Integer insertQuotation(QuotationDTO quotation) {
         String sql = "INSERT INTO quotation (project_id, qs_id, date, deadline, status, description) VALUES (?, ?, ?, ?, ?, ?)";
         KeyHolder keyHolder = new GeneratedKeyHolder();
-        
+
         jdbcTemplate.update(connection -> {
             PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
             ps.setString(1, quotation.getProjectId());
@@ -37,7 +37,7 @@ public class QuotationDAOImpl implements QuotationDAO {
             ps.setString(6, quotation.getDescription());
             return ps;
         }, keyHolder);
-        
+
         Number key = keyHolder.getKey();
         if (key != null) {
             return key.intValue();
@@ -70,9 +70,9 @@ public class QuotationDAOImpl implements QuotationDAO {
     public QuotationDTO getQuotationById(Integer qId) {
         try {
             String sql = "SELECT q.q_id, q.project_id, p.name as project_name, q.qs_id, q.date, q.deadline, q.status, q.description " +
-                        "FROM quotation q " +
-                        "JOIN project p ON q.project_id = p.project_id " +
-                        "WHERE q.q_id = ?";
+                    "FROM quotation q " +
+                    "JOIN project p ON q.project_id = p.project_id " +
+                    "WHERE q.q_id = ?";
             return jdbcTemplate.queryForObject(sql, new Object[]{qId}, (rs, rowNum) -> {
                 QuotationDTO quotation = new QuotationDTO();
                 quotation.setQId(rs.getInt("q_id"));
@@ -196,13 +196,13 @@ public class QuotationDAOImpl implements QuotationDAO {
         try {
             // Fixed SQL query to match actual database schema
             String sql = "SELECT DISTINCT q.q_id, q.project_id, " +
-                        "p.name as project_name, " +
-                        "q.date, q.deadline, q.status " +
-                        "FROM quotation q " +
-                        "LEFT JOIN project p ON q.project_id = p.project_id " +
-                        "JOIN quotation_supplier qs ON q.q_id = qs.q_id " +
-                        "WHERE qs.supplier_id = ? " +
-                        "ORDER BY q.date DESC";
+                    "p.name as project_name, " +
+                    "q.date, q.deadline, q.status " +
+                    "FROM quotation q " +
+                    "LEFT JOIN project p ON q.project_id = p.project_id " +
+                    "JOIN quotation_supplier qs ON q.q_id = qs.q_id " +
+                    "WHERE qs.supplier_id = ? " +
+                    "ORDER BY q.date DESC";
 
             return jdbcTemplate.query(sql, new Object[]{supplierId}, (rs, rowNum) -> {
                 QuotationDTO quotation = new QuotationDTO();
@@ -221,11 +221,11 @@ public class QuotationDAOImpl implements QuotationDAO {
             // If the above fails, try a simpler query without project join
             try {
                 String fallbackSql = "SELECT DISTINCT q.q_id, q.project_id, " +
-                                   "q.date, q.deadline, q.status " +
-                                   "FROM quotation q " +
-                                   "JOIN quotation_supplier qs ON q.q_id = qs.q_id " +
-                                   "WHERE qs.supplier_id = ? " +
-                                   "ORDER BY q.date DESC";
+                        "q.date, q.deadline, q.status " +
+                        "FROM quotation q " +
+                        "JOIN quotation_supplier qs ON q.q_id = qs.q_id " +
+                        "WHERE qs.supplier_id = ? " +
+                        "ORDER BY q.date DESC";
 
                 return jdbcTemplate.query(fallbackSql, new Object[]{supplierId}, (rs, rowNum) -> {
                     QuotationDTO quotation = new QuotationDTO();
@@ -250,9 +250,9 @@ public class QuotationDAOImpl implements QuotationDAO {
     @Override
     public List<QuotationSupplierDTO> getQuotationSuppliersByQuotationId(Integer qId) {
         String sql = "SELECT qs.q_id, qs.supplier_id, s.supplier_name " +
-                     "FROM quotation_supplier qs " +
-                     "JOIN supplier s ON qs.supplier_id = s.supplier_id " +
-                     "WHERE qs.q_id = ?";
+                "FROM quotation_supplier qs " +
+                "JOIN supplier s ON qs.supplier_id = s.supplier_id " +
+                "WHERE qs.q_id = ?";
         return jdbcTemplate.query(sql, new Object[]{qId}, (rs, rowNum) -> {
             QuotationSupplierDTO quotationSupplier = new QuotationSupplierDTO();
             quotationSupplier.setQId(rs.getInt("q_id"));
@@ -265,9 +265,9 @@ public class QuotationDAOImpl implements QuotationDAO {
     @Override
     public List<QuotationDTO> getAllQuotations() {
         String sql = "SELECT q.q_id, q.project_id, p.name as project_name, q.qs_id, q.date, q.deadline, q.status, q.description " +
-                    "FROM quotation q " +
-                    "JOIN project p ON q.project_id = p.project_id " +
-                    "ORDER BY q.date DESC";
+                "FROM quotation q " +
+                "JOIN project p ON q.project_id = p.project_id " +
+                "ORDER BY q.date DESC";
 
         try {
             return jdbcTemplate.query(sql, (rs, rowNum) -> {
@@ -291,9 +291,9 @@ public class QuotationDAOImpl implements QuotationDAO {
     @Override
     public List<QuotationDTO> getQuotationsByQsId(String qsId) {
         String sql = "SELECT q.q_id, q.project_id, p.name as project_name, q.qs_id, q.date, q.deadline, q.status, q.description " +
-                    "FROM quotation q " +
-                    "JOIN project p ON q.project_id = p.project_id " +
-                    "WHERE q.qs_id = ? ORDER BY q.date DESC";
+                "FROM quotation q " +
+                "JOIN project p ON q.project_id = p.project_id " +
+                "WHERE q.qs_id = ? ORDER BY q.date DESC";
         return jdbcTemplate.query(sql, new Object[]{qsId}, (rs, rowNum) -> {
             QuotationDTO quotation = new QuotationDTO();
             quotation.setQId(rs.getInt("q_id"));
@@ -312,32 +312,32 @@ public class QuotationDAOImpl implements QuotationDAO {
     public List<QuotationItemDTO> getEnhancedQuotationItemsByQuotationId(Integer qId) {
         // Enhanced SQL query to fetch complete item details
         String sql = "SELECT " +
-                    "qi.item_id, " +
-                    "qi.q_id, " +
-                    "qi.name, " +
-                    "qi.description, " +
-                    "qi.amount, " +
-                    "qi.quantity, " +
-                    "COALESCE(qi.unit, 'units') as unit, " +
-                    "COALESCE(qi.category, 'General') as category, " +
-                    "qi.specifications, " +
-                    "qi.brand, " +
-                    "qi.model, " +
-                    "COALESCE(qi.unit_price, qi.amount) as unit_price, " +
-                    "CASE " +
-                    "  WHEN qi.unit_price IS NOT NULL THEN qi.unit_price * qi.quantity " +
-                    "  ELSE qi.amount * qi.quantity " +
-                    "END as total_price, " +
-                    "qi.item_code, " +
-                    "COALESCE(qi.priority, 'MEDIUM') as priority, " +
-                    "qi.required_date, " +
-                    "qi.notes, " +
-                    "COALESCE(qi.status, 'REQUESTED') as status, " +
-                    "qi.created_date, " +
-                    "qi.updated_date " +
-                    "FROM quotation_item qi " +
-                    "WHERE qi.q_id = ? " +
-                    "ORDER BY qi.item_id";
+                "qi.item_id, " +
+                "qi.q_id, " +
+                "qi.name, " +
+                "qi.description, " +
+                "qi.amount, " +
+                "qi.quantity, " +
+                "COALESCE(qi.unit, 'units') as unit, " +
+                "COALESCE(qi.category, 'General') as category, " +
+                "qi.specifications, " +
+                "qi.brand, " +
+                "qi.model, " +
+                "COALESCE(qi.unit_price, qi.amount) as unit_price, " +
+                "CASE " +
+                "  WHEN qi.unit_price IS NOT NULL THEN qi.unit_price * qi.quantity " +
+                "  ELSE qi.amount * qi.quantity " +
+                "END as total_price, " +
+                "qi.item_code, " +
+                "COALESCE(qi.priority, 'MEDIUM') as priority, " +
+                "qi.required_date, " +
+                "qi.notes, " +
+                "COALESCE(qi.status, 'REQUESTED') as status, " +
+                "qi.created_date, " +
+                "qi.updated_date " +
+                "FROM quotation_item qi " +
+                "WHERE qi.q_id = ? " +
+                "ORDER BY qi.item_id";
 
         try {
             return jdbcTemplate.query(sql, new Object[]{qId}, (rs, rowNum) -> {
@@ -378,3 +378,5 @@ public class QuotationDAOImpl implements QuotationDAO {
             return getQuotationItemsByQuotationId(qId);
         }
     }
+}
+
