@@ -15,7 +15,7 @@ public class RequestSiteResourceDTO {
     private Integer requestId;
 
     @JsonProperty("pm_approval")
-    private Boolean pmApproval;
+    private  String pmApproval;
 
     @JsonProperty("qs_approval")
     private Boolean qsApproval;
