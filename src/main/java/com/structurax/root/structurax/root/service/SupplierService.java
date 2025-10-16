@@ -10,5 +10,5 @@ public interface SupplierService {
     void deleteCatalog(Integer itemId);
     CatalogDTO getCatalogById(Integer itemId);
 
-    SupplierResponseDTO login(SupplierLoginDTO supplierDTO);
+
 }

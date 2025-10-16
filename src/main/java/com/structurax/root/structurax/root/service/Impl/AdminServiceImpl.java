@@ -28,31 +28,13 @@ public class AdminServiceImpl implements AdminService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-    @Override
-    public AdminResponseDTO login(AdminLoginDTO loginDTO) {
-        AdminDTO admin = adminDAO.findByEmail(loginDTO.getEmail())
-                .orElseThrow(() -> new RuntimeException("User not found"));
 
-        if (!passwordEncoder.matches(loginDTO.getPassword(), admin.getPassword())) {
-            throw new RuntimeException("Invalid password");
-        }
-
-        String token = jwtUtil.generateTokenForAdmin(admin.getEmail(), admin.getRole(), admin.getAdminId());
-
-        return new AdminResponseDTO(
-                admin.getAdminId(),
-
-                admin.getEmail(),
-                admin.getRole(),
-                token
-        );
-    }
 
     @Override
-    public EmployeeDTO createEmployee(EmployeeDTO employeeDTO){
-        logger.info("Creating employee: {}", employeeDTO);
-        EmployeeDTO createdEmployee = adminDAO.createEmployee(employeeDTO);
-        logger.info("Employee created successfully: {}", createdEmployee.getEmployeeId());
+    public UserDTO createEmployee(UserDTO userDTO){
+        logger.info("Creating employee: {}", userDTO);
+        UserDTO createdEmployee = adminDAO.createEmployee(userDTO);
+        logger.info("Employee created successfully: {}", createdEmployee.getUserId());
         return createdEmployee;
     }
 
