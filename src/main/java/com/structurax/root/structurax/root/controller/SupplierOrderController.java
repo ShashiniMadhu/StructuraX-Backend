@@ -2,6 +2,8 @@ package com.structurax.root.structurax.root.controller;
 
 import com.structurax.root.structurax.root.dto.PurchaseOrderDTO;
 import com.structurax.root.structurax.root.service.SupplierOrderService;
+import com.structurax.root.structurax.root.dto.ProjectOrderResponseDTO;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -74,11 +76,19 @@ public class SupplierOrderController {
         }
     }
 
-
-
-
-
-
-
+    @GetMapping("/project/{projectId}/details")
+    public ResponseEntity<ProjectOrderResponseDTO> getProjectOrderDetails(@PathVariable String projectId) {
+        try {
+            logger.info("Fetching project order details for project ID: {}", projectId);
+            ProjectOrderResponseDTO response = supplierOrderService.getProjectOrderDetails(projectId);
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            logger.error("Error fetching project order details for project ID {}: {}", projectId, e.getMessage());
+            if (e.getMessage().contains("not found")) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+            }
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
+    }
 
 }

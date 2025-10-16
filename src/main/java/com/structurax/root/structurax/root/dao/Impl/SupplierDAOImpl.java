@@ -24,6 +24,11 @@ import com.structurax.root.structurax.root.dto.PurchaseOrderDTO;
 import com.structurax.root.structurax.root.dto.SupplierDTO;
 import com.structurax.root.structurax.root.util.DatabaseConnection;
 
+import com.structurax.root.structurax.root.dto.ProjectDTO;
+import com.structurax.root.structurax.root.dto.OrderItemDTO;
+import java.math.BigDecimal;
+
+
 @Repository
 public class SupplierDAOImpl implements SupplierDAO {
 
@@ -283,4 +288,66 @@ public class SupplierDAOImpl implements SupplierDAO {
         order.setOrderStatus(rs.getBoolean("order_status"));
         return order;
     }
+    @Override
+    public ProjectDTO getProjectById(String projectId) {
+        String sql = "SELECT project_id, name FROM project WHERE project_id = ?";
+        try {
+            return jdbcTemplate.queryForObject(sql, new Object[]{projectId}, (rs, rowNum) -> {
+                ProjectDTO project = new ProjectDTO();
+                project.setProjectId(rs.getString("project_id"));
+                project.setName(rs.getString("name"));
+                return project;
+            });
+        } catch (EmptyResultDataAccessException e) {
+            logger.error("No project found with project_id: {}", projectId);
+            throw new RuntimeException("Project not found with ID: " + projectId);
+        }
+    }
+
+
+    @Override
+    public PurchaseOrderDTO getOrderByProjectId(String projectId) {
+        String sql = "SELECT order_id, project_id, order_date, order_status FROM purchase_order WHERE project_id = ?";
+        try {
+            return jdbcTemplate.queryForObject(sql, new Object[]{projectId}, (rs, rowNum) -> {
+                PurchaseOrderDTO order = new PurchaseOrderDTO();
+                order.setOrderId(rs.getInt("order_id"));
+                order.setProjectId(rs.getString("project_id"));
+                order.setOrderDate(rs.getDate("order_date").toLocalDate());
+                order.setStatus(rs.getString("order_status"));
+                return order;
+            });
+        } catch (EmptyResultDataAccessException e) {
+            logger.error("No purchase order found for project_id: {}", projectId);
+            throw new RuntimeException("Purchase order not found for project ID: " + projectId);
+        }
+    }
+
+    @Override
+    public BigDecimal getQuotationAmountByResponseId(Integer responseId) {
+        String sql = "SELECT total_amount FROM quotation_response WHERE response_id = ?";
+        try {
+            return jdbcTemplate.queryForObject(sql, new Object[]{responseId}, BigDecimal.class);
+        } catch (EmptyResultDataAccessException e) {
+            logger.error("No quotation response found with response_id: {}", responseId);
+            throw new RuntimeException("Quotation response not found with ID: " + responseId);
+        }
+    }
+
+
+    @Override
+    public List<OrderItemDTO> getOrderItemsByOrderId(Integer orderId) {
+        String sql = "SELECT item_id, order_id, description, quantity, unit_price FROM order_items WHERE order_id = ?";
+        return jdbcTemplate.query(sql, new Object[]{orderId}, (rs, rowNum) -> {
+            OrderItemDTO item = new OrderItemDTO();
+            item.setItemId(rs.getInt("item_id"));
+            item.setOrderId(rs.getInt("order_id"));
+            item.setDescription(rs.getString("description"));  // Changed from setProductName
+            item.setQuantity(rs.getInt("quantity"));
+            item.setUnitPrice(rs.getBigDecimal("unit_price"));  // Changed from setPrice
+            return item;
+        });
+    }
+
+
 }
