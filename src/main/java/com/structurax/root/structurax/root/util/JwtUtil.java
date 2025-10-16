@@ -2,6 +2,7 @@ package com.structurax.root.structurax.root.util;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
+import jakarta.validation.constraints.Pattern;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
@@ -12,48 +13,32 @@ public class JwtUtil {
     private final String secret = "secretsecretsecretsecretsecretsecretsecret123";
     private final long expirationMs = 86400000; // 1 day
 
-    public String generateToken(String email, String role,String employeeId) {
-        return Jwts.builder()
+    public String generateToken(String email, String type, Integer userId, String employeeId, String clientId, String supplierId, String adminId) {
+        // Create the builder first
+        JwtBuilder builder = Jwts.builder()
                 .setSubject(email)
-                .claim("role", role)
-                .claim("employeeId", employeeId)
+                .claim("type", type)
+                .claim("userId", userId)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + expirationMs))
-                .signWith(Keys.hmacShaKeyFor(secret.getBytes()))
-                .compact();
-    }
+                .signWith(Keys.hmacShaKeyFor(secret.getBytes()));
 
-    public String generateTokenForClient(String email,String role,String clientId) {
-        return Jwts.builder()
-                .setSubject(email)
-                .claim("role", role)
-                .claim("clientId", clientId)
-                .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + expirationMs))
-                .signWith(Keys.hmacShaKeyFor(secret.getBytes()))
-                .compact();
-    }
+        // Add employeeId, clientId, lecturerId if available
+        if (employeeId != null) {
+            builder.claim("employeeId", employeeId);
+        }
+        if (clientId != null) {
+            builder.claim("clientId", clientId);
+        }
+        if (supplierId != null) {
+            builder.claim("supplierId", supplierId);
+        }
+        if (adminId != null) {
+            builder.claim("adminId", adminId);
+        }
 
-    public String generateTokenForSupplier(String email,String role,int supplierId) {
-        return Jwts.builder()
-                .setSubject(email)
-                .claim("role", role)
-                .claim("supplier_id", supplierId)
-                .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + expirationMs))
-                .signWith(Keys.hmacShaKeyFor(secret.getBytes()))
-                .compact();
-    }
-
-    public String generateTokenForAdmin(String email,String role,String adminId) {
-        return Jwts.builder()
-                .setSubject(email)
-                .claim("role", role)
-                .claim("admin_id", adminId)
-                .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + expirationMs))
-                .signWith(Keys.hmacShaKeyFor(secret.getBytes()))
-                .compact();
+        // Build and return the token
+        return builder.compact();
     }
 
     public boolean validateToken(String token) {
@@ -72,6 +57,8 @@ public class JwtUtil {
 
     public String getRoleFromToken(String token) {
         return Jwts.parserBuilder().setSigningKey(secret.getBytes()).build()
-                .parseClaimsJws(token).getBody().get("role", String.class);
+                .parseClaimsJws(token).getBody().get("type", String.class);
     }
+
+
 }

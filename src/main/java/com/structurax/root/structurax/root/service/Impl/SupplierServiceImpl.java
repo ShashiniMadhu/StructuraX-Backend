@@ -31,25 +31,7 @@ public class SupplierServiceImpl implements SupplierService {
     @Autowired
     private SupplierDAO supplierDAO;
 
-    @Override
-    public SupplierResponseDTO login(SupplierLoginDTO loginDTO) {
-        SupplierDTO supplierDTO = supplierDAO.findByEmail(loginDTO.getEmail())
-                .orElseThrow(() -> new RuntimeException("User not found"));
 
-        if (!passwordEncoder.matches(loginDTO.getPassword(), supplierDTO.getPassword())) {
-            throw new RuntimeException("Invalid password");
-        }
-
-        String token = jwtUtil.generateTokenForSupplier(supplierDTO.getEmail(), supplierDTO.getRole(), supplierDTO.getSupplier_id());
-
-        return new SupplierResponseDTO(
-                supplierDTO.getSupplier_id(),
-
-                supplierDTO.getEmail(),
-                supplierDTO.getRole(),
-                token
-        );
-    }
 
     @Override
     public CatalogDTO createCatalog(CatalogDTO catalogDTO) {

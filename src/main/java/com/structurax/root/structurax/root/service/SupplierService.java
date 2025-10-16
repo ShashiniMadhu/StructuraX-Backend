@@ -9,8 +9,5 @@ public interface SupplierService {
     List<CatalogDTO> getAllCatalogs();
     void deleteCatalog(Integer itemId);
     CatalogDTO getCatalogById(Integer itemId);
-
-    SupplierResponseDTO login(SupplierLoginDTO supplierDTO);
     SupplierDTO getSupplierById(int supplierId);
-
 }
