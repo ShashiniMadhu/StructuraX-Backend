@@ -1,31 +1,25 @@
 package com.structurax.root.structurax.root.dto;
 
+
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.Data;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDate;
 
-@Data
 @Getter
 @Setter
-public class LegalDocumentDTO {
+@NoArgsConstructor
+@AllArgsConstructor
+public class LegalProcessDTO {
 
-    @JsonProperty("legal_document_id")
-    private Integer documentId;
+    private int id;
     @JsonProperty("project_id")
     private String projectId;
-
-    @JsonProperty("document_url")
-    private String documentUrl;
-
-    private LocalDate date;
-    private String type;
     private String description;
-
-
-    public LegalDocumentDTO() {}
-
-
+    private String status;
+    @JsonProperty("approval_date")
+    private LocalDate date;
 }

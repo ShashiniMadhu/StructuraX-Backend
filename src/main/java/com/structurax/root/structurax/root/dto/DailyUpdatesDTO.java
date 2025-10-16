@@ -1,5 +1,7 @@
 package com.structurax.root.structurax.root.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.time.LocalDate;
 
 public class DailyUpdatesDTO {
@@ -7,6 +9,7 @@ public class DailyUpdatesDTO {
     private String projectId;
     private LocalDate date;
     private String note;
+    @JsonProperty("employee_id")
     private String employeeId;
 
     // Default constructor

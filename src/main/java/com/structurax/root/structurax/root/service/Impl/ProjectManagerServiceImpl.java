@@ -48,17 +48,13 @@ public class ProjectManagerServiceImpl implements ProjectManagerService {
     }
 
     @Override
-    public List<RequestSiteResourceDTO> getRequestSiteResourcesByPmId(String pmId) {
-        return visitLogDAO.getRequestSiteResourcesByPmId(pmId);
-    }
-    @Override
     public boolean approveRequestSiteResource(Integer requestId) {
-        return visitLogDAO.updateRequestSiteResourceApproval(requestId, true);
+        return visitLogDAO.updateRequestSiteResourceApproval(requestId, "accepted");
     }
 
     @Override
     public boolean rejectRequestSiteResource(Integer requestId) {
-        return visitLogDAO.updateRequestSiteResourceApproval(requestId, false);
+        return visitLogDAO.updateRequestSiteResourceApproval(requestId, "rejected");
     }
 
     @Override
@@ -86,6 +82,54 @@ public class ProjectManagerServiceImpl implements ProjectManagerService {
         return visitLogDAO.getDailyUpdatesByPmId(pmId);
     }
 
+    @Override
+    public List<ProjectInitiateDTO> getNullLocationProjectsByPmId(String pmId) {
+        return visitLogDAO.getProjectsWithNullLocationByPmId(pmId);
+    }
+
+    @Override
+    public boolean updateProjectLocation(String projectId, String location) {
+        return visitLogDAO.updateProjectLocation(projectId, location);
+    }
+
+    @Override
+    public boolean insertProjectMaterials(ProjectMaterialsDTO projectMaterials) {
+        return visitLogDAO.insertProjectMaterials(projectMaterials);
+    }
+
+    @Override
+    public List<ProjectInitiateDTO> getCompletedProjectsByPmId(String pmId) {
+        return visitLogDAO.getCompletedProjectsByPmId(pmId);
+    }
+
+    @Override
+    public List<DesignDTO> getDesignLink(String projectId) {
+        return visitLogDAO.getDesignLink(projectId);
+    }
+
+    @Override
+    public List<WBSDTO> getWBSByProjectId(String projectId) {
+        return visitLogDAO.getWBSByProjectId(projectId);
+    }
+
+    @Override
+    public List<BOQitemDTO> getBOQItemsByProjectId(String projectId) {
+        return visitLogDAO.getBOQItemsByProjectId(projectId);
+    }
+    @Override
+    public PaymentDTO getPaymentByProjectId(String projectId) {
+        return visitLogDAO.getPaymentByProjectId(projectId);
+    }
+
+    @Override
+    public List<RequestSiteResourceDTO> getPendingRequestsByPmId(String pmId) {
+        return visitLogDAO.getPendingRequestsByPmId(pmId);
+    }
+
+    @Override
+    public List<SiteResourcesDTO> getSiteResourcesByRequestId(Integer requestId) {
+        return visitLogDAO.getSiteResourcesByRequestId(requestId);
+    }
 
 
 
