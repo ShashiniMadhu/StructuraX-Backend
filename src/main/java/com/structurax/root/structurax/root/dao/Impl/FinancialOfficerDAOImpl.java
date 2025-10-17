@@ -5,7 +5,10 @@ import com.structurax.root.structurax.root.dto.*;
 import com.structurax.root.structurax.root.util.DatabaseConnection;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.math.BigDecimal;
 import java.sql.*;
 import java.util.ArrayList;
@@ -651,8 +654,8 @@ public class FinancialOfficerDAOImpl implements FinancialOfficerDAO {
 
     @Override
     public LaborSalaryDTO insertSalary(LaborSalaryDTO laborSalaryDTO) {
-        final String sql = "INSERT INTO labor_salary (project_id, attendance_id, labor_rate) " +
-                "VALUES (?, ?, ?)"; // No cost here
+        final String sql = "INSERT INTO labor_salary (project_id, attendance_id, labor_rate,cost) " +
+                "VALUES (?, ?, ?,?)"; // No cost here
 
         try (
                 Connection connection = databaseConnection.getConnection();
@@ -661,6 +664,7 @@ public class FinancialOfficerDAOImpl implements FinancialOfficerDAO {
             preparedStatement.setString(1, laborSalaryDTO.getProjectId());
             preparedStatement.setInt(2, laborSalaryDTO.getAttendanceId());
             preparedStatement.setBigDecimal(3, laborSalaryDTO.getLaborRate());
+            preparedStatement.setBigDecimal(4,laborSalaryDTO.getCost());
 
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
@@ -779,7 +783,6 @@ public class FinancialOfficerDAOImpl implements FinancialOfficerDAO {
     }
 
 
-
     @Override
     public PaymentPlanDTO deletePaymentPlanById(String id) {
         PaymentPlanDTO paymentPlan = getPaymentPlanByProjectId(id);
@@ -813,7 +816,77 @@ public class FinancialOfficerDAOImpl implements FinancialOfficerDAO {
     }
 
 
+    @Override
+    public LaborPaymentDTO createLaborPayment(LaborPaymentDTO paymentDTO) {
+        String sql = "INSERT INTO labor_payment (project_id, amount, comment, date, receipt) VALUES (?, ?, ?, ?, ?)";
 
+        try (
+                Connection connection = databaseConnection.getConnection();
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)
+        ) {
+            preparedStatement.setString(1, paymentDTO.getProjectId());
+            preparedStatement.setBigDecimal(2, paymentDTO.getAmount());
+            preparedStatement.setString(3, paymentDTO.getComment());
+            preparedStatement.setDate(4, java.sql.Date.valueOf(paymentDTO.getDate()));
+
+            // Set BLOB from MultipartFile
+            if (paymentDTO.getReceipt() != null && !paymentDTO.getReceipt().isEmpty()) {
+                preparedStatement.setBinaryStream(
+                        5,
+                        paymentDTO.getReceipt().getInputStream(),
+                        (int) paymentDTO.getReceipt().getSize()
+                );
+            } else {
+                preparedStatement.setNull(5, java.sql.Types.BLOB);
+            }
+
+            preparedStatement.executeUpdate();
+        } catch (Exception e) {
+            throw new RuntimeException("Error inserting labor payment: " + e.getMessage(), e);
+        }
+
+        return paymentDTO;
+    }
+
+    @Override
+    public List<LaborPaymentDTO> getAllLaborPayments() {
+        List<LaborPaymentDTO> paymentList = new ArrayList<>();
+        final String sql = "SELECT * FROM labor_payment";
+
+        try (
+                Connection connection = databaseConnection.getConnection();
+                PreparedStatement preparedStatement = connection.prepareStatement(sql);
+                ResultSet rs = preparedStatement.executeQuery()
+        ) {
+            while (rs.next()) {
+                LaborPaymentDTO payment = new LaborPaymentDTO();
+                payment.setPaymentId(rs.getInt("payment_id"));
+                payment.setProjectId(rs.getString("project_id"));
+                payment.setAmount(rs.getBigDecimal("amount"));
+                payment.setComment(rs.getString("comment"));
+                payment.setDate(rs.getDate("date").toLocalDate());
+
+                // Set BLOB from MultipartFile
+                if (payment.getReceipt() != null && !payment.getReceipt().isEmpty()) {
+                    preparedStatement.setBinaryStream(
+                            (int) payment.getReceipt().getSize(),
+                            payment.getReceipt().getInputStream()
+                                        );
+                } else {
+                    preparedStatement.setNull(5, java.sql.Types.BLOB);
+                }
+
+
+                paymentList.add(payment);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        return paymentList;
+    }
 
 
 }

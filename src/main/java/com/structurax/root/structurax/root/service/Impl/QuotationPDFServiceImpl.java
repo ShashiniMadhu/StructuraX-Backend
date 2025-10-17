@@ -6,6 +6,7 @@ import java.text.DecimalFormat;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
+import com.structurax.root.structurax.root.dto.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -17,11 +18,6 @@ import com.itextpdf.text.Paragraph;
 import com.itextpdf.text.pdf.PdfPTable;
 import com.itextpdf.text.pdf.PdfWriter;
 import com.structurax.root.structurax.root.dao.QuotationDAO;
-import com.structurax.root.structurax.root.dto.EmployeeDTO;
-import com.structurax.root.structurax.root.dto.Project1DTO;
-import com.structurax.root.structurax.root.dto.QuotationDTO;
-import com.structurax.root.structurax.root.dto.QuotationItemDTO;
-import com.structurax.root.structurax.root.dto.QuotationResponseWithSupplierDTO;
 import com.structurax.root.structurax.root.service.AdminService;
 import com.structurax.root.structurax.root.service.QuotationPDFService;
 import com.structurax.root.structurax.root.service.QuotationResponseService;
@@ -98,7 +94,7 @@ public class QuotationPDFServiceImpl implements QuotationPDFService {
             
             // QS Information
             try {
-                EmployeeDTO qsEmployee = adminService.getEmployeeById(quotation.getQsId());
+                UserDTO qsEmployee = adminService.getEmployeeById(quotation.getQsId());
                 if (qsEmployee != null) {
                     document.add(new Paragraph("QUANTITY SURVEYOR INFORMATION", sectionFont));
                     document.add(new Paragraph("QS Name: " + qsEmployee.getName()));
@@ -225,7 +221,7 @@ public class QuotationPDFServiceImpl implements QuotationPDFService {
                     document.add(new Paragraph("Location: " + project.getLocation()));
                 }
                 
-                EmployeeDTO qsEmployee = adminService.getEmployeeById(quotation.getQsId());
+                UserDTO qsEmployee = adminService.getEmployeeById(quotation.getQsId());
                 if (qsEmployee != null) {
                     document.add(new Paragraph("QS: " + qsEmployee.getName() + " (" + qsEmployee.getEmail() + ")"));
                 }
@@ -330,7 +326,7 @@ public class QuotationPDFServiceImpl implements QuotationPDFService {
             
             // QS Information
             try {
-                EmployeeDTO qsEmployee = adminService.getEmployeeById(quotation.getQsId());
+                UserDTO qsEmployee = adminService.getEmployeeById(quotation.getQsId());
                 if (qsEmployee != null) {
                     document.add(new Paragraph("QUANTITY SURVEYOR DETAILS", sectionFont));
                     document.add(new Paragraph("QS ID: " + quotation.getQsId()));

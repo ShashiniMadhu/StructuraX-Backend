@@ -1,6 +1,7 @@
 package com.structurax.root.structurax.root.controller;
 
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.structurax.root.structurax.root.dto.*;
 import com.structurax.root.structurax.root.service.FinancialOfficerService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -144,10 +145,26 @@ public class FinancialOfficerController {
 
 
     @PostMapping("/labor_salary")
-    public ResponseEntity<LaborSalaryDTO> insertSalary(@RequestBody LaborSalaryDTO laborSalaryDTO){
-        financialOfficerService.insertSalary(laborSalaryDTO);
-        return new ResponseEntity<>(laborSalaryDTO, HttpStatus.OK);
+    public ResponseEntity<?> insertLaborSalary(@RequestBody Object body) {
+        try {
+            if (body instanceof List<?>) {
+                List<?> list = (List<?>) body;
+                for (Object obj : list) {
+                    LaborSalaryDTO dto = new ObjectMapper().convertValue(obj, LaborSalaryDTO.class);
+                    financialOfficerService.insertSalary(dto);
+                }
+                return ResponseEntity.ok("Multiple salaries inserted successfully");
+            } else {
+                LaborSalaryDTO dto = new ObjectMapper().convertValue(body, LaborSalaryDTO.class);
+                financialOfficerService.insertSalary(dto);
+                return ResponseEntity.ok("Single salary inserted successfully");
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error inserting salaries: " + e.getMessage());
+        }
     }
+
 
     @DeleteMapping("/labor_salary/{salaryId}")
     public ResponseEntity<LaborSalaryDTO> deleteSalaryRecordById(@PathVariable int salaryId){
@@ -159,6 +176,19 @@ public class FinancialOfficerController {
     public ResponseEntity<List<LaborSalaryDTO>> updateSalaryRecord(@RequestBody List<LaborSalaryDTO> laborSalaryDTOList) {
         List<LaborSalaryDTO> updatedList = financialOfficerService.updateSalaryRecord(laborSalaryDTOList);
         return new ResponseEntity<>(updatedList, HttpStatus.OK);
+    }
+
+    @PostMapping("/labor_payment")
+    public ResponseEntity<LaborPaymentDTO> createLaborPayment(@ModelAttribute LaborPaymentDTO paymentDTO){
+        LaborPaymentDTO laborPaymentDTO = financialOfficerService.createLaborPayment(paymentDTO);
+        return new ResponseEntity<>(laborPaymentDTO,HttpStatus.OK);
+    }
+
+    @GetMapping("labor_payment")
+    public ResponseEntity<List<LaborPaymentDTO>> getAllLaborPayments(){
+        List<LaborPaymentDTO> paymentDTOS = financialOfficerService.getAllLaborPayments();
+        System.out.println("Endpoint hit");
+        return new ResponseEntity<>(paymentDTOS, HttpStatus.OK);
     }
 
 

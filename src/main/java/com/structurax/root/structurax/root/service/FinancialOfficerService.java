@@ -27,6 +27,10 @@ public interface FinancialOfficerService {
     PaymentPlanDTO updateFullPaymentPlan(PaymentPlanDTO paymentPlanDTO);
 
 
+    /* Lobor payments */
+    LaborPaymentDTO createLaborPayment(LaborPaymentDTO paymentDTO);
+    List<LaborPaymentDTO> getAllLaborPayments();
+
 
 
    // PaymentPlanDTO createPaymentPlan(PaymentPlanDTO paymentPlanDTO);
@@ -44,7 +48,7 @@ public interface FinancialOfficerService {
     //InstallmentDTO deleteInstallmentById(Integer id);
 
 
-    /* labor payment */
+    /* labor salary */
     List<LaborAttendanceDTO> getLaborAttendanceByProjectId(String projectId, Date date);
 
     LaborAttendanceDTO getAttendanceById(int attendanceId);

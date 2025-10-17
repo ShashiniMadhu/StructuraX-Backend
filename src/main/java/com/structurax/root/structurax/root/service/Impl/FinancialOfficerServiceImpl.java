@@ -65,6 +65,13 @@ public class FinancialOfficerServiceImpl implements FinancialOfficerService {
     }
 
     @Override
+    public LaborPaymentDTO createLaborPayment(LaborPaymentDTO paymentDTO) {
+        LaborPaymentDTO payment = financialOfficerDAO.createLaborPayment(paymentDTO);
+        return paymentDTO;
+    }
+
+
+    @Override
     public List<LaborAttendanceDTO> getLaborAttendanceByProjectId(String projectId, Date date) {
         return financialOfficerDAO.getLaborAttendanceByProjectId(projectId,date);
     }
@@ -95,7 +102,10 @@ public class FinancialOfficerServiceImpl implements FinancialOfficerService {
         return financialOfficerDAO.deleteSalaryRecordById(salaryId);
     }
 
-
+    @Override
+    public List<LaborPaymentDTO> getAllLaborPayments() {
+        return financialOfficerDAO.getAllLaborPayments();
+    }
 
 
 

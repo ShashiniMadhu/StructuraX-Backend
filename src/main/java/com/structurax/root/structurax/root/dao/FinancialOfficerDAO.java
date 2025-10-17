@@ -24,8 +24,6 @@ public interface FinancialOfficerDAO {
 
 
 
-
-
     /* installment CRUD */
     //InstallmentDTO createInstallment(InstallmentDTO installmentDTO);
 
@@ -58,4 +56,9 @@ public interface FinancialOfficerDAO {
     LaborSalaryDTO deleteSalaryRecordById(int attendanceId);
 
     List<LaborSalaryDTO> updateSalaryRecord(List<LaborSalaryDTO> laborSalaryDTO);
+
+
+    /* Labor payments */
+    LaborPaymentDTO createLaborPayment(LaborPaymentDTO paymentDTO);
+    List<LaborPaymentDTO> getAllLaborPayments();
 }
