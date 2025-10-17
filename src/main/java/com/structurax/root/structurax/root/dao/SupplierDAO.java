@@ -32,5 +32,6 @@ public interface SupplierDAO {
     PurchaseOrderDTO getOrderByProjectId(String projectId);
     BigDecimal getQuotationAmountByResponseId(Integer responseId);
     List<OrderItemDTO> getOrderItemsByOrderId(Integer orderId);
+    void updateOrderStatus(Integer orderId, Integer orderStatus);
 
 }
