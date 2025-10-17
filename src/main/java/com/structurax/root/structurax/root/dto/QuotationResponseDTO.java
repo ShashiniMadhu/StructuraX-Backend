@@ -1,38 +1,60 @@
 package com.structurax.root.structurax.root.dto;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.math.BigDecimal;
 import java.sql.Date;
-import java.sql.Timestamp;
 
 public class QuotationResponseDTO {
+
+    @JsonProperty("responseId")
     private Integer responseId;
+
+    @JsonProperty("qId")
+    @JsonAlias({"quotationId"})
     private Integer qId;
+
+    @JsonProperty("supplierId")
     private Integer supplierId;
-    private String supplierName;
+
+    @JsonProperty("totalAmount")
     private BigDecimal totalAmount;
+
+    @JsonProperty("status")
     private String status;
-    private String notes;
-    private Date responseDate;
-    private Date validUntil;
+
+    @JsonProperty("deliveryDate")
+    @JsonFormat(pattern = "yyyy-MM-dd")
     private Date deliveryDate;
+
+    @JsonProperty("additionalNote")
     private String additionalNote;
+
+    @JsonProperty("respondDate")
+    @JsonFormat(pattern = "yyyy-MM-dd")
     private Date respondDate;
-    private Timestamp createdAt;
-    private Timestamp updatedAt;
+
+    @JsonProperty("deliveryTime")
+    private Integer deliveryTime;
 
     // Default constructor
     public QuotationResponseDTO() {
     }
 
-    // Constructor with essential fields
+    // Constructor matching database columns
     public QuotationResponseDTO(Integer responseId, Integer qId, Integer supplierId,
-                               BigDecimal totalAmount, String status, Date responseDate) {
+                                BigDecimal totalAmount, Date deliveryDate, String additionalNote,
+                                Date respondDate, String status) {
         this.responseId = responseId;
         this.qId = qId;
         this.supplierId = supplierId;
         this.totalAmount = totalAmount;
+        this.deliveryDate = deliveryDate;
+        this.additionalNote = additionalNote;
+        this.respondDate = respondDate;
         this.status = status;
-        this.responseDate = responseDate;
     }
 
     // Getters and Setters
@@ -52,20 +74,21 @@ public class QuotationResponseDTO {
         this.qId = qId;
     }
 
+    @JsonAlias("quotationId")
+    public void setQuotationId(Integer quotationId) {
+        this.qId = quotationId;
+    }
+
+    public Integer getQuotationId() {
+        return qId;
+    }
+
     public Integer getSupplierId() {
         return supplierId;
     }
 
     public void setSupplierId(Integer supplierId) {
         this.supplierId = supplierId;
-    }
-
-    public String getSupplierName() {
-        return supplierName;
-    }
-
-    public void setSupplierName(String supplierName) {
-        this.supplierName = supplierName;
     }
 
     public BigDecimal getTotalAmount() {
@@ -84,36 +107,20 @@ public class QuotationResponseDTO {
         this.status = status;
     }
 
-    public String getNotes() {
-        return notes;
-    }
-
-    public void setNotes(String notes) {
-        this.notes = notes;
-    }
-
-    public Date getResponseDate() {
-        return responseDate;
-    }
-
-    public void setResponseDate(Date responseDate) {
-        this.responseDate = responseDate;
-    }
-
-    public Date getValidUntil() {
-        return validUntil;
-    }
-
-    public void setValidUntil(Date validUntil) {
-        this.validUntil = validUntil;
-    }
-
     public Date getDeliveryDate() {
         return deliveryDate;
     }
 
     public void setDeliveryDate(Date deliveryDate) {
         this.deliveryDate = deliveryDate;
+    }
+
+    public Integer getDeliveryTime() {
+        return deliveryTime;
+    }
+
+    public void setDeliveryTime(Integer deliveryTime) {
+        this.deliveryTime = deliveryTime;
     }
 
     public String getAdditionalNote() {
@@ -132,20 +139,14 @@ public class QuotationResponseDTO {
         this.respondDate = respondDate;
     }
 
-    public Timestamp getCreatedAt() {
-        return createdAt;
+    // Alias methods for service compatibility
+    @JsonAlias({"response_date"})
+    public Date getResponseDate() {
+        return respondDate;
     }
 
-    public void setCreatedAt(Timestamp createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public Timestamp getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(Timestamp updatedAt) {
-        this.updatedAt = updatedAt;
+    public void setResponseDate(Date responseDate) {
+        this.respondDate = responseDate;
     }
 
     @Override
@@ -154,17 +155,12 @@ public class QuotationResponseDTO {
                 "responseId=" + responseId +
                 ", qId=" + qId +
                 ", supplierId=" + supplierId +
-                ", supplierName='" + supplierName + '\'' +
                 ", totalAmount=" + totalAmount +
                 ", status='" + status + '\'' +
-                ", notes='" + notes + '\'' +
-                ", responseDate=" + responseDate +
-                ", validUntil=" + validUntil +
                 ", deliveryDate=" + deliveryDate +
+                ", deliveryTime=" + deliveryTime +
                 ", additionalNote='" + additionalNote + '\'' +
                 ", respondDate=" + respondDate +
-                ", createdAt=" + createdAt +
-                ", updatedAt=" + updatedAt +
                 '}';
     }
 }

@@ -1,10 +1,10 @@
 package com.structurax.root.structurax.root.dao.Impl;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 
+import com.structurax.root.structurax.root.dto.EmployeeDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
@@ -100,34 +100,57 @@ public class SQSDAOImpl implements SQSDAO {
      * Get all QS Officers from the employee table.
      */
     @Override
-    public java.util.List<com.structurax.root.structurax.root.dto.EmployeeDTO> getQSOfficers() {
-        java.util.List<com.structurax.root.structurax.root.dto.EmployeeDTO> officers = new java.util.ArrayList<>();
-        String sql = "SELECT * FROM employee WHERE type = 'QS_Officer'";
-        try (Connection conn = databaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql);
-             ResultSet rs = stmt.executeQuery()) {
+    public List<EmployeeDTO> getQSOfficers() {
+        List<EmployeeDTO> officers = new ArrayList<>();
+        String sql = """
+        SELECT 
+            e.emp_id AS employee_id,
+            u.name,
+            u.email,
+            u.phone_number,
+            u.address,
+            u.type,
+            u.joined_date,
+            u.password,
+            u.availability,
+            u.profile_image_url
+        FROM employee e
+        INNER JOIN users u ON e.user_id = u.user_id
+        WHERE u.type = 'QS_Officer'
+    """;
+
+        try (
+                Connection conn = databaseConnection.getConnection();
+                PreparedStatement stmt = conn.prepareStatement(sql);
+                ResultSet rs = stmt.executeQuery()
+        ) {
             while (rs.next()) {
-                com.structurax.root.structurax.root.dto.EmployeeDTO emp = new com.structurax.root.structurax.root.dto.EmployeeDTO();
-                emp.setEmployeeId(rs.getString("employee_id"));
+                EmployeeDTO emp = new EmployeeDTO();
+                emp.setEmployeeId(rs.getString("employee_id")); // alias for e.emp_id
                 emp.setName(rs.getString("name"));
                 emp.setEmail(rs.getString("email"));
                 emp.setPhoneNumber(rs.getString("phone_number"));
-                emp.setAddress(rs.getString("address"));
+                emp.setName(rs.getString("address"));
                 emp.setType(rs.getString("type"));
-                java.sql.Date joinedDate = rs.getDate("joined_date");
+
+                Date joinedDate = rs.getDate("joined_date");
                 if (joinedDate != null) {
                     emp.setJoinedDate(joinedDate.toLocalDate());
                 }
-                emp.setPassword(rs.getString("password"));
+
+                emp.setPassword(rs.getString("password")); // you may set to null to avoid exposing
                 emp.setAvailability(rs.getString("availability"));
                 emp.setProfileImageUrl(rs.getString("profile_image_url"));
+
                 officers.add(emp);
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            throw new RuntimeException("Error fetching QS Officers: " + e.getMessage(), e);
         }
+
         return officers;
     }
+
 
     /**
      * Get all requests in the system

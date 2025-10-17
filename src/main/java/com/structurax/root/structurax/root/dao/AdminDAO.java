@@ -8,10 +8,10 @@ import java.util.Optional;
 public interface AdminDAO {
     /**
      * create an employee by admin
-     * @param employeeDTO
+     * @param userDTO
      * @return EmployeeDTO
      */
-    EmployeeDTO createEmployee(EmployeeDTO employeeDTO);
+    UserDTO createEmployee(UserDTO userDTO);
 
     /**
      * get the all employees
