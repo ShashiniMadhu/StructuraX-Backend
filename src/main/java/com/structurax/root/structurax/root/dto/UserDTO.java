@@ -59,4 +59,7 @@ public class UserDTO {
 
     private String resetToken;
     private LocalDateTime tokenExpiry;
+
+    public UserDTO(String userId, String name, String email, String phoneNumber, String address, String type, LocalDate joinedDate, Object o, String availability, String profileImageUrl) {
+    }
 }

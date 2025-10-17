@@ -11,7 +11,7 @@ import java.util.List;
 public interface AdminService {
     /**
      * To create an employee
-     * @param employeeDTO
+     * @param userDTO
      * @return created employee
      */
 
@@ -22,7 +22,7 @@ public interface AdminService {
 
     void deactivateEmployee(String empId);
 
-    EmployeeDTO getEmployeeById(String id);
+    UserDTO getEmployeeById(String id);
 
     SupplierDTO addSupplier(SupplierDTO supplierDTO);
 
