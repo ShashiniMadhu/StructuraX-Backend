@@ -19,4 +19,6 @@ public interface SupplierDAO {
     Optional<SupplierDTO> findByEmail(String email);
     
     SupplierDTO getSupplierById(Integer supplierId);
+    
+    List<SupplierDTO> getAllSuppliers();
 }

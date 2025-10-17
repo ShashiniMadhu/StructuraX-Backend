@@ -13,7 +13,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
-import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
@@ -35,9 +34,21 @@ public class SupplierDAOImpl implements SupplierDAO {
 
     @Override
     public Optional<SupplierDTO> findByEmail(String email) {
-        String sql = "SELECT * FROM supplier WHERE email = ?";
+        String sql = "SELECT supplier_id, supplier_name, address, phone, joined_date, status, email, password FROM supplier WHERE email = ?";
         try {
-            SupplierDTO supplier = jdbcTemplate.queryForObject(sql, new BeanPropertyRowMapper<>(SupplierDTO.class), email);
+            SupplierDTO supplier = jdbcTemplate.queryForObject(sql, (rs, rowNum) -> {
+                SupplierDTO s = new SupplierDTO();
+                s.setSupplier_id(rs.getInt("supplier_id"));
+                s.setSupplier_name(rs.getString("supplier_name"));
+                s.setAddress(rs.getString("address"));
+                s.setPhone(rs.getString("phone"));
+                s.setJoined_date(rs.getDate("joined_date"));
+                s.setStatus(rs.getString("status"));
+                s.setEmail(rs.getString("email"));
+                s.setPassword(rs.getString("password"));
+                s.setRole("Supplier"); // Set default role since column doesn't exist in DB
+                return s;
+            }, email);
             return Optional.ofNullable(supplier);
         } catch (EmptyResultDataAccessException e) {
             return Optional.empty();
@@ -166,15 +177,52 @@ public class SupplierDAOImpl implements SupplierDAO {
     
     @Override
     public SupplierDTO getSupplierById(Integer supplierId) {
-        String sql = "SELECT * FROM supplier WHERE supplier_id = ?";
+        String sql = "SELECT supplier_id, supplier_name, address, phone, joined_date, status, email FROM supplier WHERE supplier_id = ?";
         try {
-            return jdbcTemplate.queryForObject(sql, new BeanPropertyRowMapper<>(SupplierDTO.class), supplierId);
+            return jdbcTemplate.queryForObject(sql, (rs, rowNum) -> {
+                SupplierDTO supplier = new SupplierDTO();
+                supplier.setSupplier_id(rs.getInt("supplier_id"));
+                supplier.setSupplier_name(rs.getString("supplier_name"));
+                supplier.setAddress(rs.getString("address"));
+                supplier.setPhone(rs.getString("phone"));
+                supplier.setJoined_date(rs.getDate("joined_date"));
+                supplier.setStatus(rs.getString("status"));
+                supplier.setEmail(rs.getString("email"));
+                supplier.setRole("Supplier"); // Set default role since column doesn't exist in DB
+                // Note: Not including password field for security reasons in getById
+                return supplier;
+            }, supplierId);
         } catch (EmptyResultDataAccessException e) {
             logger.warn("No supplier found with supplier_id: {}", supplierId);
             return null;
         } catch (Exception e) {
             logger.error("Error retrieving supplier by supplier_id {}: {}", supplierId, e.getMessage(), e);
             throw new RuntimeException("Error retrieving supplier by supplier_id: " + e.getMessage(), e);
+        }
+    }
+    
+    @Override
+    public List<SupplierDTO> getAllSuppliers() {
+        String sql = "SELECT supplier_id, supplier_name, address, phone, joined_date, status, email FROM supplier ORDER BY supplier_name";
+        try {
+            List<SupplierDTO> suppliers = jdbcTemplate.query(sql, (rs, rowNum) -> {
+                SupplierDTO supplier = new SupplierDTO();
+                supplier.setSupplier_id(rs.getInt("supplier_id"));
+                supplier.setSupplier_name(rs.getString("supplier_name"));
+                supplier.setAddress(rs.getString("address"));
+                supplier.setPhone(rs.getString("phone"));
+                supplier.setJoined_date(rs.getDate("joined_date"));
+                supplier.setStatus(rs.getString("status"));
+                supplier.setEmail(rs.getString("email"));
+                supplier.setRole("Supplier"); // Set default role since column doesn't exist in DB
+                // Note: Not including password field for security reasons
+                return supplier;
+            });
+            logger.info("Retrieved {} suppliers from database", suppliers.size());
+            return suppliers;
+        } catch (Exception e) {
+            logger.error("Error retrieving all suppliers: {}", e.getMessage(), e);
+            throw new RuntimeException("Error retrieving all suppliers: " + e.getMessage(), e);
         }
     }
 }
