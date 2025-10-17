@@ -19,5 +19,10 @@ public class SupplierInvoiceDTO {
     private String description;
     private String filePath;
     private LocalDate date;
+    private String status; // PENDING, APPROVED, REJECTED
+
+    // Additional fields for viewing details
+    private String projectName;
+    private String supplierName;
 
 }

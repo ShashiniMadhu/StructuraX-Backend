@@ -8,6 +8,7 @@ import com.structurax.root.structurax.root.dto.PurchaseOrderDTO;
 import com.structurax.root.structurax.root.dto.SupplierDTO;
 import com.structurax.root.structurax.root.dto.SupplierPaymentDTO;
 import com.structurax.root.structurax.root.dto.SupplierHistoryDTO;
+import com.structurax.root.structurax.root.dto.SupplierInvoiceDTO;
 import com.structurax.root.structurax.root.util.DatabaseConnection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -556,6 +557,181 @@ public class SupplierDAOImpl implements SupplierDAO {
             throw new RuntimeException("Error retrieving order items: " + e.getMessage(), e);
         }
         return items;
+    }
+
+    // ========== INVOICE METHODS ==========
+
+    @Override
+    public SupplierInvoiceDTO createInvoice(SupplierInvoiceDTO invoiceDTO) {
+        String sql = "INSERT INTO order_invoice (order_id, supplier_id, amount, description, file_path, date, status) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        try (Connection conn = databaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            ps.setInt(1, invoiceDTO.getOrderId());
+            ps.setInt(2, invoiceDTO.getSupplierId());
+            ps.setBigDecimal(3, invoiceDTO.getAmount());
+            ps.setString(4, invoiceDTO.getDescription());
+            ps.setString(5, invoiceDTO.getFilePath());
+            ps.setDate(6, Date.valueOf(invoiceDTO.getDate()));
+            ps.setString(7, invoiceDTO.getStatus());
+
+            int rows = ps.executeUpdate();
+            if (rows == 0) {
+                throw new RuntimeException("Failed to insert invoice");
+            }
+
+            ResultSet rs = ps.getGeneratedKeys();
+            if (rs.next()) {
+                invoiceDTO.setInvoiceId(rs.getInt(1));
+            }
+            logger.info("Created invoice with invoice_id: {}", invoiceDTO.getInvoiceId());
+            return invoiceDTO;
+        } catch (SQLException e) {
+            logger.error("Error creating invoice: {}", e.getMessage(), e);
+            throw new RuntimeException("Error creating invoice: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public List<SupplierInvoiceDTO> getAllInvoices() {
+        String sql = "SELECT oi.invoice_id, oi.order_id, oi.supplier_id, oi.amount, oi.description, " +
+                     "oi.file_path, oi.date, oi.status, p.name AS project_name, s.company AS supplier_name " +
+                     "FROM order_invoice oi " +
+                     "LEFT JOIN purchase_order po ON oi.order_id = po.order_id " +
+                     "LEFT JOIN project p ON po.project_id = p.project_id " +
+                     "LEFT JOIN supplier s ON oi.supplier_id = s.supplier_id";
+        List<SupplierInvoiceDTO> invoices = new ArrayList<>();
+
+        try (Connection conn = databaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                invoices.add(mapResultSetToInvoiceDTO(rs));
+            }
+            logger.info("Retrieved {} invoices", invoices.size());
+        } catch (SQLException e) {
+            logger.error("Error retrieving invoices: {}", e.getMessage(), e);
+            throw new RuntimeException("Error retrieving invoices: " + e.getMessage(), e);
+        }
+        return invoices;
+    }
+
+    @Override
+    public SupplierInvoiceDTO getInvoiceById(Integer invoiceId) {
+        String sql = "SELECT oi.invoice_id, oi.order_id, oi.supplier_id, oi.amount, oi.description, " +
+                     "oi.file_path, oi.date, oi.status, p.name AS project_name, s.company AS supplier_name " +
+                     "FROM order_invoice oi " +
+                     "LEFT JOIN purchase_order po ON oi.order_id = po.order_id " +
+                     "LEFT JOIN project p ON po.project_id = p.project_id " +
+                     "LEFT JOIN supplier s ON oi.supplier_id = s.supplier_id " +
+                     "WHERE oi.invoice_id = ?";
+
+        try (Connection conn = databaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, invoiceId);
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+                logger.info("Retrieved invoice with invoice_id: {}", invoiceId);
+                return mapResultSetToInvoiceDTO(rs);
+            } else {
+                logger.warn("No invoice found with invoice_id: {}", invoiceId);
+                return null;
+            }
+        } catch (SQLException e) {
+            logger.error("Error retrieving invoice by id {}: {}", invoiceId, e.getMessage(), e);
+            throw new RuntimeException("Error retrieving invoice: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public List<SupplierInvoiceDTO> getInvoicesBySupplierId(Integer supplierId) {
+        String sql = "SELECT oi.invoice_id, oi.order_id, oi.supplier_id, oi.amount, oi.description, " +
+                     "oi.file_path, oi.date, oi.status, p.name AS project_name, s.company AS supplier_name " +
+                     "FROM order_invoice oi " +
+                     "LEFT JOIN purchase_order po ON oi.order_id = po.order_id " +
+                     "LEFT JOIN project p ON po.project_id = p.project_id " +
+                     "LEFT JOIN supplier s ON oi.supplier_id = s.supplier_id " +
+                     "WHERE oi.supplier_id = ?";
+        List<SupplierInvoiceDTO> invoices = new ArrayList<>();
+
+        try (Connection conn = databaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, supplierId);
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                invoices.add(mapResultSetToInvoiceDTO(rs));
+            }
+            logger.info("Retrieved {} invoices for supplier_id: {}", invoices.size(), supplierId);
+        } catch (SQLException e) {
+            logger.error("Error retrieving invoices for supplier {}: {}", supplierId, e.getMessage(), e);
+            throw new RuntimeException("Error retrieving invoices for supplier: " + e.getMessage(), e);
+        }
+        return invoices;
+    }
+
+    @Override
+    public List<SupplierInvoiceDTO> getInvoicesByOrderId(Integer orderId) {
+        String sql = "SELECT oi.invoice_id, oi.order_id, oi.supplier_id, oi.amount, oi.description, " +
+                     "oi.file_path, oi.date, oi.status, p.name AS project_name, s.company AS supplier_name " +
+                     "FROM order_invoice oi " +
+                     "LEFT JOIN purchase_order po ON oi.order_id = po.order_id " +
+                     "LEFT JOIN project p ON po.project_id = p.project_id " +
+                     "LEFT JOIN supplier s ON oi.supplier_id = s.supplier_id " +
+                     "WHERE oi.order_id = ?";
+        List<SupplierInvoiceDTO> invoices = new ArrayList<>();
+
+        try (Connection conn = databaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, orderId);
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                invoices.add(mapResultSetToInvoiceDTO(rs));
+            }
+            logger.info("Retrieved {} invoices for order_id: {}", invoices.size(), orderId);
+        } catch (SQLException e) {
+            logger.error("Error retrieving invoices for order {}: {}", orderId, e.getMessage(), e);
+            throw new RuntimeException("Error retrieving invoices for order: " + e.getMessage(), e);
+        }
+        return invoices;
+    }
+
+    @Override
+    public void updateInvoiceStatus(Integer invoiceId, String status) {
+        String sql = "UPDATE order_invoice SET status = ? WHERE invoice_id = ?";
+        try (Connection conn = databaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, status);
+            ps.setInt(2, invoiceId);
+            int rows = ps.executeUpdate();
+            if (rows == 0) {
+                logger.warn("No invoice found with invoice_id: {}", invoiceId);
+                throw new RuntimeException("Invoice not found with ID: " + invoiceId);
+            }
+            logger.info("Updated invoice status to {} for invoice_id: {}", status, invoiceId);
+        } catch (SQLException e) {
+            logger.error("Error updating invoice status: {}", e.getMessage(), e);
+            throw new RuntimeException("Error updating invoice status: " + e.getMessage(), e);
+        }
+    }
+
+    private SupplierInvoiceDTO mapResultSetToInvoiceDTO(ResultSet rs) throws SQLException {
+        SupplierInvoiceDTO invoice = new SupplierInvoiceDTO();
+        invoice.setInvoiceId(rs.getInt("invoice_id"));
+        invoice.setOrderId(rs.getInt("order_id"));
+        invoice.setSupplierId(rs.getInt("supplier_id"));
+        invoice.setAmount(rs.getBigDecimal("amount"));
+        invoice.setDescription(rs.getString("description"));
+        invoice.setFilePath(rs.getString("file_path"));
+        Date date = rs.getDate("date");
+        if (date != null) {
+            invoice.setDate(date.toLocalDate());
+        }
+        invoice.setStatus(rs.getString("status"));
+        invoice.setProjectName(rs.getString("project_name"));
+        invoice.setSupplierName(rs.getString("supplier_name"));
+        return invoice;
     }
 
 }
