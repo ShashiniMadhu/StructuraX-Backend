@@ -1,44 +1,43 @@
 package com.structurax.root.structurax.root.dao.Impl;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.sql.Date;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-
+import com.structurax.root.structurax.root.dao.SupplierDAO;
+import com.structurax.root.structurax.root.dto.CatalogDTO;
+import com.structurax.root.structurax.root.dto.OrderItemDTO;
+import com.structurax.root.structurax.root.dto.ProjectDTO;
+import com.structurax.root.structurax.root.dto.PurchaseOrderDTO;
+import com.structurax.root.structurax.root.dto.SupplierDTO;
+import com.structurax.root.structurax.root.dto.SupplierPaymentDTO;
+import com.structurax.root.structurax.root.util.DatabaseConnection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
-import com.structurax.root.structurax.root.dao.SupplierDAO;
-import com.structurax.root.structurax.root.dto.CatalogDTO;
-import com.structurax.root.structurax.root.dto.PurchaseOrderDTO;
-import com.structurax.root.structurax.root.dto.SupplierDTO;
-import com.structurax.root.structurax.root.util.DatabaseConnection;
-
-import com.structurax.root.structurax.root.dto.ProjectDTO;
-import com.structurax.root.structurax.root.dto.OrderItemDTO;
 import java.math.BigDecimal;
-
+import java.sql.Connection;
+import java.sql.Date;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 @Repository
 public class SupplierDAOImpl implements SupplierDAO {
 
     private static final Logger logger = LoggerFactory.getLogger(SupplierDAOImpl.class);
 
-    @Autowired
-    private DatabaseConnection databaseConnection;
+    private final DatabaseConnection databaseConnection;
+    private final JdbcTemplate jdbcTemplate;
 
-    @Autowired
-    private JdbcTemplate jdbcTemplate;
+    public SupplierDAOImpl(DatabaseConnection databaseConnection, JdbcTemplate jdbcTemplate) {
+        this.databaseConnection = databaseConnection;
+        this.jdbcTemplate = jdbcTemplate;
+    }
 
     // ========== EXISTING SUPPLIER METHODS ==========
 
@@ -353,6 +352,37 @@ public class SupplierDAOImpl implements SupplierDAO {
     public void updateOrderStatus(Integer orderId, Integer orderStatus) {
         String sql = "UPDATE purchase_order SET order_status = ? WHERE order_id = ?";
         jdbcTemplate.update(sql, orderStatus, orderId);
+    }
+
+    @Override
+    public List<SupplierPaymentDTO> getAllSupplierPayments() {
+        String sql = "SELECT sp.supplier_payment_id, sp.project_id, p.name AS project_name, sp.invoice_id, oi.date AS invoice_date, sp.due_date, sp.payed_date, sp.amount, sp.status " +
+                "FROM supplier_payment sp " +
+                "LEFT JOIN project p ON sp.project_id = p.project_id " +
+                "LEFT JOIN order_invoice oi ON sp.invoice_id = oi.invoice_id";
+
+        return jdbcTemplate.query(sql, (rs, rowNum) -> {
+            SupplierPaymentDTO payment = new SupplierPaymentDTO();
+            payment.setSupplierPaymentId(rs.getInt("supplier_payment_id"));
+            payment.setProjectId(rs.getString("project_id"));
+            payment.setProjectName(rs.getString("project_name"));
+            payment.setInvoiceId(rs.getInt("invoice_id"));
+            Date invoiceDate = rs.getDate("invoice_date");
+            if (invoiceDate != null) {
+                payment.setInvoiceDate(invoiceDate.toLocalDate());
+            }
+            Date dueDate = rs.getDate("due_date");
+            if (dueDate != null) {
+                payment.setDueDate(dueDate.toLocalDate());
+            }
+            Date payedDate = rs.getDate("payed_date");
+            if (payedDate != null) {
+                payment.setPayedDate(payedDate.toLocalDate());
+            }
+            payment.setAmount(rs.getBigDecimal("amount"));
+            payment.setStatus(rs.getString("status"));
+            return payment;
+        });
     }
 
 }

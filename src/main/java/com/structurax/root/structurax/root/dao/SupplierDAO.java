@@ -8,6 +8,8 @@ import com.structurax.root.structurax.root.dto.PurchaseOrderDTO;
 import com.structurax.root.structurax.root.dto.SupplierDTO;
 import com.structurax.root.structurax.root.dto.ProjectDTO;
 import com.structurax.root.structurax.root.dto.OrderItemDTO;
+import com.structurax.root.structurax.root.dto.SupplierPaymentDTO;
+
 import java.math.BigDecimal;
 
 public interface SupplierDAO {
@@ -33,5 +35,8 @@ public interface SupplierDAO {
     BigDecimal getQuotationAmountByResponseId(Integer responseId);
     List<OrderItemDTO> getOrderItemsByOrderId(Integer orderId);
     void updateOrderStatus(Integer orderId, Integer orderStatus);
+
+    // Supplier Payment Methods
+    List<SupplierPaymentDTO> getAllSupplierPayments();
 
 }
