@@ -349,5 +349,10 @@ public class SupplierDAOImpl implements SupplierDAO {
         });
     }
 
+    @Override
+    public void updateOrderStatus(Integer orderId, Integer orderStatus) {
+        String sql = "UPDATE purchase_order SET order_status = ? WHERE order_id = ?";
+        jdbcTemplate.update(sql, orderStatus, orderId);
+    }
 
 }
