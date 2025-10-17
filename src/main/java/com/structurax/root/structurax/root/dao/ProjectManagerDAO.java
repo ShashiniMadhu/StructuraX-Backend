@@ -6,10 +6,10 @@ import java.util.List;
 
 public interface ProjectManagerDAO {
     SiteVisitLogDTO createVisitLog(SiteVisitLogDTO visitLogDTO);
-    List<SiteVisitLogDTO> getAllVisitLogs();
-    SiteVisitLogDTO getVisitLogById(Integer id);
+//    List<SiteVisitLogDTO> getAllVisitLogs();
+List<SiteVisitLogDTO> getSiteVisitLogsByPmId(String pmId);
     boolean updateVisitLog(SiteVisitLogDTO visitLogDTO);
-    List<VisitRequestDTO> getAllVisitRequests();
+    List<VisitRequestDTO> getAllVisitRequests( String pmId);
     boolean updateVisitRequest(VisitRequestDTO visitRequestDTO);
     List<ProjectInitiateDTO> getProjectsByPmIdAndStatus(String pmId, String status);
     boolean updateRequestSiteResourceApproval(Integer requestId, String pmApproval);
@@ -25,9 +25,9 @@ public interface ProjectManagerDAO {
     List<DesignDTO> getDesignLink(String projectId);
     List<WBSDTO> getWBSByProjectId(String projectId);
     List<BOQitemDTO> getBOQItemsByProjectId(String projectId);
-    PaymentDTO getPaymentByProjectId(String projectId);
+    List<PaymentDTO> getPaymentByProjectId(String projectId);
     List<RequestSiteResourceDTO> getPendingRequestsByPmId(String pmId);
     List<SiteResourcesDTO> getSiteResourcesByRequestId(Integer requestId);
-
+    List<ProjectMaterialsDTO> getProjectMaterialsByProjectId(String projectId);
 
 }

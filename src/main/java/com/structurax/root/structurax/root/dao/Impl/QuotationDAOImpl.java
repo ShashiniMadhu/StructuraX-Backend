@@ -18,7 +18,7 @@ import com.structurax.root.structurax.root.dto.QuotationSupplierDTO;
 
 @Repository
 public class QuotationDAOImpl implements QuotationDAO {
-    
+
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
@@ -26,7 +26,7 @@ public class QuotationDAOImpl implements QuotationDAO {
     public Integer insertQuotation(QuotationDTO quotation) {
         String sql = "INSERT INTO quotation (project_id, qs_id, date, deadline, status, description) VALUES (?, ?, ?, ?, ?, ?)";
         KeyHolder keyHolder = new GeneratedKeyHolder();
-        
+
         jdbcTemplate.update(connection -> {
             PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
             ps.setString(1, quotation.getProjectId());
@@ -37,7 +37,7 @@ public class QuotationDAOImpl implements QuotationDAO {
             ps.setString(6, quotation.getDescription());
             return ps;
         }, keyHolder);
-        
+
         Number key = keyHolder.getKey();
         if (key != null) {
             return key.intValue();
@@ -378,3 +378,4 @@ public class QuotationDAOImpl implements QuotationDAO {
             return getQuotationItemsByQuotationId(qId);
         }
     }
+}
