@@ -5,10 +5,12 @@ import java.math.BigDecimal;
 public class OrderItemDTO {
     private Integer orderId;
     private Integer itemId;
+    private String name;
     private String description;
     private BigDecimal unitPrice;
     private Integer quantity;
-    
+    private String projectName;
+
     public OrderItemDTO() {}
     
     // Getters and setters
@@ -48,7 +50,23 @@ public class OrderItemDTO {
         return quantity; 
     }
     
-    public void setQuantity(Integer quantity) { 
-        this.quantity = quantity; 
+    public void setQuantity(Integer quantity) {
+        this.quantity = quantity;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getProjectName() {
+        return projectName;
+    }
+
+    public void setProjectName(String projectName) {
+        this.projectName = projectName;
     }
 }

@@ -9,6 +9,7 @@ import com.structurax.root.structurax.root.dto.SupplierDTO;
 import com.structurax.root.structurax.root.dto.ProjectDTO;
 import com.structurax.root.structurax.root.dto.OrderItemDTO;
 import com.structurax.root.structurax.root.dto.SupplierPaymentDTO;
+import com.structurax.root.structurax.root.dto.SupplierHistoryDTO;
 
 import java.math.BigDecimal;
 
@@ -39,5 +40,15 @@ public interface SupplierDAO {
     // Supplier Payment Methods
     List<SupplierPaymentDTO> getAllSupplierPayments();
     void updatePaymentStatusToPaid(Integer paymentId);
+
+    // Supplier History Methods
+    List<SupplierHistoryDTO> getAllSupplierHistory();
+    SupplierHistoryDTO getSupplierHistoryById(Integer historyId);
+    List<SupplierHistoryDTO> getSupplierHistoryBySupplierId(Integer supplierId);
+    List<SupplierHistoryDTO> getSupplierHistoryByOrderId(Integer orderId);
+    SupplierHistoryDTO createSupplierHistory(SupplierHistoryDTO historyDTO);
+
+    // Item retrieval methods for orders and quotations
+    List<OrderItemDTO> getOrderItemsByOrderIdAndSupplierId(Integer orderId, Integer supplierId);
 
 }

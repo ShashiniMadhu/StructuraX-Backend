@@ -7,6 +7,7 @@ import com.structurax.root.structurax.root.dto.ProjectDTO;
 import com.structurax.root.structurax.root.dto.PurchaseOrderDTO;
 import com.structurax.root.structurax.root.dto.SupplierDTO;
 import com.structurax.root.structurax.root.dto.SupplierPaymentDTO;
+import com.structurax.root.structurax.root.dto.SupplierHistoryDTO;
 import com.structurax.root.structurax.root.util.DatabaseConnection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -390,6 +391,171 @@ public class SupplierDAOImpl implements SupplierDAO {
     public void updatePaymentStatusToPaid(Integer paymentId) {
         String sql = "UPDATE supplier_payment SET status = 'Paid', payed_date = ? WHERE supplier_payment_id = ?";
         jdbcTemplate.update(sql, Date.valueOf(LocalDate.now()), paymentId);
+    }
+
+    // ========== SUPPLIER HISTORY METHODS ==========
+
+    @Override
+    public List<SupplierHistoryDTO> getAllSupplierHistory() {
+        String sql = "SELECT history_id, supplier_id, order_id, supply_date, amount FROM supplier_history";
+        List<SupplierHistoryDTO> histories = new ArrayList<>();
+        try (Connection conn = databaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                SupplierHistoryDTO h = new SupplierHistoryDTO();
+                h.setHistoryId(rs.getInt("history_id"));
+                h.setSupplierId(rs.getInt("supplier_id"));
+                h.setOrderId(rs.getInt("order_id"));
+                Date d = rs.getDate("supply_date");
+                h.setSupplyDate(d);
+                h.setAmount(rs.getBigDecimal("amount"));
+                histories.add(h);
+            }
+            logger.info("Retrieved {} supplier history records", histories.size());
+        } catch (SQLException e) {
+            logger.error("Error retrieving supplier history: {}", e.getMessage(), e);
+            throw new RuntimeException("Error retrieving supplier history: " + e.getMessage(), e);
+        }
+        return histories;
+    }
+
+    @Override
+    public SupplierHistoryDTO getSupplierHistoryById(Integer historyId) {
+        String sql = "SELECT history_id, supplier_id, order_id, supply_date, amount FROM supplier_history WHERE history_id = ?";
+        try (Connection conn = databaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, historyId);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                SupplierHistoryDTO h = new SupplierHistoryDTO();
+                h.setHistoryId(rs.getInt("history_id"));
+                h.setSupplierId(rs.getInt("supplier_id"));
+                h.setOrderId(rs.getInt("order_id"));
+                h.setSupplyDate(rs.getDate("supply_date"));
+                h.setAmount(rs.getBigDecimal("amount"));
+                return h;
+            } else {
+                logger.warn("No supplier history found with history_id: {}", historyId);
+                return null;
+            }
+        } catch (SQLException e) {
+            logger.error("Error retrieving supplier history by id {}: {}", historyId, e.getMessage(), e);
+            throw new RuntimeException("Error retrieving supplier history: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public List<SupplierHistoryDTO> getSupplierHistoryBySupplierId(Integer supplierId) {
+        String sql = "SELECT history_id, supplier_id, order_id, supply_date, amount FROM supplier_history WHERE supplier_id = ?";
+        List<SupplierHistoryDTO> histories = new ArrayList<>();
+        try (Connection conn = databaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, supplierId);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                SupplierHistoryDTO h = new SupplierHistoryDTO();
+                h.setHistoryId(rs.getInt("history_id"));
+                h.setSupplierId(rs.getInt("supplier_id"));
+                h.setOrderId(rs.getInt("order_id"));
+                h.setSupplyDate(rs.getDate("supply_date"));
+                h.setAmount(rs.getBigDecimal("amount"));
+                histories.add(h);
+            }
+            logger.info("Retrieved {} supplier history records for supplier_id: {}", histories.size(), supplierId);
+        } catch (SQLException e) {
+            logger.error("Error retrieving supplier history for supplier {}: {}", supplierId, e.getMessage(), e);
+            throw new RuntimeException("Error retrieving supplier history: " + e.getMessage(), e);
+        }
+        return histories;
+    }
+
+    @Override
+    public List<SupplierHistoryDTO> getSupplierHistoryByOrderId(Integer orderId) {
+        String sql = "SELECT history_id, supplier_id, order_id, supply_date, amount FROM supplier_history WHERE order_id = ?";
+        List<SupplierHistoryDTO> histories = new ArrayList<>();
+        try (Connection conn = databaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, orderId);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                SupplierHistoryDTO h = new SupplierHistoryDTO();
+                h.setHistoryId(rs.getInt("history_id"));
+                h.setSupplierId(rs.getInt("supplier_id"));
+                h.setOrderId(rs.getInt("order_id"));
+                h.setSupplyDate(rs.getDate("supply_date"));
+                h.setAmount(rs.getBigDecimal("amount"));
+                histories.add(h);
+            }
+            logger.info("Retrieved {} supplier history records for order_id: {}", histories.size(), orderId);
+        } catch (SQLException e) {
+            logger.error("Error retrieving supplier history for order {}: {}", orderId, e.getMessage(), e);
+            throw new RuntimeException("Error retrieving supplier history: " + e.getMessage(), e);
+        }
+        return histories;
+    }
+
+    @Override
+    public SupplierHistoryDTO createSupplierHistory(SupplierHistoryDTO historyDTO) {
+        String sql = "INSERT INTO supplier_history (supplier_id, order_id, supply_date, amount) VALUES (?, ?, ?, ?)";
+        try (Connection conn = databaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            ps.setInt(1, historyDTO.getSupplierId());
+            ps.setInt(2, historyDTO.getOrderId());
+            ps.setDate(3, historyDTO.getSupplyDate());
+            ps.setBigDecimal(4, historyDTO.getAmount());
+            int rows = ps.executeUpdate();
+            if (rows == 0) {
+                throw new RuntimeException("Failed to insert supplier history");
+            }
+            ResultSet rs = ps.getGeneratedKeys();
+            if (rs.next()) {
+                historyDTO.setHistoryId(rs.getInt(1));
+            }
+            logger.info("Created supplier history with history_id: {}", historyDTO.getHistoryId());
+            return historyDTO;
+        } catch (SQLException e) {
+            logger.error("Error creating supplier history: {}", e.getMessage(), e);
+            throw new RuntimeException("Error creating supplier history: " + e.getMessage(), e);
+        }
+    }
+
+    // ========== ITEM RETRIEVAL METHODS ==========
+
+    @Override
+    public List<OrderItemDTO> getOrderItemsByOrderIdAndSupplierId(Integer orderId, Integer supplierId) {
+        String sql = "SELECT oi.item_id, oi.order_id, qi.name, oi.description, oi.quantity, oi.unit_price, p.name AS project_name " +
+                     "FROM order_item oi " +
+                     "INNER JOIN purchase_order po ON oi.order_id = po.order_id " +
+                     "LEFT JOIN project p ON po.project_id = p.project_id " +
+                     "LEFT JOIN quotation_response qr ON po.response_id = qr.response_id " +
+                     "LEFT JOIN quotation_item qi ON qr.q_id = qi.q_id AND oi.description = qi.description " +
+                     "WHERE oi.order_id = ? AND po.supplier_id = ?";
+        List<OrderItemDTO> items = new ArrayList<>();
+
+        try (Connection conn = databaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, orderId);
+            ps.setInt(2, supplierId);
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                OrderItemDTO item = new OrderItemDTO();
+                item.setItemId(rs.getInt("item_id"));
+                item.setOrderId(rs.getInt("order_id"));
+                item.setName(rs.getString("name"));
+                item.setDescription(rs.getString("description"));
+                item.setQuantity(rs.getInt("quantity"));
+                item.setUnitPrice(rs.getBigDecimal("unit_price"));
+                item.setProjectName(rs.getString("project_name"));
+                items.add(item);
+            }
+            logger.info("Retrieved {} order items for order_id: {} and supplier_id: {}", items.size(), orderId, supplierId);
+        } catch (SQLException e) {
+            logger.error("Error retrieving order items for order {} and supplier {}: {}", orderId, supplierId, e.getMessage(), e);
+            throw new RuntimeException("Error retrieving order items: " + e.getMessage(), e);
+        }
+        return items;
     }
 
 }
