@@ -22,6 +22,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -383,6 +384,12 @@ public class SupplierDAOImpl implements SupplierDAO {
             payment.setStatus(rs.getString("status"));
             return payment;
         });
+    }
+
+    @Override
+    public void updatePaymentStatusToPaid(Integer paymentId) {
+        String sql = "UPDATE supplier_payment SET status = 'Paid', payed_date = ? WHERE supplier_payment_id = ?";
+        jdbcTemplate.update(sql, Date.valueOf(LocalDate.now()), paymentId);
     }
 
 }

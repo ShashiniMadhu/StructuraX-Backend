@@ -25,4 +25,10 @@ public class SupplierPaymentServiceImpl implements SupplierPaymentService {
         logger.info("Service: Fetching all supplier payments");
         return supplierDAO.getAllSupplierPayments();
     }
+
+    @Override
+    public void markAsPaid(Integer paymentId) {
+        logger.info("Service: Marking payment with ID {} as paid", paymentId);
+        supplierDAO.updatePaymentStatusToPaid(paymentId);
+    }
 }

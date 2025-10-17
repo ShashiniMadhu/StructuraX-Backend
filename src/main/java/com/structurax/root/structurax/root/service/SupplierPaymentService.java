@@ -8,4 +8,6 @@ public interface SupplierPaymentService {
 
     List<SupplierPaymentDTO> getAllPayments();
 
+    void markAsPaid(Integer paymentId);
+
 }

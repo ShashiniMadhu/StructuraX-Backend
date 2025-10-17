@@ -38,5 +38,6 @@ public interface SupplierDAO {
 
     // Supplier Payment Methods
     List<SupplierPaymentDTO> getAllSupplierPayments();
+    void updatePaymentStatusToPaid(Integer paymentId);
 
 }
