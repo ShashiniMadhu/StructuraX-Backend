@@ -51,8 +51,8 @@ public class AdminDAOImpl implements AdminDAO {
         }*/
 
         try {
-            final String sql = "INSERT INTO users (user_id, name, email, phone_number, address, type, joined_date, password, availability) " +
-                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) ";
+            final String sql = "INSERT INTO users (user_id, name, email, phone_number, address, type, joined_date, password) " +
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?) ";
             connection = databaseConnection.getConnection();
             preparedStatement = connection.prepareStatement(sql);
 
@@ -64,7 +64,6 @@ public class AdminDAOImpl implements AdminDAO {
             preparedStatement.setString(6, userDTO.getType());
             preparedStatement.setDate(7, java.sql.Date.valueOf(userDTO.getJoinedDate()));
             preparedStatement.setString(8, hashedPassword);
-            preparedStatement.setString(9, userDTO.getAvailability()); // Changed from setBoolean to setString
       //      preparedStatement.setString(10, userDTO.getProfileImageUrl());
 
 
@@ -85,7 +84,7 @@ public class AdminDAOImpl implements AdminDAO {
         final List<EmployeeDTO> employeeList = new ArrayList<>();
         final String sql = """
         SELECT 
-            e.emp_id AS employee_id,
+            e.empployee_id AS employee_id,
             u.name,
             u.email,
             u.phone_number,
@@ -159,8 +158,8 @@ public class AdminDAOImpl implements AdminDAO {
     }
 
     @Override
-    public EmployeeDTO getEmployeeById(String empId) {
-        final String sql = "SELECT * FROM employee WHERE employee_id = ?";
+    public UserDTO getEmployeeById(String empId) {
+        final String sql = "SELECT * FROM users u INNER JOIN employee e ON u.user_id=e.user_id WHERE e.employee_id = ?";
         Connection connection = null;
         PreparedStatement preparedStatement = null;
         ResultSet resultSet = null;
@@ -172,8 +171,8 @@ public class AdminDAOImpl implements AdminDAO {
             resultSet = preparedStatement.executeQuery();
 
             if (resultSet.next()) {
-                return new EmployeeDTO(
-                        resultSet.getString("employee_id"),
+                return new UserDTO(
+                        resultSet.getString("user_id"),
                         resultSet.getString("name"),
                         resultSet.getString("email"),
                         resultSet.getString("phone_number"),
@@ -181,7 +180,6 @@ public class AdminDAOImpl implements AdminDAO {
                         resultSet.getString("type"),
                         resultSet.getDate("joined_date").toLocalDate(),
                         null, // Don't expose password
-                        resultSet.getString("availability"), // Changed from getBoolean to getString
                         resultSet.getString("profile_image_url")
 
                 );
@@ -264,7 +262,7 @@ public class AdminDAOImpl implements AdminDAO {
             // Get generated supplier_id
             ResultSet generatedKeys = preparedStatement.getGeneratedKeys();
             if (generatedKeys.next()) {
-                supplierDTO.setSupplier_id(generatedKeys.getString(1));
+                supplierDTO.setSupplier_id(generatedKeys.getInt(1));
             }
 
         } catch (SQLException e) {

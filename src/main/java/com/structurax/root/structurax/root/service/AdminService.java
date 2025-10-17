@@ -22,7 +22,7 @@ public interface AdminService {
 
     void deactivateEmployee(String empId);
 
-    EmployeeDTO getEmployeeById(String id);
+    UserDTO getEmployeeById(String id);
 
     SupplierDTO addSupplier(SupplierDTO supplierDTO);
 

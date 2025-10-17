@@ -84,7 +84,6 @@ public class AdminController {
             employeeDTO.setType(type);
             employeeDTO.setJoinedDate(LocalDate.parse(joinedDate));
             employeeDTO.setPassword(otp); // Store plain OTP, hash it later in DAO
-            employeeDTO.setAvailability(availability);
             employeeDTO.setProfileImageUrl(imageUrl);
 
             // Save employee
@@ -151,7 +150,7 @@ public class AdminController {
    @GetMapping(value = "/{id}", produces = Constants.APPLICATION_JSON)
     public ResponseEntity<?> getEmployeeById(@PathVariable @Pattern(regexp = "^EMP_\\d{3}$", message = "Employee ID must follow format EMP_XXX") String id) {
         try {
-            final EmployeeDTO employee = adminService.getEmployeeById(id);
+            final UserDTO employee = adminService.getEmployeeById(id);
            if (employee == null) {
                 return new ResponseEntity<>("Employee not found with id: " + id, HttpStatus.NOT_FOUND);
             }

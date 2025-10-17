@@ -10,7 +10,7 @@ import java.sql.Date;
 @NoArgsConstructor
 @AllArgsConstructor
 public class SupplierDTO {
-    private String supplier_id;
+    private int supplier_id;
 
     private String supplier_name;
 

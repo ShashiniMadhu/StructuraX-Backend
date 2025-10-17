@@ -59,7 +59,7 @@ public class UserDAOImpl implements UserDAO {
 
     @Override
     public String findEmployeeIdByUserId(Integer userId) {
-        String sql = "SELECT e.emp_id FROM employee e " +
+        String sql = "SELECT e.employee_id FROM employee e " +
                 "INNER JOIN users u ON e.user_id=u.user_id WHERE u.user_id=?";
         try{
             return jdbcTemplate.queryForObject(sql,String.class, userId);
