@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.structurax.root.structurax.root.dto.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,14 +18,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.structurax.root.structurax.root.dto.EmployeeDTO;
-import com.structurax.root.structurax.root.dto.Project1DTO;
-import com.structurax.root.structurax.root.dto.PurchaseOrderDTO;
-import com.structurax.root.structurax.root.dto.QuotationDTO;
-import com.structurax.root.structurax.root.dto.QuotationItemDTO;
-import com.structurax.root.structurax.root.dto.QuotationResponseDTO;
-import com.structurax.root.structurax.root.dto.QuotationResponseWithSupplierDTO;
-import com.structurax.root.structurax.root.dto.SupplierDTO;
 import com.structurax.root.structurax.root.service.AdminService;
 import com.structurax.root.structurax.root.service.MailService;
 import com.structurax.root.structurax.root.service.PurchaseOrderService;
@@ -924,7 +917,7 @@ public class QuotationController {
             String projectName = project != null ? project.getName() : "Project #" + quotation.getProjectId();
 
             // Get QS details
-            EmployeeDTO qsEmployee = adminService.getEmployeeById(quotation.getQsId());
+            UserDTO qsEmployee = adminService.getEmployeeById(quotation.getQsId());
             String qsName = qsEmployee != null ? qsEmployee.getName() : "QS";
             String qsEmail = qsEmployee != null ? qsEmployee.getEmail() : "noreply@structurax.com";
 
@@ -1058,7 +1051,7 @@ public class QuotationController {
                 // Get the quotation to find QS details
                 QuotationDTO quotation = quotationService.getQuotationById(quotationResponse.getQId());
                 if (quotation != null) {
-                    EmployeeDTO qsEmployee = adminService.getEmployeeById(quotation.getQsId());
+                    UserDTO qsEmployee = adminService.getEmployeeById(quotation.getQsId());
                     if (qsEmployee != null) {
                         qsName = qsEmployee.getName();
                         qsEmail = qsEmployee.getEmail();
@@ -1129,7 +1122,7 @@ public class QuotationController {
             Project1DTO project = sqsService.getProjectById(quotation.getProjectId());
             String projectName = project != null ? project.getName() : "Project #" + quotation.getProjectId();
 
-            EmployeeDTO qsEmployee = adminService.getEmployeeById(quotation.getQsId());
+            UserDTO qsEmployee = adminService.getEmployeeById(quotation.getQsId());
             String qsName = qsEmployee != null ? qsEmployee.getName() : "QS";
             String qsEmail = qsEmployee != null ? qsEmployee.getEmail() : "noreply@structurax.com";
 

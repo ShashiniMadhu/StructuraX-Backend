@@ -56,13 +56,13 @@ public class AdminServiceImpl implements AdminService {
 
 
     @Override
-    public EmployeeDTO getEmployeeById(String id) {
+    public UserDTO getEmployeeById(String id) {
         logger.info("Fetching employee by ID: {}", id);
-        EmployeeDTO employee = adminDAO.getEmployeeById(id);
+        UserDTO employee = adminDAO.getEmployeeById(id);
         if (employee == null) {
             logger.warn("No employee found with ID: {}", id);
         } else {
-            logger.info("Employee found: {}", employee.getEmployeeId());
+            logger.info("Employee found: {}", employee.getUserId());
         }
         return employee;
     }

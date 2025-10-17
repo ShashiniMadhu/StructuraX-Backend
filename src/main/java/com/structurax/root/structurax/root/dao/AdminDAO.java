@@ -28,7 +28,7 @@ public interface AdminDAO {
      * @param id
      * @return EmployeeDTO
      */
-    EmployeeDTO getEmployeeById(String id);
+    UserDTO getEmployeeById(String id);
 
     SupplierDTO addSupplier(SupplierDTO supplierDTO);
 }
