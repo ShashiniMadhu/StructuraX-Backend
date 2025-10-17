@@ -1,17 +1,21 @@
 package com.structurax.root.structurax.root.service.Impl;
 
-import com.structurax.root.structurax.root.dao.ClientDAO;
-import com.structurax.root.structurax.root.dao.SupplierDAO;
-import com.structurax.root.structurax.root.dto.*;
-import com.structurax.root.structurax.root.service.SupplierService;
-import com.structurax.root.structurax.root.util.JwtUtil;
+import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
+import com.structurax.root.structurax.root.dao.ClientDAO;
+import com.structurax.root.structurax.root.dao.SupplierDAO;
+import com.structurax.root.structurax.root.dto.CatalogDTO;
+import com.structurax.root.structurax.root.dto.SupplierDTO;
+import com.structurax.root.structurax.root.dto.SupplierLoginDTO;
+import com.structurax.root.structurax.root.dto.SupplierResponseDTO;
+import com.structurax.root.structurax.root.service.SupplierService;
+import com.structurax.root.structurax.root.util.JwtUtil;
 
 @Service
 public class SupplierServiceImpl implements SupplierService {
@@ -134,6 +138,42 @@ public class SupplierServiceImpl implements SupplierService {
             return catalog;
         } catch (Exception e) {
             logger.error("Error retrieving catalog with item_id {}: {}", itemId, e.getMessage(), e);
+            throw e;
+        }
+    }
+    
+    @Override
+    public List<SupplierDTO> getAllSuppliers() {
+        logger.info("Retrieving all suppliers");
+        try {
+            List<SupplierDTO> suppliers = supplierDAO.getAllSuppliers();
+            logger.info("Successfully retrieved {} suppliers", suppliers.size());
+            return suppliers;
+        } catch (Exception e) {
+            logger.error("Error retrieving all suppliers: {}", e.getMessage(), e);
+            throw e;
+        }
+    }
+    
+    @Override
+    public SupplierDTO getSupplierById(Integer supplierId) {
+        logger.info("Retrieving supplier with supplier_id: {}", supplierId);
+        
+        if (supplierId == null || supplierId <= 0) {
+            logger.error("Validation failed: Valid supplier_id is required");
+            throw new IllegalArgumentException("Valid supplier_id is required");
+        }
+        
+        try {
+            SupplierDTO supplier = supplierDAO.getSupplierById(supplierId);
+            if (supplier == null) {
+                logger.warn("Supplier not found with supplier_id: {}", supplierId);
+                return null;
+            }
+            logger.info("Successfully retrieved supplier with supplier_id: {}", supplierId);
+            return supplier;
+        } catch (Exception e) {
+            logger.error("Error retrieving supplier with supplier_id {}: {}", supplierId, e.getMessage(), e);
             throw e;
         }
     }

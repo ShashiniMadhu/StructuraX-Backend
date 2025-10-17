@@ -1,6 +1,7 @@
 package com.structurax.root.structurax.root.service;
 
 import java.util.List;
+import java.util.Map;
 
 import com.structurax.root.structurax.root.dto.QuotationDTO;
 import com.structurax.root.structurax.root.dto.QuotationItemDTO;
@@ -40,4 +41,10 @@ public interface QuotationService {
     // Delete operations
     boolean deleteQuotation(Integer qId);
     boolean deleteQuotationItem(Integer itemId);
+    
+    // Close quotation if no responses or all rejected
+    boolean closeQuotationIfNoResponsesOrAllRejected(Integer qId);
+    
+    // Batch process all quotations to close eligible ones
+    Map<String, Object> closeAllEligibleQuotations();
 }

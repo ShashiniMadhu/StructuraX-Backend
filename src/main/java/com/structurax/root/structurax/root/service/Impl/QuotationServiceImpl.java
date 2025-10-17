@@ -1,14 +1,18 @@
 package com.structurax.root.structurax.root.service.Impl;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.structurax.root.structurax.root.dao.QuotationDAO;
+import com.structurax.root.structurax.root.dao.QuotationResponseDAO;
 import com.structurax.root.structurax.root.dto.QuotationDTO;
 import com.structurax.root.structurax.root.dto.QuotationItemDTO;
+import com.structurax.root.structurax.root.dto.QuotationResponseDTO;
 import com.structurax.root.structurax.root.dto.QuotationSupplierDTO;
 import com.structurax.root.structurax.root.dto.QuotationWithItemsDTO;
 import com.structurax.root.structurax.root.service.QuotationService;
@@ -18,6 +22,9 @@ public class QuotationServiceImpl implements QuotationService {
     
     @Autowired
     private QuotationDAO quotationDAO;
+    
+    @Autowired
+    private QuotationResponseDAO quotationResponseDAO;
 
     @Override
     @Transactional
@@ -222,5 +229,137 @@ public class QuotationServiceImpl implements QuotationService {
     @Override
     public boolean deleteQuotationItem(Integer itemId) {
         return quotationDAO.deleteQuotationItem(itemId);
+    }
+
+    @Override
+    public boolean closeQuotationIfNoResponsesOrAllRejected(Integer qId) {
+        try {
+            // Get the quotation to check if it exists and its current status
+            QuotationDTO quotation = quotationDAO.getQuotationById(qId);
+            if (quotation == null) {
+                return false; // Quotation not found
+            }
+            
+            // Check if quotation is already closed
+            if ("closed".equalsIgnoreCase(quotation.getStatus())) {
+                return true; // Already closed
+            }
+            
+            // Get all quotation responses for this quotation
+            List<QuotationResponseDTO> responses = quotationResponseDAO.getQuotationResponsesByQuotationId(qId);
+            
+            boolean shouldClose = false;
+            
+            if (responses == null || responses.isEmpty()) {
+                // No responses at all - should close
+                shouldClose = true;
+            } else {
+                // Check if all responses are rejected
+                boolean allRejected = true;
+                for (QuotationResponseDTO response : responses) {
+                    if (!"rejected".equalsIgnoreCase(response.getStatus())) {
+                        allRejected = false;
+                        break;
+                    }
+                }
+                shouldClose = allRejected;
+            }
+            
+            // If should close, update the quotation status to "closed"
+            if (shouldClose) {
+                return quotationDAO.updateQuotationStatus(qId, "closed");
+            }
+            
+            return false; // No need to close
+            
+        } catch (Exception e) {
+            // Log the error in a real application
+            return false;
+        }
+    }
+
+    @Override
+    public Map<String, Object> closeAllEligibleQuotations() {
+        Map<String, Object> result = new HashMap<>();
+        List<Integer> closedQuotationIds = new java.util.ArrayList<>();
+        List<Integer> failedQuotationIds = new java.util.ArrayList<>();
+        List<String> errors = new java.util.ArrayList<>();
+        
+        try {
+            // Get all quotations
+            List<QuotationDTO> allQuotations = quotationDAO.getAllQuotations();
+            
+            int processedCount = 0;
+            int closedCount = 0;
+            int alreadyClosedCount = 0;
+            int skippedCount = 0;
+            
+            for (QuotationDTO quotation : allQuotations) {
+                processedCount++;
+                
+                try {
+                    // Skip if already closed
+                    if ("closed".equalsIgnoreCase(quotation.getStatus())) {
+                        alreadyClosedCount++;
+                        continue;
+                    }
+                    
+                    // Check if should close
+                    List<QuotationResponseDTO> responses = 
+                        quotationResponseDAO.getQuotationResponsesByQuotationId(quotation.getQId());
+                    
+                    boolean shouldClose = false;
+                    
+                    if (responses == null || responses.isEmpty()) {
+                        // No responses - should close
+                        shouldClose = true;
+                    } else {
+                        // Check if all responses are rejected
+                        boolean allRejected = true;
+                        for (QuotationResponseDTO response : responses) {
+                            if (!"rejected".equalsIgnoreCase(response.getStatus())) {
+                                allRejected = false;
+                                break;
+                            }
+                        }
+                        shouldClose = allRejected;
+                    }
+                    
+                    if (shouldClose) {
+                        boolean closed = quotationDAO.updateQuotationStatus(quotation.getQId(), "closed");
+                        if (closed) {
+                            closedQuotationIds.add(quotation.getQId());
+                            closedCount++;
+                        } else {
+                            failedQuotationIds.add(quotation.getQId());
+                            errors.add("Failed to update status for quotation ID: " + quotation.getQId());
+                        }
+                    } else {
+                        skippedCount++;
+                    }
+                    
+                } catch (Exception e) {
+                    failedQuotationIds.add(quotation.getQId());
+                    errors.add("Error processing quotation ID " + quotation.getQId() + ": " + e.getMessage());
+                }
+            }
+            
+            result.put("success", true);
+            result.put("totalProcessed", processedCount);
+            result.put("closed", closedCount);
+            result.put("alreadyClosed", alreadyClosedCount);
+            result.put("skipped", skippedCount);
+            result.put("failed", failedQuotationIds.size());
+            result.put("closedQuotationIds", closedQuotationIds);
+            result.put("failedQuotationIds", failedQuotationIds);
+            result.put("errors", errors);
+            
+        } catch (Exception e) {
+            result.put("success", false);
+            result.put("message", "Error in batch processing: " + e.getMessage());
+            result.put("errors", errors);
+        }
+        
+        return result;
     }
 }
