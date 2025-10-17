@@ -1,6 +1,7 @@
 package com.structurax.root.structurax.root.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
@@ -37,7 +38,7 @@ public class MailService {
             mailSender.send(message);
             log.info("📧 OTP email sent to {}", toEmail);
         } catch (MessagingException e) {
-            log.error("❌ Failed to send OTP email: {}", e.getMessage());
+            log.error("Failed to send OTP email: {}", e.getMessage());
         }
     }
 
@@ -62,7 +63,7 @@ public class MailService {
             mailSender.send(message);
             log.info("📧 Removal email sent to {}", toEmail);
         } catch (MessagingException e) {
-            log.error("❌ Failed to send removal email: {}", e.getMessage());
+            log.error("Failed to send removal email: {}", e.getMessage());
         }
     }
 
@@ -115,7 +116,7 @@ public class MailService {
             mailSender.send(message);
             log.info("📧 Supplier OTP email sent to {}", toEmail);
         } catch (MessagingException e) {
-            log.error("❌ Failed to send supplier OTP email: {}", e.getMessage());
+            log.error("Failed to send supplier OTP email: {}", e.getMessage());
         }
     }
 
@@ -199,4 +200,30 @@ public class MailService {
         }
     }
 
+    public void sendPassswordResetEmail(String toEmail,String username, String resetLink){
+        try {
+                SimpleMailMessage message = new SimpleMailMessage();
+                message.setTo(toEmail);
+                message.setSubject("StructuraX Password Reset Request");
+
+                String emailBody = String.format(
+                        "Dear %s, \n\n" +
+                                "We received a request to reset your structuraX account password.\n\n" +
+                                "Please click the link below to reset your password (valid for 15 minutes):\n" +
+                                "%s\n\n" +
+                                "If you did not request this, you can safely ignore this email.\n\n" +
+                                "Best Regards,\n" +
+                                "StructuraX Administration Team",
+                        username,resetLink
+
+                );
+
+                message.setText(emailBody);
+                mailSender.send(message);
+                System.out.println("Password reset email sent successfully to "+ toEmail);
+            }catch(Exception e){
+                System.err.println("Failed to send a password rest email to: "+ toEmail + ", Error: "+ e.getMessage());
+                throw new RuntimeException("Failed to send password reset email: " + e.getMessage());
+            }
+    }
 }

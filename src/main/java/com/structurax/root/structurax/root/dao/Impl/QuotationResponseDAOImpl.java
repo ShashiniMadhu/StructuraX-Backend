@@ -56,9 +56,9 @@ public class QuotationResponseDAOImpl implements QuotationResponseDAO {
                 response.setQId(rs.getInt("q_id"));
                 response.setSupplierId(rs.getInt("supplier_id"));
                 response.setTotalAmount(rs.getBigDecimal("total_amount"));
-                response.setDeliveryDate(rs.getObject("delivery_date", java.time.LocalDate.class));
+                response.setDeliveryDate(rs.getDate("delivery_date"));
                 response.setAdditionalNote(rs.getString("additional_note"));
-                response.setRespondDate(rs.getObject("respond_date", java.time.LocalDate.class));
+                response.setRespondDate(rs.getDate("respond_date"));
                 response.setStatus(rs.getString("status"));
                 return response;
             }, responseId);
@@ -77,9 +77,9 @@ public class QuotationResponseDAOImpl implements QuotationResponseDAO {
             response.setQId(rs.getInt("q_id"));
             response.setSupplierId(rs.getInt("supplier_id"));
             response.setTotalAmount(rs.getBigDecimal("total_amount"));
-            response.setDeliveryDate(rs.getObject("delivery_date", java.time.LocalDate.class));
+            response.setDeliveryDate(rs.getDate("delivery_date"));
             response.setAdditionalNote(rs.getString("additional_note"));
-            response.setRespondDate(rs.getObject("respond_date", java.time.LocalDate.class));
+            response.setRespondDate(rs.getDate("respond_date"));
             response.setStatus(rs.getString("status"));
             return response;
         }, qId);
@@ -95,9 +95,9 @@ public class QuotationResponseDAOImpl implements QuotationResponseDAO {
             response.setQId(rs.getInt("q_id"));
             response.setSupplierId(rs.getInt("supplier_id"));
             response.setTotalAmount(rs.getBigDecimal("total_amount"));
-            response.setDeliveryDate(rs.getObject("delivery_date", java.time.LocalDate.class));
+            response.setDeliveryDate(rs.getDate("delivery_date"));
             response.setAdditionalNote(rs.getString("additional_note"));
-            response.setRespondDate(rs.getObject("respond_date", java.time.LocalDate.class));
+            response.setRespondDate(rs.getDate("respond_date"));
             response.setStatus(rs.getString("status"));
             return response;
         }, supplierId);
@@ -113,9 +113,9 @@ public class QuotationResponseDAOImpl implements QuotationResponseDAO {
             response.setQId(rs.getInt("q_id"));
             response.setSupplierId(rs.getInt("supplier_id"));
             response.setTotalAmount(rs.getBigDecimal("total_amount"));
-            response.setDeliveryDate(rs.getObject("delivery_date", java.time.LocalDate.class));
+            response.setDeliveryDate(rs.getDate("delivery_date"));
             response.setAdditionalNote(rs.getString("additional_note"));
-            response.setRespondDate(rs.getObject("respond_date", java.time.LocalDate.class));
+            response.setRespondDate(rs.getDate("respond_date"));
             response.setStatus(rs.getString("status"));
             return response;
         });

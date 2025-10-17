@@ -23,6 +23,7 @@ public interface QuotationService {
     // Read operations
     QuotationDTO getQuotationById(Integer qId);
     List<QuotationItemDTO> getQuotationItemsByQuotationId(Integer qId);
+    List<QuotationItemDTO> getEnhancedQuotationItemsByQuotationId(Integer qId);
     List<QuotationSupplierDTO> getQuotationSuppliersByQuotationId(Integer qId);
     List<QuotationDTO> getAllQuotations();
     List<QuotationDTO> getQuotationsByQsId(String qsId);

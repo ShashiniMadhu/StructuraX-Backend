@@ -12,8 +12,6 @@ import com.structurax.root.structurax.root.dao.ClientDAO;
 import com.structurax.root.structurax.root.dao.SupplierDAO;
 import com.structurax.root.structurax.root.dto.CatalogDTO;
 import com.structurax.root.structurax.root.dto.SupplierDTO;
-import com.structurax.root.structurax.root.dto.SupplierLoginDTO;
-import com.structurax.root.structurax.root.dto.SupplierResponseDTO;
 import com.structurax.root.structurax.root.service.SupplierService;
 import com.structurax.root.structurax.root.util.JwtUtil;
 
@@ -28,32 +26,10 @@ public class SupplierServiceImpl implements SupplierService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-
-
     private static final Logger logger = LoggerFactory.getLogger(SupplierServiceImpl.class);
 
     @Autowired
     private SupplierDAO supplierDAO;
-
-    @Override
-    public SupplierResponseDTO login(SupplierLoginDTO loginDTO) {
-        SupplierDTO supplierDTO = supplierDAO.findByEmail(loginDTO.getEmail())
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        if (!passwordEncoder.matches(loginDTO.getPassword(), supplierDTO.getPassword())) {
-            throw new RuntimeException("Invalid password");
-        }
-
-        String token = jwtUtil.generateTokenForSupplier(supplierDTO.getEmail(), supplierDTO.getRole(), supplierDTO.getSupplier_id());
-
-        return new SupplierResponseDTO(
-                supplierDTO.getSupplier_id(),
-
-                supplierDTO.getEmail(),
-                supplierDTO.getRole(),
-                token
-        );
-    }
 
     @Override
     public CatalogDTO createCatalog(CatalogDTO catalogDTO) {
@@ -64,7 +40,7 @@ public class SupplierServiceImpl implements SupplierService {
             logger.error("Validation failed: Name is required");
             throw new IllegalArgumentException("Name is required");
         }
-        if (catalogDTO.getRate() == null || catalogDTO.getRate() <= 0) { // Changed from BigDecimal comparison
+        if (catalogDTO.getRate() == null || catalogDTO.getRate() <= 0) {
             logger.error("Validation failed: Rate must be positive");
             throw new IllegalArgumentException("Rate must be positive");
         }
@@ -141,7 +117,7 @@ public class SupplierServiceImpl implements SupplierService {
             throw e;
         }
     }
-    
+
     @Override
     public List<SupplierDTO> getAllSuppliers() {
         logger.info("Retrieving all suppliers");
@@ -154,16 +130,16 @@ public class SupplierServiceImpl implements SupplierService {
             throw e;
         }
     }
-    
+
     @Override
     public SupplierDTO getSupplierById(Integer supplierId) {
         logger.info("Retrieving supplier with supplier_id: {}", supplierId);
-        
+
         if (supplierId == null || supplierId <= 0) {
             logger.error("Validation failed: Valid supplier_id is required");
             throw new IllegalArgumentException("Valid supplier_id is required");
         }
-        
+
         try {
             SupplierDTO supplier = supplierDAO.getSupplierById(supplierId);
             if (supplier == null) {

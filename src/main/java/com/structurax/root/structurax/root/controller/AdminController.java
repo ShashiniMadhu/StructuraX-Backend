@@ -33,11 +33,7 @@ public class AdminController {
     @Autowired
     private MailService mailService;
 
-    @PostMapping("/login")
-    public ResponseEntity<AdminResponseDTO> login(@RequestBody AdminLoginDTO loginDTO) {
-        AdminResponseDTO response = adminService.login(loginDTO);
-        return ResponseEntity.ok(response);
-    }
+
 
     @PostMapping(value = "/add_employee", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> createEmployee(
@@ -80,7 +76,7 @@ public class AdminController {
             String otp = OtpUtil.generateOtp();
 
             // Create DTO and set fields (no hashing here)
-            EmployeeDTO employeeDTO = new EmployeeDTO();
+            UserDTO employeeDTO = new UserDTO();
             employeeDTO.setName(name);
             employeeDTO.setEmail(email);
             employeeDTO.setPhoneNumber(phoneNumber);
@@ -92,7 +88,7 @@ public class AdminController {
             employeeDTO.setProfileImageUrl(imageUrl);
 
             // Save employee
-            EmployeeDTO savedEmployee = adminService.createEmployee(employeeDTO);
+            UserDTO savedEmployee = adminService.createEmployee(employeeDTO);
 
             // Send OTP email
             mailService.sendEmployeeOtp(
@@ -119,7 +115,7 @@ public class AdminController {
                         availability.equals("Deactive"));
     }
 
-    @GetMapping(value = "get_employees" , produces = Constants.APPLICATION_JSON)
+    /*@GetMapping(value = "get_employees" , produces = Constants.APPLICATION_JSON)
     public ResponseEntity<?> getAllEmployees() {
         try {
             final List employeeDTOS = adminService.getAllEmployees();
@@ -127,36 +123,36 @@ public class AdminController {
         } catch (Exception e) {
             return new ResponseEntity<>("Error fetching employees: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
-    }
+    }*/
 
     @PutMapping(value = "/deactivate/{id}")
     public ResponseEntity<?> deactivateEmployee(@PathVariable @Pattern(regexp = "^EMP_\\d{3}$") String id) {
         try {
-            EmployeeDTO employee = adminService.getEmployeeById(id);
-            if (employee == null) {
+            //EmployeeDTO employee = adminService.getEmployeeById(id);
+            //if (employee == null) {
                 return new ResponseEntity<>("Employee not found", HttpStatus.NOT_FOUND);
-            }
+           // }
 
             // Check if employee is already deactivated
-            if ("Deactive".equals(employee.getAvailability())) {
-                return new ResponseEntity<>("Employee is already deactivated", HttpStatus.BAD_REQUEST);
-            }
+          //  if ("Deactive".equals(employee.getAvailability())) {
+              //  return new ResponseEntity<>("Employee is already deactivated", HttpStatus.BAD_REQUEST);
+            //}
 
-            adminService.deactivateEmployee(id);
-            mailService.sendRemovalNotification(employee.getEmail(), employee.getName());
+          //  adminService.deactivateEmployee(id);
+            //mailService.sendRemovalNotification(employee.getEmail(), employee.getName());
 
-            return ResponseEntity.ok("Employee deactivated successfully and notification email sent.");
+          //  return ResponseEntity.ok("Employee deactivated successfully and notification email sent.");
         } catch (Exception e) {
             return new ResponseEntity<>("Error deactivating employee: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
 
-    @GetMapping(value = "/{id}", produces = Constants.APPLICATION_JSON)
+   @GetMapping(value = "/{id}", produces = Constants.APPLICATION_JSON)
     public ResponseEntity<?> getEmployeeById(@PathVariable @Pattern(regexp = "^EMP_\\d{3}$", message = "Employee ID must follow format EMP_XXX") String id) {
         try {
             final EmployeeDTO employee = adminService.getEmployeeById(id);
-            if (employee == null) {
+           if (employee == null) {
                 return new ResponseEntity<>("Employee not found with id: " + id, HttpStatus.NOT_FOUND);
             }
             return ResponseEntity.ok(employee);

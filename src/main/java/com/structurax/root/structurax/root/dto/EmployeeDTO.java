@@ -21,42 +21,34 @@ public class EmployeeDTO {
     @Pattern(regexp = "^EMP_\\d{3}$", message = "Employee ID must follow format EMP_XXX")
     private String employeeId;
 
-    @NotBlank(message = "Name is required")
-    @JsonProperty("name")
-    private String name;
+    @JsonProperty("user_id")
+    private int userId;
 
-    @NotBlank(message = "Email is required")
-    @Email(message = "Email should be valid")
-    @JsonProperty("email")
-    private String email;
+    public EmployeeDTO(String employeeId, String name, String email, String phoneNumber, String address, String type, LocalDate localJoinedDate, Object o, String availability, String profileImageUrl) {
+    }
 
-    @NotBlank(message = "Phone number is required")
-    @JsonProperty("phone_number")
-    private String phoneNumber;
 
-    @NotBlank(message = "Address is required")
-    @JsonProperty("address")
-    private String address;
+    public void setName(String name) {
+    }
 
-    @NotBlank(message = "Type is required")
-    @JsonProperty("type")
-    private String type;
+    public void setEmail(String email) {
+    }
 
-    @NotNull(message = "Joined date is required")
-    @JsonProperty("joined_date")
-    private LocalDate joinedDate;
+    public void setPhoneNumber(String phoneNumber) {
+    }
 
-    @NotBlank(message = "Password is required")
-  //  @Size(min = 8, message = "Password must be at least 8 characters")
-    @JsonProperty("password")
-    private String password;
+    public void setJoinedDate(LocalDate localDate) {
+    }
 
-    @NotNull(message = "Availability status is required")
-    @Pattern(regexp = "^(Assigned|Available|Deactive)$", message = "Availability must be one of: Assigned, Available, Deactive")
-    @JsonProperty("availability")
-    private String availability;
+    public void setType(String type) {
+    }
 
-    @JsonProperty("profile_image_url")
-    private String profileImageUrl;
+    public void setPassword(String password) {
+    }
 
+    public void setAvailability(String availability) {
+    }
+
+    public void setProfileImageUrl(String profileImageUrl) {
+    }
 }

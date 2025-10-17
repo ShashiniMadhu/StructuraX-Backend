@@ -1,23 +1,52 @@
 package com.structurax.root.structurax.root.dto;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.math.BigDecimal;
-import java.time.LocalDate;
+import java.sql.Date;
 
 public class QuotationResponseDTO {
-    private Integer responseId;
-    private Integer qId;
-    private Integer supplierId;
-    private BigDecimal totalAmount;
-    private LocalDate deliveryDate;
-    private String additionalNote;
-    private LocalDate respondDate;
-    private String status; // 'pending', 'accepted', 'rejected'
 
+    @JsonProperty("responseId")
+    private Integer responseId;
+
+    @JsonProperty("qId")
+    @JsonAlias({"quotationId"})
+    private Integer qId;
+
+    @JsonProperty("supplierId")
+    private Integer supplierId;
+
+    @JsonProperty("totalAmount")
+    private BigDecimal totalAmount;
+
+    @JsonProperty("status")
+    private String status;
+
+    @JsonProperty("deliveryDate")
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    private Date deliveryDate;
+
+    @JsonProperty("additionalNote")
+    private String additionalNote;
+
+    @JsonProperty("respondDate")
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    private Date respondDate;
+
+    @JsonProperty("deliveryTime")
+    private Integer deliveryTime;
+
+    // Default constructor
     public QuotationResponseDTO() {
     }
 
-    public QuotationResponseDTO(Integer responseId, Integer qId, Integer supplierId, BigDecimal totalAmount, 
-                              LocalDate deliveryDate, String additionalNote, LocalDate respondDate, String status) {
+    // Constructor matching database columns
+    public QuotationResponseDTO(Integer responseId, Integer qId, Integer supplierId,
+                                BigDecimal totalAmount, Date deliveryDate, String additionalNote,
+                                Date respondDate, String status) {
         this.responseId = responseId;
         this.qId = qId;
         this.supplierId = supplierId;
@@ -45,6 +74,15 @@ public class QuotationResponseDTO {
         this.qId = qId;
     }
 
+    @JsonAlias("quotationId")
+    public void setQuotationId(Integer quotationId) {
+        this.qId = quotationId;
+    }
+
+    public Integer getQuotationId() {
+        return qId;
+    }
+
     public Integer getSupplierId() {
         return supplierId;
     }
@@ -61,12 +99,28 @@ public class QuotationResponseDTO {
         this.totalAmount = totalAmount;
     }
 
-    public LocalDate getDeliveryDate() {
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public Date getDeliveryDate() {
         return deliveryDate;
     }
 
-    public void setDeliveryDate(LocalDate deliveryDate) {
+    public void setDeliveryDate(Date deliveryDate) {
         this.deliveryDate = deliveryDate;
+    }
+
+    public Integer getDeliveryTime() {
+        return deliveryTime;
+    }
+
+    public void setDeliveryTime(Integer deliveryTime) {
+        this.deliveryTime = deliveryTime;
     }
 
     public String getAdditionalNote() {
@@ -77,20 +131,22 @@ public class QuotationResponseDTO {
         this.additionalNote = additionalNote;
     }
 
-    public LocalDate getRespondDate() {
+    public Date getRespondDate() {
         return respondDate;
     }
 
-    public void setRespondDate(LocalDate respondDate) {
+    public void setRespondDate(Date respondDate) {
         this.respondDate = respondDate;
     }
 
-    public String getStatus() {
-        return status;
+    // Alias methods for service compatibility
+    @JsonAlias({"response_date"})
+    public Date getResponseDate() {
+        return respondDate;
     }
 
-    public void setStatus(String status) {
-        this.status = status;
+    public void setResponseDate(Date responseDate) {
+        this.respondDate = responseDate;
     }
 
     @Override
@@ -100,10 +156,11 @@ public class QuotationResponseDTO {
                 ", qId=" + qId +
                 ", supplierId=" + supplierId +
                 ", totalAmount=" + totalAmount +
+                ", status='" + status + '\'' +
                 ", deliveryDate=" + deliveryDate +
+                ", deliveryTime=" + deliveryTime +
                 ", additionalNote='" + additionalNote + '\'' +
                 ", respondDate=" + respondDate +
-                ", status='" + status + '\'' +
                 '}';
     }
 }

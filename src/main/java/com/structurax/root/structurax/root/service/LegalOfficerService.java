@@ -16,6 +16,9 @@ public interface LegalOfficerService {
     LegalProcessDTO updateLegalProcess(LegalProcessDTO dto);
     boolean deleteLegalProcess(int id);
     LegalProcessDTO getLegalProcessById(int id);
+    boolean acceptDocument(Integer documentId);
+    boolean rejectDocument(Integer documentId);
+    List<String> getDistinctProjectIds();
 
 
 

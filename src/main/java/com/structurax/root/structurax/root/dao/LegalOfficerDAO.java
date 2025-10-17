@@ -17,6 +17,10 @@ public interface LegalOfficerDAO {
     LegalProcessDTO updateLegalProcess(LegalProcessDTO dto);
     boolean deleteLegalProcess(int id);
     LegalProcessDTO findLegalProcessById(int id);
+    boolean acceptDocument(Integer documentId);
+    boolean rejectDocument(Integer documentId);
+    ProjectDocumentsDTO findDocumentById(Integer documentId);
+    List<String> findDistinctProjectIds();
 
 
 }

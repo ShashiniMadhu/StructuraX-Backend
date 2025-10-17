@@ -1,31 +1,27 @@
 package com.structurax.root.structurax.root.dto;
 
-import java.time.LocalDate;
+import java.sql.Date;
+import java.sql.Timestamp;
 
 public class QuotationDTO {
     private Integer qId;
     private String projectId;
     private String projectName;
     private String qsId;
-    private LocalDate date;
-    private LocalDate deadline;
-    private String status; // 'pending', 'sent', 'received', 'closed'
+    private Date date;
+    private Date deadline;
+    private String status;
     private String description;
+    private Timestamp createdAt;
+    private Timestamp updatedAt;
 
+    // Default constructor
     public QuotationDTO() {
     }
 
-    public QuotationDTO(Integer qId, String projectId, String projectName, String qsId, LocalDate date, LocalDate deadline, String status) {
-        this.qId = qId;
-        this.projectId = projectId;
-        this.projectName = projectName;
-        this.qsId = qsId;
-        this.date = date;
-        this.deadline = deadline;
-        this.status = status;
-    }
-
-    public QuotationDTO(Integer qId, String projectId, String projectName, String qsId, LocalDate date, LocalDate deadline, String status, String description) {
+    // Constructor with all fields
+    public QuotationDTO(Integer qId, String projectId, String projectName, String qsId,
+                       Date date, Date deadline, String status, String description) {
         this.qId = qId;
         this.projectId = projectId;
         this.projectName = projectName;
@@ -69,19 +65,19 @@ public class QuotationDTO {
         this.qsId = qsId;
     }
 
-    public LocalDate getDate() {
+    public Date getDate() {
         return date;
     }
 
-    public void setDate(LocalDate date) {
+    public void setDate(Date date) {
         this.date = date;
     }
 
-    public LocalDate getDeadline() {
+    public Date getDeadline() {
         return deadline;
     }
 
-    public void setDeadline(LocalDate deadline) {
+    public void setDeadline(Date deadline) {
         this.deadline = deadline;
     }
 
@@ -101,6 +97,22 @@ public class QuotationDTO {
         this.description = description;
     }
 
+    public Timestamp getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(Timestamp createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public Timestamp getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(Timestamp updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
     @Override
     public String toString() {
         return "QuotationDTO{" +
@@ -112,6 +124,8 @@ public class QuotationDTO {
                 ", deadline=" + deadline +
                 ", status='" + status + '\'' +
                 ", description='" + description + '\'' +
+                ", createdAt=" + createdAt +
+                ", updatedAt=" + updatedAt +
                 '}';
     }
 }

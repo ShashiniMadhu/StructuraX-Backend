@@ -11,7 +11,8 @@ public class PurchaseOrderDTO {
     private LocalDate estimatedDeliveryDate;
     private LocalDate orderDate;
     private Boolean orderStatus; // 0 or 1 (false or true)
-    
+    private String status;
+
     public PurchaseOrderDTO() {}
     
     // Getters and setters
@@ -78,4 +79,13 @@ public class PurchaseOrderDTO {
     public void setOrderStatus(Boolean orderStatus) { 
         this.orderStatus = orderStatus; 
     }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
 }

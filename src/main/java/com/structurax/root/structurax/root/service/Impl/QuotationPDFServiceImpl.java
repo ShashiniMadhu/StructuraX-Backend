@@ -71,9 +71,9 @@ public class QuotationPDFServiceImpl implements QuotationPDFService {
             document.add(new Paragraph("Quotation ID: " + quotation.getQId()));
             
             DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-            document.add(new Paragraph("Date: " + (quotation.getDate() != null ? quotation.getDate().format(dateFormatter) : "N/A")));
-            document.add(new Paragraph("Deadline: " + (quotation.getDeadline() != null ? quotation.getDeadline().format(dateFormatter) : "N/A")));
-            
+            document.add(new Paragraph("Date: " + (quotation.getDate() != null ? quotation.getDate().toLocalDate().format(dateFormatter) : "N/A")));
+            document.add(new Paragraph("Deadline: " + (quotation.getDeadline() != null ? quotation.getDeadline().toLocalDate().format(dateFormatter) : "N/A")));
+
             document.add(new Paragraph("Status: " + quotation.getStatus()));
             if (quotation.getDescription() != null) {
                 document.add(new Paragraph("Description: " + quotation.getDescription()));
@@ -215,8 +215,8 @@ public class QuotationPDFServiceImpl implements QuotationPDFService {
             // Simple header
             document.add(new Paragraph("Quotation ID: " + quotation.getQId()));
             DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-            document.add(new Paragraph("Date: " + (quotation.getDate() != null ? quotation.getDate().format(dateFormatter) : "N/A")));
-            
+            document.add(new Paragraph("Date: " + (quotation.getDate() != null ? quotation.getDate().toLocalDate().format(dateFormatter) : "N/A")));
+
             // Add basic project and QS info for simple format
             try {
                 Project1DTO project = sqsService.getProjectById(quotation.getProjectId());
@@ -298,10 +298,10 @@ public class QuotationPDFServiceImpl implements QuotationPDFService {
             document.add(new Paragraph("Document Type: Quotation"));
             document.add(new Paragraph("Quotation Reference: " + quotation.getQId()));
             
-            DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-            document.add(new Paragraph("Date: " + (quotation.getDate() != null ? quotation.getDate().format(dateFormatter) : "N/A")));
-            document.add(new Paragraph("Deadline: " + (quotation.getDeadline() != null ? quotation.getDeadline().format(dateFormatter) : "N/A")));
-            
+            DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+            document.add(new Paragraph("Date: " + (quotation.getDate() != null ? quotation.getDate().toLocalDate().format(dateFormatter) : "N/A")));
+            document.add(new Paragraph("Deadline: " + (quotation.getDeadline() != null ? quotation.getDeadline().toLocalDate().format(dateFormatter) : "N/A")));
+
             document.add(new Paragraph("Status: " + quotation.getStatus()));
             if (quotation.getDescription() != null) {
                 document.add(new Paragraph("Description: " + quotation.getDescription()));
