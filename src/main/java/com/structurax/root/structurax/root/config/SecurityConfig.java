@@ -25,6 +25,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.PUT, "/api/supplier/payments/**").permitAll()
                         .requestMatchers("/api/**").permitAll()
+                        .requestMatchers("/admin/**").permitAll()
+                        .requestMatchers("/user/**").permitAll()
                         .anyRequest().authenticated()
                 );
         return http.build();
