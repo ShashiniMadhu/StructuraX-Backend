@@ -19,10 +19,9 @@ public interface AdminDAO {
      */
     Optional<AdminDTO> findByEmail(String email);
 
-    List<EmployeeDTO> getAllEmployees();
+    List<NewEmployeeDTO> getAllEmployees();
 
-    void removeEmployeePassword(String empId);
-
+    public void deactivateEmployee(String empId);
     /**
      * get the employee by employee_id
      * @param id
@@ -30,5 +29,5 @@ public interface AdminDAO {
      */
     UserDTO getEmployeeById(String id);
 
-    SupplierDTO addSupplier(SupplierDTO supplierDTO);
+    UserDTO addSupplier(UserDTO userDTO) ;
 }
