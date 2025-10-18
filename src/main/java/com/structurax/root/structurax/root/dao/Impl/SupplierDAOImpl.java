@@ -2,10 +2,12 @@ package com.structurax.root.structurax.root.dao.Impl;
 
 import java.math.BigDecimal;
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -23,6 +25,10 @@ import com.structurax.root.structurax.root.dto.ProjectDTO;
 import com.structurax.root.structurax.root.dto.PurchaseOrderDTO;
 import com.structurax.root.structurax.root.dto.SupplierDTO;
 import com.structurax.root.structurax.root.util.DatabaseConnection;
+import com.structurax.root.structurax.root.dto.SupplierHistoryDTO;
+import com.structurax.root.structurax.root.dto.SupplierInvoiceDTO;
+import com.structurax.root.structurax.root.dto.SupplierPaymentDTO;
+
 
 @Repository
 public class SupplierDAOImpl implements SupplierDAO {
@@ -88,7 +94,7 @@ public class SupplierDAOImpl implements SupplierDAO {
 
     @Override
     public List<SupplierDTO> getAllSuppliers() {
-        String sql = "SELECT supplier_id, supplier_name, address, phone, joined_date, status, email FROM supplier ORDER BY supplier_name";
+        String sql = "SELECT supplier_id, supplier_name, address, phone, joined_date, status, email FROM supplier   ORDER BY supplier_name";
         try {
             List<SupplierDTO> suppliers = jdbcTemplate.query(sql, (rs, rowNum) -> {
                 SupplierDTO supplier = new SupplierDTO();
@@ -602,7 +608,7 @@ public class SupplierDAOImpl implements SupplierDAO {
 
     @Override
     public SupplierInvoiceDTO createInvoice(SupplierInvoiceDTO invoiceDTO) {
-        String sql = "INSERT INTO order_invoice (order_id, supplier_id, amount, description, file_path, date, status) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO supplier_invoice (order_id, supplier_id, amount, description, file_path, status) VALUES (?, ?, ?, ?, ?, ?)";
         try (Connection conn = databaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setInt(1, invoiceDTO.getOrderId());
@@ -610,8 +616,7 @@ public class SupplierDAOImpl implements SupplierDAO {
             ps.setBigDecimal(3, invoiceDTO.getAmount());
             ps.setString(4, invoiceDTO.getDescription());
             ps.setString(5, invoiceDTO.getFilePath());
-            ps.setDate(6, Date.valueOf(invoiceDTO.getDate()));
-            ps.setString(7, invoiceDTO.getStatus());
+            ps.setString(6, invoiceDTO.getStatus());
 
             int rows = ps.executeUpdate();
             if (rows == 0) {
@@ -632,12 +637,11 @@ public class SupplierDAOImpl implements SupplierDAO {
 
     @Override
     public List<SupplierInvoiceDTO> getAllInvoices() {
-        String sql = "SELECT oi.invoice_id, oi.order_id, oi.supplier_id, oi.amount, oi.description, " +
-                     "oi.file_path, oi.date, oi.status, p.name AS project_name, s.company AS supplier_name " +
-                     "FROM order_invoice oi " +
-                     "LEFT JOIN purchase_order po ON oi.order_id = po.order_id " +
-                     "LEFT JOIN project p ON po.project_id = p.project_id " +
-                     "LEFT JOIN supplier s ON oi.supplier_id = s.supplier_id";
+        String sql = "SELECT si.invoice_id, si.order_id, si.supplier_id, si.amount, si.description, " +
+                     "si.file_path, si.status, p.name AS project_name " +
+                     "FROM supplier_invoice si " +
+                     "LEFT JOIN purchase_order po ON si.order_id = po.order_id " +
+                     "LEFT JOIN project p ON po.project_id = p.project_id";
         List<SupplierInvoiceDTO> invoices = new ArrayList<>();
 
         try (Connection conn = databaseConnection.getConnection();
@@ -656,13 +660,12 @@ public class SupplierDAOImpl implements SupplierDAO {
 
     @Override
     public SupplierInvoiceDTO getInvoiceById(Integer invoiceId) {
-        String sql = "SELECT oi.invoice_id, oi.order_id, oi.supplier_id, oi.amount, oi.description, " +
-                     "oi.file_path, oi.date, oi.status, p.name AS project_name, s.company AS supplier_name " +
-                     "FROM order_invoice oi " +
-                     "LEFT JOIN purchase_order po ON oi.order_id = po.order_id " +
+        String sql = "SELECT si.invoice_id, si.order_id, si.supplier_id, si.amount, si.description, " +
+                     "si.file_path, si.status, p.name AS project_name " +
+                     "FROM supplier_invoice si " +
+                     "LEFT JOIN purchase_order po ON si.order_id = po.order_id " +
                      "LEFT JOIN project p ON po.project_id = p.project_id " +
-                     "LEFT JOIN supplier s ON oi.supplier_id = s.supplier_id " +
-                     "WHERE oi.invoice_id = ?";
+                     "WHERE si.invoice_id = ?";
 
         try (Connection conn = databaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -684,13 +687,12 @@ public class SupplierDAOImpl implements SupplierDAO {
 
     @Override
     public List<SupplierInvoiceDTO> getInvoicesBySupplierId(Integer supplierId) {
-        String sql = "SELECT oi.invoice_id, oi.order_id, oi.supplier_id, oi.amount, oi.description, " +
-                     "oi.file_path, oi.date, oi.status, p.name AS project_name, s.company AS supplier_name " +
-                     "FROM order_invoice oi " +
-                     "LEFT JOIN purchase_order po ON oi.order_id = po.order_id " +
+        String sql = "SELECT si.invoice_id, si.order_id, si.supplier_id, si.amount, si.description, " +
+                     "si.file_path, si.status, p.name AS project_name " +
+                     "FROM supplier_invoice si " +
+                     "LEFT JOIN purchase_order po ON si.order_id = po.order_id " +
                      "LEFT JOIN project p ON po.project_id = p.project_id " +
-                     "LEFT JOIN supplier s ON oi.supplier_id = s.supplier_id " +
-                     "WHERE oi.supplier_id = ?";
+                     "WHERE si.supplier_id = ?";
         List<SupplierInvoiceDTO> invoices = new ArrayList<>();
 
         try (Connection conn = databaseConnection.getConnection();
@@ -711,13 +713,12 @@ public class SupplierDAOImpl implements SupplierDAO {
 
     @Override
     public List<SupplierInvoiceDTO> getInvoicesByOrderId(Integer orderId) {
-        String sql = "SELECT oi.invoice_id, oi.order_id, oi.supplier_id, oi.amount, oi.description, " +
-                     "oi.file_path, oi.date, oi.status, p.name AS project_name, s.company AS supplier_name " +
-                     "FROM order_invoice oi " +
-                     "LEFT JOIN purchase_order po ON oi.order_id = po.order_id " +
+        String sql = "SELECT si.invoice_id, si.order_id, si.supplier_id, si.amount, si.description, " +
+                     "si.file_path, si.status, p.name AS project_name " +
+                     "FROM supplier_invoice si " +
+                     "LEFT JOIN purchase_order po ON si.order_id = po.order_id " +
                      "LEFT JOIN project p ON po.project_id = p.project_id " +
-                     "LEFT JOIN supplier s ON oi.supplier_id = s.supplier_id " +
-                     "WHERE oi.order_id = ?";
+                     "WHERE si.order_id = ?";
         List<SupplierInvoiceDTO> invoices = new ArrayList<>();
 
         try (Connection conn = databaseConnection.getConnection();
@@ -738,7 +739,7 @@ public class SupplierDAOImpl implements SupplierDAO {
 
     @Override
     public void updateInvoiceStatus(Integer invoiceId, String status) {
-        String sql = "UPDATE order_invoice SET status = ? WHERE invoice_id = ?";
+        String sql = "UPDATE supplier_invoice SET status = ? WHERE invoice_id = ?";
         try (Connection conn = databaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, status);
@@ -763,13 +764,8 @@ public class SupplierDAOImpl implements SupplierDAO {
         invoice.setAmount(rs.getBigDecimal("amount"));
         invoice.setDescription(rs.getString("description"));
         invoice.setFilePath(rs.getString("file_path"));
-        Date date = rs.getDate("date");
-        if (date != null) {
-            invoice.setDate(date.toLocalDate());
-        }
         invoice.setStatus(rs.getString("status"));
         invoice.setProjectName(rs.getString("project_name"));
-        invoice.setSupplierName(rs.getString("supplier_name"));
         return invoice;
     }
 
