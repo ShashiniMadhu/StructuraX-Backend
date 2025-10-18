@@ -1,33 +1,28 @@
 package com.structurax.root.structurax.root.dao.Impl;
 
+import java.math.BigDecimal;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Repository;
+
 import com.structurax.root.structurax.root.dao.SupplierDAO;
 import com.structurax.root.structurax.root.dto.CatalogDTO;
 import com.structurax.root.structurax.root.dto.OrderItemDTO;
 import com.structurax.root.structurax.root.dto.ProjectDTO;
 import com.structurax.root.structurax.root.dto.PurchaseOrderDTO;
 import com.structurax.root.structurax.root.dto.SupplierDTO;
-import com.structurax.root.structurax.root.dto.SupplierPaymentDTO;
-import com.structurax.root.structurax.root.dto.SupplierHistoryDTO;
-import com.structurax.root.structurax.root.dto.SupplierInvoiceDTO;
 import com.structurax.root.structurax.root.util.DatabaseConnection;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.dao.EmptyResultDataAccessException;
-import org.springframework.jdbc.core.BeanPropertyRowMapper;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.stereotype.Repository;
-
-import java.math.BigDecimal;
-import java.sql.Connection;
-import java.sql.Date;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
 
 @Repository
 public class SupplierDAOImpl implements SupplierDAO {
@@ -42,13 +37,23 @@ public class SupplierDAOImpl implements SupplierDAO {
         this.jdbcTemplate = jdbcTemplate;
     }
 
-    // ========== EXISTING SUPPLIER METHODS ==========
-
     @Override
     public Optional<SupplierDTO> findByEmail(String email) {
-        String sql = "SELECT * FROM supplier WHERE email = ?";
+        String sql = "SELECT supplier_id, supplier_name, address, phone, joined_date, status, email, password FROM supplier WHERE email = ?";
         try {
-            SupplierDTO supplier = jdbcTemplate.queryForObject(sql, new BeanPropertyRowMapper<>(SupplierDTO.class), email);
+            SupplierDTO supplier = jdbcTemplate.queryForObject(sql, (rs, rowNum) -> {
+                SupplierDTO s = new SupplierDTO();
+                s.setSupplier_id(rs.getInt("supplier_id"));
+                s.setSupplier_name(rs.getString("supplier_name"));
+                s.setAddress(rs.getString("address"));
+                s.setPhone(rs.getString("phone"));
+                s.setJoined_date(rs.getDate("joined_date"));
+                s.setStatus(rs.getString("status"));
+                s.setEmail(rs.getString("email"));
+                s.setPassword(rs.getString("password"));
+                s.setRole("Supplier"); // Set default role since column doesn't exist in DB
+                return s;
+            }, email);
             return Optional.ofNullable(supplier);
         } catch (EmptyResultDataAccessException e) {
             return Optional.empty();
@@ -57,9 +62,21 @@ public class SupplierDAOImpl implements SupplierDAO {
 
     @Override
     public SupplierDTO getSupplierById(Integer supplierId) {
-        String sql = "SELECT * FROM supplier WHERE supplier_id = ?";
+        String sql = "SELECT supplier_id, supplier_name, address, phone, joined_date, status, email FROM supplier WHERE supplier_id = ?";
         try {
-            return jdbcTemplate.queryForObject(sql, new BeanPropertyRowMapper<>(SupplierDTO.class), supplierId);
+            return jdbcTemplate.queryForObject(sql, (rs, rowNum) -> {
+                SupplierDTO supplier = new SupplierDTO();
+                supplier.setSupplier_id(rs.getInt("supplier_id"));
+                supplier.setSupplier_name(rs.getString("supplier_name"));
+                supplier.setAddress(rs.getString("address"));
+                supplier.setPhone(rs.getString("phone"));
+                supplier.setJoined_date(rs.getDate("joined_date"));
+                supplier.setStatus(rs.getString("status"));
+                supplier.setEmail(rs.getString("email"));
+                supplier.setRole("Supplier"); // Set default role
+                // Note: Not including password field for security reasons in getById
+                return supplier;
+            }, supplierId);
         } catch (EmptyResultDataAccessException e) {
             logger.warn("No supplier found with supplier_id: {}", supplierId);
             return null;
@@ -69,7 +86,30 @@ public class SupplierDAOImpl implements SupplierDAO {
         }
     }
 
-
+    @Override
+    public List<SupplierDTO> getAllSuppliers() {
+        String sql = "SELECT supplier_id, supplier_name, address, phone, joined_date, status, email FROM supplier ORDER BY supplier_name";
+        try {
+            List<SupplierDTO> suppliers = jdbcTemplate.query(sql, (rs, rowNum) -> {
+                SupplierDTO supplier = new SupplierDTO();
+                supplier.setSupplier_id(rs.getInt("supplier_id"));
+                supplier.setSupplier_name(rs.getString("supplier_name"));
+                supplier.setAddress(rs.getString("address"));
+                supplier.setPhone(rs.getString("phone"));
+                supplier.setJoined_date(rs.getDate("joined_date"));
+                supplier.setStatus(rs.getString("status"));
+                supplier.setEmail(rs.getString("email"));
+                supplier.setRole("Supplier"); // Set default role
+                // Note: Not including password field for security reasons
+                return supplier;
+            });
+            logger.info("Retrieved {} suppliers from database", suppliers.size());
+            return suppliers;
+        } catch (Exception e) {
+            logger.error("Error retrieving all suppliers: {}", e.getMessage(), e);
+            throw new RuntimeException("Error retrieving all suppliers: " + e.getMessage(), e);
+        }
+    }
 
     @Override
     public CatalogDTO createCatalog(CatalogDTO catalogDTO) {
@@ -188,7 +228,7 @@ public class SupplierDAOImpl implements SupplierDAO {
         return catalog;
     }
 
-
+    // ========== PURCHASE ORDER AND PROJECT METHODS (from Dev branch) ==========
 
     @Override
     public List<PurchaseOrderDTO> getAllOrders() {
@@ -290,6 +330,7 @@ public class SupplierDAOImpl implements SupplierDAO {
         order.setOrderStatus(rs.getBoolean("order_status"));
         return order;
     }
+
     @Override
     public ProjectDTO getProjectById(String projectId) {
         String sql = "SELECT project_id, name FROM project WHERE project_id = ?";
@@ -305,7 +346,6 @@ public class SupplierDAOImpl implements SupplierDAO {
             throw new RuntimeException("Project not found with ID: " + projectId);
         }
     }
-
 
     @Override
     public PurchaseOrderDTO getOrderByProjectId(String projectId) {
@@ -336,7 +376,6 @@ public class SupplierDAOImpl implements SupplierDAO {
         }
     }
 
-
     @Override
     public List<OrderItemDTO> getOrderItemsByOrderId(Integer orderId) {
         String sql = "SELECT item_id, order_id, description, quantity, unit_price FROM order_items WHERE order_id = ?";
@@ -344,9 +383,9 @@ public class SupplierDAOImpl implements SupplierDAO {
             OrderItemDTO item = new OrderItemDTO();
             item.setItemId(rs.getInt("item_id"));
             item.setOrderId(rs.getInt("order_id"));
-            item.setDescription(rs.getString("description"));  // Changed from setProductName
+            item.setDescription(rs.getString("description"));
             item.setQuantity(rs.getInt("quantity"));
-            item.setUnitPrice(rs.getBigDecimal("unit_price"));  // Changed from setPrice
+            item.setUnitPrice(rs.getBigDecimal("unit_price"));
             return item;
         });
     }
