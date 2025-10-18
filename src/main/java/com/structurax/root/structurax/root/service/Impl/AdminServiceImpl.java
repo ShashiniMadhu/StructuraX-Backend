@@ -73,4 +73,20 @@ public class AdminServiceImpl implements AdminService {
         logger.info("Supplier created successfully with user_id: {}", createdSupplier.getUserId());
         return createdSupplier;
     }
+
+    @Override
+    public List<FullClientDTO> getAllClients() {
+        logger.info("Fetching all clients with their projects");
+        List<FullClientDTO> clients = adminDAO.getAllClients();
+        logger.info("Fetched {} client records", clients.size());
+        return clients;
+    }
+
+    @Override
+    public List<Project1DTO> getAllProjects() {
+        logger.info("Fetching all projects");
+        List<Project1DTO> projects = adminDAO.getAllProjects();
+        logger.info("Fetched {} projects", projects.size());
+        return projects;
+    }
 }

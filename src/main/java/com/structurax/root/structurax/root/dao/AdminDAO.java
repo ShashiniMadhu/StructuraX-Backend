@@ -30,4 +30,8 @@ public interface AdminDAO {
     UserDTO getEmployeeById(String id);
 
     UserDTO addSupplier(UserDTO userDTO) ;
+
+    List<FullClientDTO> getAllClients();
+
+    public List<Project1DTO> getAllProjects();
 }

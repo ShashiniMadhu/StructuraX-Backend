@@ -26,5 +26,8 @@ public interface AdminService {
 
     UserDTO addSupplier(UserDTO userDTO) ;
 
+    List<FullClientDTO> getAllClients();
+
+    public List<Project1DTO> getAllProjects();
 
 }
