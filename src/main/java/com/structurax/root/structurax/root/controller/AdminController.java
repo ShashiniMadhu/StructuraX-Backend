@@ -193,4 +193,24 @@ public class AdminController {
         }
     }
 
+    @GetMapping(value = "/get_all_clients", produces = Constants.APPLICATION_JSON)
+    public ResponseEntity<?> getAllClients() {
+        try {
+            List<FullClientDTO> clients = adminService.getAllClients();
+            return ResponseEntity.ok(clients);
+        } catch (Exception e) {
+            return new ResponseEntity<>("Error fetching clients: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping(value = "/get_all_projects", produces = Constants.APPLICATION_JSON)
+    public ResponseEntity<?> getAllProjects() {
+        try {
+            List<Project1DTO> projects = adminService.getAllProjects();
+            return ResponseEntity.ok(projects);
+        } catch (Exception e) {
+            return new ResponseEntity<>("Error fetching projects: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
 }
