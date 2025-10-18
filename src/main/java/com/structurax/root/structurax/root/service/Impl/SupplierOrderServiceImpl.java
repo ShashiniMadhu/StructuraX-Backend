@@ -1,18 +1,17 @@
 package com.structurax.root.structurax.root.service.Impl;
 
 import com.structurax.root.structurax.root.dao.SupplierDAO;
-import com.structurax.root.structurax.root.dto.PurchaseOrderDTO;
-import com.structurax.root.structurax.root.service.SupplierOrderService;
 import com.structurax.root.structurax.root.dto.ProjectDTO;
 import com.structurax.root.structurax.root.dto.OrderItemDTO;
-import java.math.BigDecimal;
-
+import com.structurax.root.structurax.root.dto.ProjectOrdersDTO;
+import com.structurax.root.structurax.root.dto.PurchaseOrderDTO;
+import com.structurax.root.structurax.root.service.SupplierOrderService;
 import com.structurax.root.structurax.root.dto.ProjectOrderResponseDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Service
@@ -20,8 +19,11 @@ public class SupplierOrderServiceImpl implements SupplierOrderService {
 
     private static final Logger logger = LoggerFactory.getLogger(SupplierOrderServiceImpl.class);
 
-    @Autowired
-    private SupplierDAO supplierDAO;
+    private final SupplierDAO supplierDAO;
+
+    public SupplierOrderServiceImpl(SupplierDAO supplierDAO) {
+        this.supplierDAO = supplierDAO;
+    }
 
     @Override
     public List<PurchaseOrderDTO> getAllOrders() {
@@ -42,9 +44,11 @@ public class SupplierOrderServiceImpl implements SupplierOrderService {
     }
 
     @Override
-    public List<PurchaseOrderDTO> getOrdersByProjectId(String projectId) {
+    public ProjectOrdersDTO getOrdersByProjectId(String projectId) {
         logger.info("Service: Fetching orders for project ID: {}", projectId);
-        return supplierDAO.getOrdersByProjectId(projectId);
+        ProjectDTO project = supplierDAO.getProjectById(projectId);
+        List<PurchaseOrderDTO> orders = supplierDAO.getOrdersByProjectId(projectId);
+        return new ProjectOrdersDTO(project, orders);
     }
 
     @Override
@@ -70,8 +74,9 @@ public class SupplierOrderServiceImpl implements SupplierOrderService {
         return response;
     }
 
-
-
-
-
+    @Override
+    public void updateOrderStatus(Integer orderId, Integer orderStatus) {
+        logger.info("Service: Updating order status for order ID: {} to {}", orderId, orderStatus);
+        supplierDAO.updateOrderStatus(orderId, orderStatus);
+    }
 }
