@@ -342,7 +342,7 @@ public class ProjectOwnerDAOImpl implements ProjectOwnerDAO {
         String sql = "SELECT i.installment_id, i.payment_plan_id, i.amount, i.due_date, i.status, i.paid_date " +
                      "FROM installment i " +
                      "INNER JOIN payment_plan pp ON i.payment_plan_id = pp.payment_plan_id " +
-                     "WHERE pp.project_id = ? AND i.status = 'Paid' " +
+                     "WHERE pp.project_id = ? AND i.status = 'paid' " +
                      "ORDER BY i.paid_date DESC";
 
         List<InstallmentDTO> paymentHistory = new ArrayList<>();
@@ -384,7 +384,7 @@ public class ProjectOwnerDAOImpl implements ProjectOwnerDAO {
         String sql = "SELECT i.installment_id, i.payment_plan_id, i.amount, i.due_date, i.status, i.paid_date " +
                      "FROM installment i " +
                      "INNER JOIN payment_plan pp ON i.payment_plan_id = pp.payment_plan_id " +
-                     "WHERE pp.project_id = ? AND i.status = 'Pending' " +
+                     "WHERE pp.project_id = ? AND i.status = 'upcoming' " +
                      "ORDER BY i.due_date ASC";
 
         List<InstallmentDTO> upcomingPayments = new ArrayList<>();

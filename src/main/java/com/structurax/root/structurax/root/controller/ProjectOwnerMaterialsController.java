@@ -148,4 +148,165 @@ public class ProjectOwnerMaterialsController {
         }
     }
 
+    // ========== PAYMENT ENDPOINTS ==========
+
+    /**
+     * Get payment summary for a project
+     * GET /api/project-owner/materials/payments/{projectId}/summary
+     */
+    @GetMapping("/payments/{projectId}/summary")
+    public ResponseEntity<Map<String, Object>> getPaymentSummary(@PathVariable String projectId) {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            logger.info("Fetching payment summary for project_id={}", projectId);
+            PaymentSummaryDTO summary = materialsService.getPaymentSummary(projectId);
+            response.put("success", true);
+            response.put("summary", summary);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            logger.error("Error fetching payment summary: {}", e.getMessage(), e);
+            response.put("success", false);
+            response.put("message", "Error fetching payment summary: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    /**
+     * Get payment history for a project
+     * GET /api/project-owner/materials/payments/{projectId}/history
+     */
+    @GetMapping("/payments/{projectId}/history")
+    public ResponseEntity<Map<String, Object>> getPaymentHistory(@PathVariable String projectId) {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            logger.info("Fetching payment history for project_id={}", projectId);
+            List<InstallmentDTO> paymentHistory = materialsService.getPaymentHistory(projectId);
+            response.put("success", true);
+            response.put("paymentHistory", paymentHistory);
+            response.put("totalCount", paymentHistory.size());
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            logger.error("Error fetching payment history: {}", e.getMessage(), e);
+            response.put("success", false);
+            response.put("message", "Error fetching payment history: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    /**
+     * Get upcoming payments for a project
+     * GET /api/project-owner/materials/payments/{projectId}/upcoming
+     */
+    @GetMapping("/payments/{projectId}/upcoming")
+    public ResponseEntity<Map<String, Object>> getUpcomingPayments(@PathVariable String projectId) {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            logger.info("Fetching upcoming payments for project_id={}", projectId);
+            List<InstallmentDTO> upcomingPayments = materialsService.getUpcomingPayments(projectId);
+            response.put("success", true);
+            response.put("upcomingPayments", upcomingPayments);
+            response.put("totalCount", upcomingPayments.size());
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            logger.error("Error fetching upcoming payments: {}", e.getMessage(), e);
+            response.put("success", false);
+            response.put("message", "Error fetching upcoming payments: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    /**
+     * Upload payment receipt
+     * POST /api/project-owner/materials/payments/receipt
+     */
+    @PostMapping("/payments/receipt")
+    public ResponseEntity<Map<String, Object>> uploadPaymentReceipt(
+            @RequestParam("installmentId") Integer installmentId,
+            @RequestParam("projectId") String projectId,
+            @RequestParam("phase") String phase,
+            @RequestParam("amount") BigDecimal amount,
+            @RequestParam("paymentDate") String paymentDate,
+            @RequestParam("description") String description,
+            @RequestParam("receiptFile") MultipartFile receiptFile) {
+
+        Map<String, Object> response = new HashMap<>();
+        try {
+            logger.info("Uploading payment receipt for project_id={}", projectId);
+
+            // Validate file
+            if (receiptFile.isEmpty()) {
+                response.put("success", false);
+                response.put("message", "Receipt file is required");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+            }
+
+            // Create upload directory if it doesn't exist
+            String uploadDir = "uploads/payment-receipts/";
+            File directory = new File(uploadDir);
+            if (!directory.exists()) {
+                directory.mkdirs();
+            }
+
+            // Save file with timestamp prefix
+            String originalFilename = receiptFile.getOriginalFilename();
+            String filename = System.currentTimeMillis() + "_" + originalFilename;
+            String filePath = uploadDir + filename;
+
+            Path path = Paths.get(filePath);
+            Files.write(path, receiptFile.getBytes());
+
+            // Create DTO
+            PaymentReceiptDTO receiptDTO = new PaymentReceiptDTO();
+            receiptDTO.setInstallmentId(installmentId);
+            receiptDTO.setProjectId(projectId);
+            receiptDTO.setPhase(phase);
+            receiptDTO.setAmount(amount);
+            receiptDTO.setPaymentDate(LocalDate.parse(paymentDate));
+            receiptDTO.setReceiptFilePath(filePath);
+            receiptDTO.setDescription(description);
+            receiptDTO.setStatus("Pending");
+            receiptDTO.setUploadedDate(LocalDate.now());
+
+            PaymentReceiptDTO created = materialsService.uploadPaymentReceipt(receiptDTO);
+
+            response.put("success", true);
+            response.put("receipt", created);
+            response.put("message", "Payment receipt uploaded successfully");
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+
+        } catch (IOException e) {
+            logger.error("Error saving receipt file: {}", e.getMessage(), e);
+            response.put("success", false);
+            response.put("message", "Error saving receipt file: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        } catch (Exception e) {
+            logger.error("Error uploading payment receipt: {}", e.getMessage(), e);
+            response.put("success", false);
+            response.put("message", "Error uploading payment receipt: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    /**
+     * Get payment receipts for a project
+     * GET /api/project-owner/materials/payments/{projectId}/receipts
+     */
+    @GetMapping("/payments/{projectId}/receipts")
+    public ResponseEntity<Map<String, Object>> getPaymentReceipts(@PathVariable String projectId) {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            logger.info("Fetching payment receipts for project_id={}", projectId);
+            List<PaymentReceiptDTO> receipts = materialsService.getPaymentReceipts(projectId);
+            response.put("success", true);
+            response.put("receipts", receipts);
+            response.put("totalCount", receipts.size());
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            logger.error("Error fetching payment receipts: {}", e.getMessage(), e);
+            response.put("success", false);
+            response.put("message", "Error fetching payment receipts: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
 }
