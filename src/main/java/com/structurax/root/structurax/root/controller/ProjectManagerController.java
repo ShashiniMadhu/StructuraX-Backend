@@ -227,6 +227,14 @@ public class ProjectManagerController {
         return ResponseEntity.ok(materials);
     }
 
+    @GetMapping("/projects/ongoing/ids")
+    public ResponseEntity<List<String>> getOngoingProjectIds() {
+        List<String> ongoingProjectIds = ProjectManagerService.getOngoingProjectIds();
+        return ResponseEntity.ok(ongoingProjectIds);
+    }
+
+
+
 
 
 }
