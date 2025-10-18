@@ -75,12 +75,27 @@ public class ProjectOwnerMaterialsController {
     public ResponseEntity<Map<String, Object>> createSiteVisit(@RequestBody SiteVisitDTO siteVisitDTO) {
         Map<String, Object> response = new HashMap<>();
         try {
-            logger.info("Creating site visit for project_id={}", siteVisitDTO.getProjectId());
+            logger.info("Creating site visit for project_id={}, date={}, time={}, type={}",
+                       siteVisitDTO.getProjectId(), siteVisitDTO.getDate(),
+                       siteVisitDTO.getTime(), siteVisitDTO.getType());
+
+            // Validate required fields
+            if (siteVisitDTO.getDate() == null) {
+                response.put("success", false);
+                response.put("message", "Site visit date is required");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+            }
+
             SiteVisitDTO created = materialsService.createSiteVisitRequest(siteVisitDTO);
             response.put("success", true);
             response.put("siteVisit", created);
             response.put("message", "Site visit request submitted successfully");
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        } catch (IllegalArgumentException e) {
+            logger.error("Validation error creating site visit: {}", e.getMessage());
+            response.put("success", false);
+            response.put("message", e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         } catch (Exception e) {
             logger.error("Error creating site visit: {}", e.getMessage(), e);
             response.put("success", false);

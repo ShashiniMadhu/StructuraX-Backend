@@ -129,6 +129,14 @@ public class ProjectOwnerDAOImpl implements ProjectOwnerDAO {
 
     @Override
     public SiteVisitDTO createSiteVisit(SiteVisitDTO siteVisitDTO) {
+        // Validate required fields
+        if (siteVisitDTO.getDate() == null) {
+            throw new IllegalArgumentException("Site visit date is required");
+        }
+        if (siteVisitDTO.getProjectId() == null || siteVisitDTO.getProjectId().isEmpty()) {
+            throw new IllegalArgumentException("Project ID is required");
+        }
+
         String sql = "INSERT INTO site_visit (project_id, type, date, time, status, requested_by, purpose, client_id, created_date) " +
                      "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
