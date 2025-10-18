@@ -11,7 +11,7 @@ import java.util.List;
 public interface AdminService {
     /**
      * To create an employee
-     * @param employeeDTO
+     * @param userDTO
      * @return created employee
      */
 

@@ -129,18 +129,18 @@ public class AdminController {
         try {
             //EmployeeDTO employee = adminService.getEmployeeById(id);
             //if (employee == null) {
-                return new ResponseEntity<>("Employee not found", HttpStatus.NOT_FOUND);
-           // }
+            return new ResponseEntity<>("Employee not found", HttpStatus.NOT_FOUND);
+            // }
 
             // Check if employee is already deactivated
-          //  if ("Deactive".equals(employee.getAvailability())) {
-              //  return new ResponseEntity<>("Employee is already deactivated", HttpStatus.BAD_REQUEST);
+            //  if ("Deactive".equals(employee.getAvailability())) {
+            //  return new ResponseEntity<>("Employee is already deactivated", HttpStatus.BAD_REQUEST);
             //}
 
-          //  adminService.deactivateEmployee(id);
+            //  adminService.deactivateEmployee(id);
             //mailService.sendRemovalNotification(employee.getEmail(), employee.getName());
 
-          //  return ResponseEntity.ok("Employee deactivated successfully and notification email sent.");
+            //  return ResponseEntity.ok("Employee deactivated successfully and notification email sent.");
         } catch (Exception e) {
             return new ResponseEntity<>("Error deactivating employee: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }

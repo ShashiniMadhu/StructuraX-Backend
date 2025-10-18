@@ -29,6 +29,6 @@ public interface ProjectManagerService {
     PaymentDTO getPaymentByProjectId(String projectId);
     List<RequestSiteResourceDTO> getPendingRequestsByPmId(String pmId);
     List<SiteResourcesDTO> getSiteResourcesByRequestId(Integer requestId);
-
+    List<ProjectMaterialsDTO> getProjectMaterialsByProjectId(String projectId);
 
 }
