@@ -4,6 +4,7 @@ import com.structurax.root.structurax.root.dao.LegalOfficerDAO;
 
 import com.structurax.root.structurax.root.dto.LegalDocumentDTO;
 
+import com.structurax.root.structurax.root.dto.LegalProcessDTO;
 import com.structurax.root.structurax.root.dto.ProjectDocumentsDTO;
 import com.structurax.root.structurax.root.service.LegalOfficerService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +33,49 @@ public class LegalOfficerServiceImpl implements LegalOfficerService {
     public List<LegalDocumentDTO> getLegalDocumentsByProjectId(String projectId) {
         return legalOfficerDAO.findLegalDocumentsByProjectId(projectId);
     }
+
+    @Override
+    public LegalProcessDTO addLegalProcess(LegalProcessDTO dto) {
+        return legalOfficerDAO.addLegalProcess(dto);
+    }
+
+    @Override
+    public List<LegalProcessDTO> getLegalProcessesByProjectId(String projectId) {
+        return legalOfficerDAO.findLegalProcessesByProjectId(projectId);
+    }
+
+    @Override
+    public LegalProcessDTO updateLegalProcess(LegalProcessDTO dto) {
+        return legalOfficerDAO.updateLegalProcess(dto);
+    }
+
+    @Override
+    public boolean deleteLegalProcess(int id) {
+        return legalOfficerDAO.deleteLegalProcess(id);
+    }
+
+    @Override
+    public LegalProcessDTO getLegalProcessById(int id) {
+        return legalOfficerDAO.findLegalProcessById(id);
+    }
+
+    @Override
+    public boolean acceptDocument(Integer documentId) {
+        return legalOfficerDAO.acceptDocument(documentId);
+    }
+
+    @Override
+    public boolean rejectDocument(Integer documentId) {
+        return legalOfficerDAO.rejectDocument(documentId);
+    }
+
+    @Override
+    public List<String> getDistinctProjectIds() {
+        return legalOfficerDAO.findDistinctProjectIds();
+    }
+
+
+
 
 
 }

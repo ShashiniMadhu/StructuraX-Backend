@@ -1,15 +1,25 @@
 package com.structurax.root.structurax.root.dao.Impl;
 
-import com.structurax.root.structurax.root.dao.SiteSupervisorDAO;
-import com.structurax.root.structurax.root.dto.*;
+import java.sql.Connection;
+import java.sql.Date;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
 
-import com.structurax.root.structurax.root.util.DatabaseConnection;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
-import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
+import com.structurax.root.structurax.root.dao.SiteSupervisorDAO;
+import com.structurax.root.structurax.root.dto.ClientDTO;
+import com.structurax.root.structurax.root.dto.LaborAttendanceDTO;
+import com.structurax.root.structurax.root.dto.ProjectDTO;
+import com.structurax.root.structurax.root.dto.RequestSiteResourcesDTO;
+import com.structurax.root.structurax.root.dto.SiteResourceDTO;
+import com.structurax.root.structurax.root.dto.TodoDTO;
+import com.structurax.root.structurax.root.util.DatabaseConnection;
 
 @Repository
 public class SiteSupervisorDAOImpl implements SiteSupervisorDAO {
@@ -321,7 +331,14 @@ public class SiteSupervisorDAOImpl implements SiteSupervisorDAO {
 
     @Override
     public List<RequestSiteResourcesDTO> getAllMaterialRequests() {
-        final String sql = "SELECT * FROM request_site_resources WHERE request_type='material'";
+        final String sql = "SELECT rsr.*, p.name as project_name, " +
+                          "ss.name as site_supervisor_name, " +
+                          "qs.name as qs_officer_name " +
+                          "FROM request_site_resources rsr " +
+                          "LEFT JOIN project p ON rsr.project_id = p.project_id " +
+                          "LEFT JOIN employee ss ON rsr.site_supervisor_id = ss.employee_id " +
+                          "LEFT JOIN employee qs ON rsr.qs_id = qs.employee_id " +
+                          "WHERE rsr.request_type='material'";
         List<RequestSiteResourcesDTO> requests = new ArrayList<>();
 
         try (
@@ -340,7 +357,9 @@ public class SiteSupervisorDAOImpl implements SiteSupervisorDAO {
                         rs.getString("site_supervisor_id"),
                         rs.getString("qs_id"),
                         rs.getBoolean("is_received"),
-                        new ArrayList<>()
+                        rs.getString("site_supervisor_name"),
+                        rs.getString("project_name"),
+                        rs.getString("qs_officer_name")
                 );
 
                 List<SiteResourceDTO> materials = getMaterialsByRequestId(request.getRequestId());
@@ -358,7 +377,14 @@ public class SiteSupervisorDAOImpl implements SiteSupervisorDAO {
 
     @Override
     public List<RequestSiteResourcesDTO> getAllToolRequests() {
-        final String sql = "SELECT * FROM request_site_resources WHERE request_type='tool'";
+        final String sql = "SELECT rsr.*, p.name as project_name, " +
+                          "ss.name as site_supervisor_name, " +
+                          "qs.name as qs_officer_name " +
+                          "FROM request_site_resources rsr " +
+                          "LEFT JOIN project p ON rsr.project_id = p.project_id " +
+                          "LEFT JOIN employee ss ON rsr.site_supervisor_id = ss.employee_id " +
+                          "LEFT JOIN employee qs ON rsr.qs_id = qs.employee_id " +
+                          "WHERE rsr.request_type='tool'";
         List<RequestSiteResourcesDTO> requests = new ArrayList<>();
 
         try (
@@ -377,7 +403,9 @@ public class SiteSupervisorDAOImpl implements SiteSupervisorDAO {
                         rs.getString("site_supervisor_id"),
                         rs.getString("qs_id"),
                         rs.getBoolean("is_received"),
-                        new ArrayList<>()
+                        rs.getString("site_supervisor_name"),
+                        rs.getString("project_name"),
+                        rs.getString("qs_officer_name")
                 );
 
                 List<SiteResourceDTO> materials = getMaterialsByRequestId(request.getRequestId());
@@ -521,7 +549,14 @@ public class SiteSupervisorDAOImpl implements SiteSupervisorDAO {
 
     @Override
     public RequestSiteResourcesDTO getRequestById(int requestId) {
-        final String sql = "SELECT * FROM request_site_resources WHERE request_id = ?";
+        final String sql = "SELECT rsr.*, p.name as project_name, " +
+                          "ss.name as site_supervisor_name, " +
+                          "qs.name as qs_officer_name " +
+                          "FROM request_site_resources rsr " +
+                          "LEFT JOIN project p ON rsr.project_id = p.project_id " +
+                          "LEFT JOIN employee ss ON rsr.site_supervisor_id = ss.employee_id " +
+                          "LEFT JOIN employee qs ON rsr.qs_id = qs.employee_id " +
+                          "WHERE rsr.request_id = ?";
 
         try (
                 Connection connection = databaseConnection.getConnection();
@@ -539,15 +574,15 @@ public class SiteSupervisorDAOImpl implements SiteSupervisorDAO {
                             rs.getString("project_id"),
                             rs.getString("site_supervisor_id"),
                             rs.getString("qs_id"),
-                            rs.getBoolean("is_received")
-
+                            rs.getBoolean("is_received"),
+                            rs.getString("site_supervisor_name"),
+                            rs.getString("project_name"),
+                            rs.getString("qs_officer_name")
                     );
-
-
                 }
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Error fetching payment plan by ID: " + e.getMessage(), e);
+            throw new RuntimeException("Error fetching request by ID: " + e.getMessage(), e);
         }
 
         return null;

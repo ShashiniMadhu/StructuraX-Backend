@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.structurax.root.structurax.root.dto.BOQDTO;
 import com.structurax.root.structurax.root.dto.BOQWithItemsDTO;
+import com.structurax.root.structurax.root.dto.BOQWithProjectDTO;
 import com.structurax.root.structurax.root.dto.BOQitemDTO;
 
 public interface BOQService {
@@ -12,4 +13,9 @@ public interface BOQService {
     BOQDTO getBOQById(String boqId);
     List<BOQitemDTO> getBOQItemsByBOQId(String boqId);
     boolean updateBOQWithItems(BOQWithItemsDTO boqWithItems);
+    
+    // SQS specific methods
+    List<BOQWithItemsDTO> getAllBOQs();
+    boolean updateBOQStatus(String boqId, BOQDTO.Status status);
+    List<BOQWithProjectDTO> getAllBOQsWithProjectInfo();
 }

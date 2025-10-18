@@ -98,4 +98,95 @@ public class BOQDAOImpl implements BOQDAO {
             return item;
         });
     }
+    // Update BOQ item and set BOQ status to 'final' if status is 'approved' and item name was changed
+    public void updateBOQItem(BOQitemDTO item) {
+        // Get the current item from DB
+        String selectSql = "SELECT item_description FROM boq_item WHERE item_id = ?";
+        String currentDescription = jdbcTemplate.queryForObject(selectSql, (rs, rowNum) -> rs.getString("item_description"), item.getItemId());
+
+        // Update the item
+        String updateSql = "UPDATE boq_item SET item_description = ?, rate = ?, unit = ?, quantity = ?, amount = ? WHERE item_id = ?";
+        jdbcTemplate.update(updateSql,
+                item.getItemDescription(),
+                item.getRate(),
+                item.getUnit(),
+                item.getQuantity(),
+                item.getAmount(),
+                item.getItemId()
+        );
+
+        // If item name changed, check BOQ status
+        if (currentDescription != null && !currentDescription.equals(item.getItemDescription())) {
+            String boqStatusSql = "SELECT status FROM boq WHERE boq_id = ?";
+            String status = jdbcTemplate.queryForObject(boqStatusSql, (rs, rowNum) -> rs.getString("status"), item.getBoqId());
+            if ("approved".equalsIgnoreCase(status)) {
+                String updateBoqStatusSql = "UPDATE boq SET status = ? WHERE boq_id = ?";
+                jdbcTemplate.update(updateBoqStatusSql, "final", item.getBoqId());
+            }
+        }
+    }
+
+    // SQS specific methods implementation
+    @Override
+    public List<BOQDTO> getAllBOQs() {
+        String sql = "SELECT boq_id, project_id, date, qs_id, status FROM boq ORDER BY date DESC";
+        return jdbcTemplate.query(sql, (rs, rowNum) -> {
+            BOQDTO boq = new BOQDTO();
+            boq.setBoqId(rs.getString("boq_id"));
+            boq.setProjectId(rs.getString("project_id"));
+            boq.setDate(rs.getObject("date", java.time.LocalDate.class));
+            boq.setQsId(rs.getString("qs_id"));
+            boq.setStatus(BOQDTO.Status.valueOf(rs.getString("status").toUpperCase()));
+            return boq;
+        });
+    }
+
+    @Override
+    public boolean updateBOQStatus(String boqId, BOQDTO.Status status) {
+        try {
+            String sql = "UPDATE boq SET status = ? WHERE boq_id = ?";
+            int rowsAffected = jdbcTemplate.update(sql, status.name().toLowerCase(), boqId);
+            return rowsAffected > 0;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    @Override
+    public List<com.structurax.root.structurax.root.dto.BOQWithProjectDTO> getAllBOQsWithProjectInfo() {
+        String sql = """
+            SELECT b.boq_id, b.project_id, b.date, b.qs_id, b.status,
+                   p.name as project_name, p.location as project_location, p.category as project_category,
+                   e.name as qs_name
+            FROM boq b
+            LEFT JOIN project p ON b.project_id = p.project_id
+            LEFT JOIN employee e ON b.qs_id = e.employee_id
+            ORDER BY b.date DESC
+            """;
+        
+        return jdbcTemplate.query(sql, (rs, rowNum) -> {
+            // Create BOQ DTO
+            BOQDTO boq = new BOQDTO();
+            boq.setBoqId(rs.getString("boq_id"));
+            boq.setProjectId(rs.getString("project_id"));
+            boq.setDate(rs.getObject("date", java.time.LocalDate.class));
+            boq.setQsId(rs.getString("qs_id"));
+            boq.setStatus(BOQDTO.Status.valueOf(rs.getString("status").toUpperCase()));
+            
+            // Get BOQ items
+            List<com.structurax.root.structurax.root.dto.BOQitemDTO> items = getBOQItemsByBOQId(rs.getString("boq_id"));
+            
+            // Create BOQWithProjectDTO
+            com.structurax.root.structurax.root.dto.BOQWithProjectDTO boqWithProject = 
+                new com.structurax.root.structurax.root.dto.BOQWithProjectDTO();
+            boqWithProject.setBoq(boq);
+            boqWithProject.setItems(items);
+            boqWithProject.setProjectName(rs.getString("project_name"));
+            boqWithProject.setProjectLocation(rs.getString("project_location"));
+            boqWithProject.setProjectCategory(rs.getString("project_category"));
+            boqWithProject.setQsName(rs.getString("qs_name"));
+            
+            return boqWithProject;
+        });
+    }
 }

@@ -1,10 +1,10 @@
 package com.structurax.root.structurax.root.dao.Impl;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 
+import com.structurax.root.structurax.root.dto.EmployeeDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
@@ -65,10 +65,17 @@ public class SQSDAOImpl implements SQSDAO {
     }
 
     /**
-     * Get projects where qs_id is null or empty, returning project name, category, and client_id.
+     * Get projects where qs_id is null or empty, returning project name, category, client_id, and client name.
      */
+    @Override
     public java.util.List<ProjectInfo> getProjectsWithoutQs() {
-        String sql = "SELECT project_id, name, category, client_id FROM project WHERE qs_id IS NULL OR qs_id = ''";
+        String sql = """
+            SELECT p.project_id, p.name, p.category, p.client_id, 
+                   CONCAT(c.first_name, ' ', c.last_name) as client_name
+            FROM project p
+            LEFT JOIN client c ON p.client_id = c.client_id
+            WHERE p.qs_id IS NULL OR p.qs_id = ''
+            """;
         java.util.List<ProjectInfo> projects = new java.util.ArrayList<>();
         try (Connection conn = databaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql);
@@ -79,6 +86,7 @@ public class SQSDAOImpl implements SQSDAO {
                 info.setName(rs.getString("name"));
                 info.setCategory(rs.getString("category"));
                 info.setClientId(rs.getString("client_id"));
+                info.setClientName(rs.getString("client_name"));
                 projects.add(info);
             }
         } catch (SQLException e) {
@@ -92,33 +100,132 @@ public class SQSDAOImpl implements SQSDAO {
      * Get all QS Officers from the employee table.
      */
     @Override
-    public java.util.List<com.structurax.root.structurax.root.dto.EmployeeDTO> getQSOfficers() {
-        java.util.List<com.structurax.root.structurax.root.dto.EmployeeDTO> officers = new java.util.ArrayList<>();
-        String sql = "SELECT * FROM employee WHERE type = 'QS_Officer'";
+    public List<EmployeeDTO> getQSOfficers() {
+        List<EmployeeDTO> officers = new ArrayList<>();
+        String sql = """
+        SELECT 
+            e.emp_id AS employee_id,
+            u.name,
+            u.email,
+            u.phone_number,
+            u.address,
+            u.type,
+            u.joined_date,
+            u.password,
+            u.availability,
+            u.profile_image_url
+        FROM employee e
+        INNER JOIN users u ON e.user_id = u.user_id
+        WHERE u.type = 'QS_Officer'
+    """;
+
+        try (
+                Connection conn = databaseConnection.getConnection();
+                PreparedStatement stmt = conn.prepareStatement(sql);
+                ResultSet rs = stmt.executeQuery()
+        ) {
+            while (rs.next()) {
+                EmployeeDTO emp = new EmployeeDTO();
+                emp.setEmployeeId(rs.getString("employee_id")); // alias for e.emp_id
+                emp.setName(rs.getString("name"));
+                emp.setEmail(rs.getString("email"));
+                emp.setPhoneNumber(rs.getString("phone_number"));
+                emp.setName(rs.getString("address"));
+                emp.setType(rs.getString("type"));
+
+                Date joinedDate = rs.getDate("joined_date");
+                if (joinedDate != null) {
+                    emp.setJoinedDate(joinedDate.toLocalDate());
+                }
+
+                emp.setPassword(rs.getString("password")); // you may set to null to avoid exposing
+                emp.setAvailability(rs.getString("availability"));
+                emp.setProfileImageUrl(rs.getString("profile_image_url"));
+
+                officers.add(emp);
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error fetching QS Officers: " + e.getMessage(), e);
+        }
+
+        return officers;
+    }
+
+
+    /**
+     * Get all requests in the system
+     */
+    @Override
+    public java.util.List<com.structurax.root.structurax.root.dto.RequestSiteResourcesDTO> getAllRequests() {
+        java.util.List<com.structurax.root.structurax.root.dto.RequestSiteResourcesDTO> requests = new java.util.ArrayList<>();
+        String sql = "SELECT rsr.*, p.name as project_name, " +
+                    "ss.name as site_supervisor_name, " +
+                    "qs.name as qs_officer_name " +
+                    "FROM request_site_resources rsr " +
+                    "LEFT JOIN project p ON rsr.project_id = p.project_id " +
+                    "LEFT JOIN employee ss ON rsr.site_supervisor_id = ss.employee_id " +
+                    "LEFT JOIN employee qs ON rsr.qs_id = qs.employee_id " +
+                    "ORDER BY rsr.date DESC";
+        
         try (Connection conn = databaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql);
              ResultSet rs = stmt.executeQuery()) {
             while (rs.next()) {
-                com.structurax.root.structurax.root.dto.EmployeeDTO emp = new com.structurax.root.structurax.root.dto.EmployeeDTO();
-                emp.setEmployeeId(rs.getString("employee_id"));
-                emp.setName(rs.getString("name"));
-                emp.setEmail(rs.getString("email"));
-                emp.setPhoneNumber(rs.getString("phone_number"));
-                emp.setAddress(rs.getString("address"));
-                emp.setType(rs.getString("type"));
-                java.sql.Date joinedDate = rs.getDate("joined_date");
-                if (joinedDate != null) {
-                    emp.setJoinedDate(joinedDate.toLocalDate());
-                }
-                emp.setPassword(rs.getString("password"));
-                emp.setAvailability(rs.getString("availability"));
-                emp.setProfileImageUrl(rs.getString("profile_image_url"));
-                officers.add(emp);
+                com.structurax.root.structurax.root.dto.RequestSiteResourcesDTO request = 
+                    new com.structurax.root.structurax.root.dto.RequestSiteResourcesDTO(
+                        rs.getInt("request_id"),
+                        rs.getString("pm_approval"),
+                        rs.getString("qs_approval"),
+                        rs.getString("request_type"),
+                        rs.getDate("date"),
+                        rs.getString("project_id"),
+                        rs.getString("site_supervisor_id"),
+                        rs.getString("qs_id"),
+                        rs.getBoolean("is_received"),
+                        rs.getString("site_supervisor_name"),
+                        rs.getString("project_name"),
+                        rs.getString("qs_officer_name")
+                    );
+                
+                // Get materials for this request
+                java.util.List<com.structurax.root.structurax.root.dto.SiteResourceDTO> materials = 
+                    getMaterialsByRequestId(request.getRequestId());
+                request.setMaterials(materials);
+                
+                requests.add(request);
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        return officers;
+        return requests;
+    }
+
+    /**
+     * Helper method to get materials by request ID
+     */
+    private java.util.List<com.structurax.root.structurax.root.dto.SiteResourceDTO> getMaterialsByRequestId(Integer requestId) {
+        java.util.List<com.structurax.root.structurax.root.dto.SiteResourceDTO> materials = new java.util.ArrayList<>();
+        String sql = "SELECT * FROM site_resources WHERE request_id = ?";
+        
+        try (Connection conn = databaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, requestId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    com.structurax.root.structurax.root.dto.SiteResourceDTO material = 
+                        new com.structurax.root.structurax.root.dto.SiteResourceDTO();
+                    material.setId(rs.getInt("id"));
+                    material.setMaterialName(rs.getString("name"));
+                    material.setQuantity(rs.getInt("quantity"));
+                    material.setPriority(rs.getString("priority"));
+                    material.setRequestId(rs.getInt("request_id"));
+                    materials.add(material);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return materials;
     }
 
 
@@ -137,6 +244,7 @@ public class SQSDAOImpl implements SQSDAO {
         private String name;
         private String category;
         private String clientId;
+        private String clientName;
 
         public String getProjectId() {
             return projectId;
@@ -168,6 +276,14 @@ public class SQSDAOImpl implements SQSDAO {
 
         public void setClientId(String clientId) {
             this.clientId = clientId;
+        }
+
+        public String getClientName() {
+            return clientName;
+        }
+
+        public void setClientName(String clientName) {
+            this.clientName = clientName;
         }
     }
 

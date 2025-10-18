@@ -1,6 +1,7 @@
 package com.structurax.root.structurax.root.service;
 
 import com.structurax.root.structurax.root.dto.*;
+import org.apache.catalina.User;
 import org.springframework.stereotype.Service;
 
 import java.awt.*;
@@ -10,20 +11,20 @@ import java.util.List;
 public interface AdminService {
     /**
      * To create an employee
-     * @param employeeDTO
+     * @param userDTO
      * @return created employee
      */
-    AdminResponseDTO login(AdminLoginDTO adminLoginDTO);
 
-    EmployeeDTO createEmployee(EmployeeDTO employeeDTO);
 
-    List<EmployeeDTO> getAllEmployees();
+    UserDTO createEmployee(UserDTO userDTO);
 
-    void deactivateEmployee(String empId);
+    List<NewEmployeeDTO> getAllEmployees();
 
-    EmployeeDTO getEmployeeById(String id);
+    public void deactivateEmployee(String empId);
 
-    SupplierDTO addSupplier(SupplierDTO supplierDTO);
+    UserDTO getEmployeeById(String id);
+
+    UserDTO addSupplier(UserDTO userDTO) ;
 
 
 }

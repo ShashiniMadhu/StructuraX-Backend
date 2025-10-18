@@ -2,8 +2,6 @@ package com.structurax.root.structurax.root.dao.Impl;
 
 import com.structurax.root.structurax.root.dao.ClientDAO;
 import com.structurax.root.structurax.root.dto.ClientOneDTO;
-import com.structurax.root.structurax.root.dto.EmployeeDTO;
-import com.structurax.root.structurax.root.service.ClientService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;

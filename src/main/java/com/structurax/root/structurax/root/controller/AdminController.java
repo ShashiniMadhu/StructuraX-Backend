@@ -33,11 +33,7 @@ public class AdminController {
     @Autowired
     private MailService mailService;
 
-    @PostMapping("/login")
-    public ResponseEntity<AdminResponseDTO> login(@RequestBody AdminLoginDTO loginDTO) {
-        AdminResponseDTO response = adminService.login(loginDTO);
-        return ResponseEntity.ok(response);
-    }
+
 
     @PostMapping(value = "/add_employee", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> createEmployee(
@@ -80,7 +76,7 @@ public class AdminController {
             String otp = OtpUtil.generateOtp();
 
             // Create DTO and set fields (no hashing here)
-            EmployeeDTO employeeDTO = new EmployeeDTO();
+            UserDTO employeeDTO = new UserDTO();
             employeeDTO.setName(name);
             employeeDTO.setEmail(email);
             employeeDTO.setPhoneNumber(phoneNumber);
@@ -88,11 +84,10 @@ public class AdminController {
             employeeDTO.setType(type);
             employeeDTO.setJoinedDate(LocalDate.parse(joinedDate));
             employeeDTO.setPassword(otp); // Store plain OTP, hash it later in DAO
-            employeeDTO.setAvailability(availability);
             employeeDTO.setProfileImageUrl(imageUrl);
 
             // Save employee
-            EmployeeDTO savedEmployee = adminService.createEmployee(employeeDTO);
+            UserDTO savedEmployee = adminService.createEmployee(employeeDTO);
 
             // Send OTP email
             mailService.sendEmployeeOtp(
@@ -132,9 +127,10 @@ public class AdminController {
     @PutMapping(value = "/deactivate/{id}")
     public ResponseEntity<?> deactivateEmployee(@PathVariable @Pattern(regexp = "^EMP_\\d{3}$") String id) {
         try {
-            EmployeeDTO employee = adminService.getEmployeeById(id);
+            // Get employee using existing method
+            UserDTO employee = adminService.getEmployeeById(id);
             if (employee == null) {
-                return new ResponseEntity<>("Employee not found", HttpStatus.NOT_FOUND);
+                return new ResponseEntity<>("Employee not found with id: " + id, HttpStatus.NOT_FOUND);
             }
 
             // Check if employee is already deactivated
@@ -142,7 +138,10 @@ public class AdminController {
                 return new ResponseEntity<>("Employee is already deactivated", HttpStatus.BAD_REQUEST);
             }
 
+            // Deactivate the employee
             adminService.deactivateEmployee(id);
+
+            // Send removal notification email
             mailService.sendRemovalNotification(employee.getEmail(), employee.getName());
 
             return ResponseEntity.ok("Employee deactivated successfully and notification email sent.");
@@ -155,7 +154,7 @@ public class AdminController {
     @GetMapping(value = "/{id}", produces = Constants.APPLICATION_JSON)
     public ResponseEntity<?> getEmployeeById(@PathVariable @Pattern(regexp = "^EMP_\\d{3}$", message = "Employee ID must follow format EMP_XXX") String id) {
         try {
-            final EmployeeDTO employee = adminService.getEmployeeById(id);
+            final UserDTO employee = adminService.getEmployeeById(id);
             if (employee == null) {
                 return new ResponseEntity<>("Employee not found with id: " + id, HttpStatus.NOT_FOUND);
             }
@@ -166,29 +165,30 @@ public class AdminController {
     }
 
     @PostMapping(value = "/add_supplier")
-    public ResponseEntity<?> addSupplier(@RequestBody SupplierDTO supplierDTO){
-        try{
+    public ResponseEntity<?> addSupplier(@RequestBody UserDTO supplierDTO) {
+        try {
             // Generate OTP for the supplier
             String otp = OtpUtil.generateOtp();
 
-            // Set the OTP as password in the DTO (will be hashed in service/DAO layer)
-            supplierDTO.setPassword(otp); // Assuming SupplierDTO has a password field
+            // Set type as Supplier
+            supplierDTO.setType("Supplier");
+            supplierDTO.setPassword(otp);
 
-            // Save supplier
-            SupplierDTO savedSupplier = adminService.addSupplier(supplierDTO);
+            // Save supplier as user
+            UserDTO savedSupplier = adminService.addSupplier(supplierDTO);
 
             // Send OTP email to supplier
             mailService.sendSupplierOtp(
                     savedSupplier.getEmail(),
-                    savedSupplier.getSupplier_name(), // Assuming this is the field name
+                    savedSupplier.getName(),
                     otp
             );
 
-            log.info("📦 Supplier created successfully: {} and OTP email sent", savedSupplier.getSupplier_name());
+            log.info("Supplier created successfully: {} and OTP email sent", savedSupplier.getName());
 
             return ResponseEntity.ok(savedSupplier);
-        }catch (Exception e){
-            log.error("❌ Error adding supplier: {}", e.getMessage());
+        } catch (Exception e) {
+            log.error("Error adding supplier: {}", e.getMessage());
             return new ResponseEntity<>("Error adding supplier: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }

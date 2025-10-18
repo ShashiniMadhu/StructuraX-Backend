@@ -8,10 +8,10 @@ import java.util.Optional;
 public interface AdminDAO {
     /**
      * create an employee by admin
-     * @param employeeDTO
+     * @param userDTO
      * @return EmployeeDTO
      */
-    EmployeeDTO createEmployee(EmployeeDTO employeeDTO);
+    UserDTO createEmployee(UserDTO userDTO);
 
     /**
      * get the all employees
@@ -19,16 +19,15 @@ public interface AdminDAO {
      */
     Optional<AdminDTO> findByEmail(String email);
 
-    List<EmployeeDTO> getAllEmployees();
+    List<NewEmployeeDTO> getAllEmployees();
 
-    void removeEmployeePassword(String empId);
-
+    public void deactivateEmployee(String empId);
     /**
      * get the employee by employee_id
      * @param id
      * @return EmployeeDTO
      */
-    EmployeeDTO getEmployeeById(String id);
+    UserDTO getEmployeeById(String id);
 
-    SupplierDTO addSupplier(SupplierDTO supplierDTO);
+    UserDTO addSupplier(UserDTO userDTO) ;
 }

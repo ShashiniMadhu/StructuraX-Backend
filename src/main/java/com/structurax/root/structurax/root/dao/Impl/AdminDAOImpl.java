@@ -14,10 +14,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.time.LocalDate;
+import java.util.*;
 
 @Repository
 public class AdminDAOImpl implements AdminDAO {
@@ -39,35 +37,34 @@ public class AdminDAOImpl implements AdminDAO {
     }
 
     @Override
-    public EmployeeDTO createEmployee(EmployeeDTO employeeDTO) {
+    public UserDTO createEmployee(UserDTO userDTO) {
         Connection connection = null;
         PreparedStatement preparedStatement = null;
 
         // BCrypt encoder
         BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
-        String hashedPassword = passwordEncoder.encode(employeeDTO.getPassword());
+        String hashedPassword = passwordEncoder.encode(userDTO.getPassword());
 
-        // Generate employee ID if not provided
-        if (employeeDTO.getEmployeeId() == null || employeeDTO.getEmployeeId().trim().isEmpty()) {
-            employeeDTO.setEmployeeId(generateEmployeeId());
-        }
+        /* Generate employee ID if not provided
+        if (userDTO.getUserId() == null || userDTO.getUserId().trim().isEmpty()) {
+            userDTO.setUserId(generateEmployeeId());
+        }*/
 
         try {
-            final String sql = "INSERT INTO employee (employee_id, name, email, phone_number, address, type, joined_date, password, availability, profile_image_url) " +
-                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            final String sql = "INSERT INTO users (user_id, name, email, phone_number, address, type, joined_date, password) " +
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?) ";
             connection = databaseConnection.getConnection();
             preparedStatement = connection.prepareStatement(sql);
 
-            preparedStatement.setString(1, employeeDTO.getEmployeeId());
-            preparedStatement.setString(2, employeeDTO.getName());
-            preparedStatement.setString(3, employeeDTO.getEmail());
-            preparedStatement.setString(4, employeeDTO.getPhoneNumber());
-            preparedStatement.setString(5, employeeDTO.getAddress());
-            preparedStatement.setString(6, employeeDTO.getType());
-            preparedStatement.setDate(7, java.sql.Date.valueOf(employeeDTO.getJoinedDate()));
+            preparedStatement.setInt(1, userDTO.getUserId());
+            preparedStatement.setString(2, userDTO.getName());
+            preparedStatement.setString(3, userDTO.getEmail());
+            preparedStatement.setString(4, userDTO.getPhoneNumber());
+            preparedStatement.setString(5, userDTO.getAddress());
+            preparedStatement.setString(6, userDTO.getType());
+            preparedStatement.setDate(7, java.sql.Date.valueOf(userDTO.getJoinedDate()));
             preparedStatement.setString(8, hashedPassword);
-            preparedStatement.setString(9, employeeDTO.getAvailability()); // Changed from setBoolean to setString
-            preparedStatement.setString(10, employeeDTO.getProfileImageUrl());
+      //      preparedStatement.setString(10, userDTO.getProfileImageUrl());
 
 
             int rowsAffected = preparedStatement.executeUpdate();
@@ -79,13 +76,29 @@ public class AdminDAOImpl implements AdminDAO {
         } finally {
             closeResources(preparedStatement, connection);
         }
-        return employeeDTO;
+        return userDTO;
     }
 
     @Override
-    public List<EmployeeDTO> getAllEmployees() {
-        final List<EmployeeDTO> employeeList = new ArrayList<>();
-        final String sql = "SELECT * FROM employee";
+    public List<NewEmployeeDTO> getAllEmployees() {
+        final List<NewEmployeeDTO> employeeList = new ArrayList<>();
+        final String sql = """
+        SELECT 
+            e.employee_id,
+            u.user_id,
+            u.name,
+            u.email,
+            u.phone_number,
+            u.address,
+            u.type,
+            u.joined_date,
+            u.profile_image_url,
+            e.availability
+        FROM employee e
+        INNER JOIN users u ON e.user_id = u.user_id
+        WHERE u.type IN ('Designer', 'Director', 'Senior_QS_Officer', 'QS_Officer', 'Project_Manager', 'Site_Supervisor', 'Legal_Officer', 'Financial_Officer')
+        ORDER BY e.employee_id ASC
+    """;
 
         try (
                 Connection connection = databaseConnection.getConnection();
@@ -93,16 +106,19 @@ public class AdminDAOImpl implements AdminDAO {
                 ResultSet resultSet = preparedStatement.executeQuery()
         ) {
             while (resultSet.next()) {
-                EmployeeDTO employee = new EmployeeDTO(
+                Date joinedDate = resultSet.getDate("joined_date");
+                LocalDate localJoinedDate = (joinedDate != null) ? ((java.sql.Date) joinedDate).toLocalDate() : null;
+
+                NewEmployeeDTO employee = new NewEmployeeDTO(
                         resultSet.getString("employee_id"),
+                        resultSet.getInt("user_id"),
                         resultSet.getString("name"),
                         resultSet.getString("email"),
                         resultSet.getString("phone_number"),
                         resultSet.getString("address"),
                         resultSet.getString("type"),
-                        resultSet.getDate("joined_date").toLocalDate(),
-                        null, // Don't expose password in responses
-                        resultSet.getString("availability"), // Changed from getBoolean to getString
+                        localJoinedDate,
+                        resultSet.getString("availability"),
                         resultSet.getString("profile_image_url")
                 );
                 employeeList.add(employee);
@@ -114,20 +130,27 @@ public class AdminDAOImpl implements AdminDAO {
         return employeeList;
     }
 
+
     @Override
-    public void removeEmployeePassword(String empId) {
-        // Generate a random password that the employee won't know
+    public void deactivateEmployee(String empId) {
         String randomPassword = generateRandomPassword();
         BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
         String hashedRandomPassword = passwordEncoder.encode(randomPassword);
 
-        final String sql = "UPDATE employee SET password = ?, availability = 'Deactive' WHERE employee_id = ?"; // Changed from false to 'Deactive'
+        final String sql = """
+        UPDATE users u 
+        INNER JOIN employee e ON u.user_id = e.user_id
+        SET u.password = ?, e.availability = 'Deactive'
+        WHERE e.employee_id = ?
+    """;
+
         try (
                 Connection connection = databaseConnection.getConnection();
                 PreparedStatement preparedStatement = connection.prepareStatement(sql)
         ) {
             preparedStatement.setString(1, hashedRandomPassword);
             preparedStatement.setString(2, empId);
+
             int rows = preparedStatement.executeUpdate();
             if (rows == 0) {
                 throw new RuntimeException("Employee deactivation failed for employee: " + empId);
@@ -137,14 +160,30 @@ public class AdminDAOImpl implements AdminDAO {
         }
     }
 
-    // Helper method to generate a random password for deactivation
     private String generateRandomPassword() {
         return "DEACTIVATED_" + UUID.randomUUID().toString().replace("-", "").substring(0, 16);
     }
 
     @Override
-    public EmployeeDTO getEmployeeById(String empId) {
-        final String sql = "SELECT * FROM employee WHERE employee_id = ?";
+    public UserDTO getEmployeeById(String empId) {
+        final String sql = """
+        SELECT 
+            e.employee_id,
+            u.user_id,
+            u.name,
+            u.email,
+            u.phone_number,
+            u.address,
+            u.type,
+            u.joined_date,
+            u.profile_image_url,
+            e.availability
+        FROM employee e
+        INNER JOIN users u ON e.user_id = u.user_id
+        WHERE e.employee_id = ? 
+        AND u.type IN ('Designer','Director','Senior_QS_Officer','QS_Officer','Project_Manager','Site_Supervisor','Legal_Officer','Financial_Officer')
+    """;
+
         Connection connection = null;
         PreparedStatement preparedStatement = null;
         ResultSet resultSet = null;
@@ -156,18 +195,16 @@ public class AdminDAOImpl implements AdminDAO {
             resultSet = preparedStatement.executeQuery();
 
             if (resultSet.next()) {
-                return new EmployeeDTO(
-                        resultSet.getString("employee_id"),
+                return new UserDTO(
+                        resultSet.getInt("user_id"),
                         resultSet.getString("name"),
                         resultSet.getString("email"),
                         resultSet.getString("phone_number"),
                         resultSet.getString("address"),
                         resultSet.getString("type"),
                         resultSet.getDate("joined_date").toLocalDate(),
-                        null, // Don't expose password
-                        resultSet.getString("availability"), // Changed from getBoolean to getString
+                        resultSet.getString("availability"),
                         resultSet.getString("profile_image_url")
-
                 );
             } else {
                 return null;
@@ -218,46 +255,46 @@ public class AdminDAOImpl implements AdminDAO {
     }
 
     @Override
-    public SupplierDTO addSupplier(SupplierDTO supplierDTO) {
+    public UserDTO addSupplier(UserDTO userDTO) {
         Connection connection = null;
         PreparedStatement preparedStatement = null;
-        // BCrypt encoder
+
         BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
-        String hashedPassword = passwordEncoder.encode(supplierDTO.getPassword());
+        String hashedPassword = passwordEncoder.encode(userDTO.getPassword());
 
         try {
-            final String sql = "INSERT INTO supplier (supplier_name, address, phone, joined_date, status, email,password) " +
-                    "VALUES (?, ?, ?, ?, ?, ?,?)";
+            final String sql = "INSERT INTO users (name, email, phone_number, address, type, joined_date, password) " +
+                    "VALUES (?, ?, ?, ?, ?, ?, ?)";
 
             connection = databaseConnection.getConnection();
             preparedStatement = connection.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS);
 
-            preparedStatement.setString(1, supplierDTO.getSupplier_name());
-            preparedStatement.setString(2, supplierDTO.getAddress());
-            preparedStatement.setString(3, supplierDTO.getPhone());
-            preparedStatement.setDate(4, supplierDTO.getJoined_date());
-            preparedStatement.setString(5, supplierDTO.getStatus());
-            preparedStatement.setString(6, supplierDTO.getEmail());
-            preparedStatement.setString(7,hashedPassword);
+            preparedStatement.setString(1, userDTO.getName());
+            preparedStatement.setString(2, userDTO.getEmail());
+            preparedStatement.setString(3, userDTO.getPhoneNumber());
+            preparedStatement.setString(4, userDTO.getAddress());
+            preparedStatement.setString(5, userDTO.getType()); // "Supplier"
+            preparedStatement.setDate(6, java.sql.Date.valueOf(userDTO.getJoinedDate()));
+            preparedStatement.setString(7, hashedPassword);
 
             int rowsAffected = preparedStatement.executeUpdate();
             if (rowsAffected == 0) {
                 throw new RuntimeException("Failed to add supplier");
             }
 
-            // Get generated supplier_id
+            // Get generated user_id
             ResultSet generatedKeys = preparedStatement.getGeneratedKeys();
             if (generatedKeys.next()) {
-                supplierDTO.setSupplier_id(generatedKeys.getInt(1));
+                userDTO.setUserId(generatedKeys.getInt(1));
             }
+
+            return userDTO;
 
         } catch (SQLException e) {
             throw new RuntimeException("Error inserting supplier: " + e.getMessage(), e);
         } finally {
             closeResources(preparedStatement, connection);
         }
-
-        return supplierDTO;
     }
 
 }
