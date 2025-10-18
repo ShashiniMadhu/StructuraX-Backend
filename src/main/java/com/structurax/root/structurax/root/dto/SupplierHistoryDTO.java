@@ -11,6 +11,7 @@ import java.sql.Date;
 @NoArgsConstructor
 @AllArgsConstructor
 public class SupplierHistoryDTO {
+
     private int historyId;
 
     private int supplierId;

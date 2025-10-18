@@ -9,6 +9,9 @@ import com.structurax.root.structurax.root.dto.OrderItemDTO;
 import com.structurax.root.structurax.root.dto.ProjectDTO;
 import com.structurax.root.structurax.root.dto.PurchaseOrderDTO;
 import com.structurax.root.structurax.root.dto.SupplierDTO;
+import com.structurax.root.structurax.root.dto.SupplierHistoryDTO;
+import com.structurax.root.structurax.root.dto.SupplierInvoiceDTO;
+import com.structurax.root.structurax.root.dto.SupplierPaymentDTO;
 
 public interface SupplierDAO {
 
