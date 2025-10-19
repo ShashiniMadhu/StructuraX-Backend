@@ -628,6 +628,25 @@ public class ProjectManagerDAOImpl implements ProjectManagerDAO {
         return null;
     }
 
+    @Override
+    public List<String> getOngoingProjectIds() {
+        List<String> ongoingProjectIds = new ArrayList<>();
+        String sql = "SELECT project_id FROM project WHERE status = 'ongoing'";
+
+        try (Connection connection = databaseConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql);
+             ResultSet resultSet = statement.executeQuery()) {
+
+            while (resultSet.next()) {
+                ongoingProjectIds.add(resultSet.getString("project_id"));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return ongoingProjectIds;
+    }
+
 
 
 

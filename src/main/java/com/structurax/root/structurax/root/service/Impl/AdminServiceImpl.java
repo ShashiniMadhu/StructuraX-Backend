@@ -39,19 +39,18 @@ public class AdminServiceImpl implements AdminService {
     }
 
     @Override
-    public List<EmployeeDTO> getAllEmployees() {
+    public List<NewEmployeeDTO> getAllEmployees() {
         logger.info("Fetching all employees");
-        List<EmployeeDTO> employees = adminDAO.getAllEmployees();
+        List<NewEmployeeDTO> employees = adminDAO.getAllEmployees();
         logger.info("Fetched {} employees", employees.size());
         return employees;
     }
 
     @Override
     public void deactivateEmployee(String empId) {
-        // This method now sets a random password and marks availability as false
-        // instead of setting password to NULL
-        adminDAO.removeEmployeePassword(empId);
-        logger.info("deactivated employee successfully");
+        logger.info("Deactivating employee: {}", empId);
+        adminDAO.deactivateEmployee(empId);
+        logger.info("Employee deactivated successfully: {}", empId);
     }
 
 
@@ -68,9 +67,26 @@ public class AdminServiceImpl implements AdminService {
     }
 
     @Override
-    public SupplierDTO addSupplier(SupplierDTO supplierDTO) {
-        logger.info("Creating supplier: {}", supplierDTO);
-        SupplierDTO createdSupplier = adminDAO.addSupplier(supplierDTO);
-        logger.info("Supplier created successfully: {}", createdSupplier.getSupplier_id());
-        return createdSupplier;    }
+    public UserDTO addSupplier(UserDTO userDTO) {
+        logger.info("Creating supplier: {}", userDTO.getName());
+        UserDTO createdSupplier = adminDAO.addSupplier(userDTO);
+        logger.info("Supplier created successfully with user_id: {}", createdSupplier.getUserId());
+        return createdSupplier;
+    }
+
+    @Override
+    public List<FullClientDTO> getAllClients() {
+        logger.info("Fetching all clients with their projects");
+        List<FullClientDTO> clients = adminDAO.getAllClients();
+        logger.info("Fetched {} client records", clients.size());
+        return clients;
+    }
+
+    @Override
+    public List<Project1DTO> getAllProjects() {
+        logger.info("Fetching all projects");
+        List<Project1DTO> projects = adminDAO.getAllProjects();
+        logger.info("Fetched {} projects", projects.size());
+        return projects;
+    }
 }
