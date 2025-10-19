@@ -46,7 +46,6 @@ public class UserDTO {
     private LocalDate joinedDate;
 
     @NotBlank(message = "Password is required")
-    //  @Size(min = 8, message = "Password must be at least 8 characters")
     @JsonProperty("password")
     private String password;
 
@@ -61,10 +60,20 @@ public class UserDTO {
     private String resetToken;
     private LocalDateTime tokenExpiry;
 
-    public UserDTO(String userId, String name, String email, String phoneNumber, String address, String type, LocalDate joinedDate, Object o, String availability, String profileImageUrl) {
+    // Custom constructor for database queries (without password)
+    public UserDTO(int userId, String name, String email, String phoneNumber, String address, String type, LocalDate joinedDate, String availability, String profileImageUrl) {
+        this.userId = userId;
+        this.name = name;
+        this.email = email;
+        this.phoneNumber = phoneNumber;
+        this.address = address;
+        this.type = type;
+        this.joinedDate = joinedDate;
+        this.availability = availability;
+        this.profileImageUrl = profileImageUrl;
     }
 
-    // Explicit getters for compatibility
+    // Explicit getters for compatibility when Lombok is not processing annotations.
     public String getName() {
         return name;
     }

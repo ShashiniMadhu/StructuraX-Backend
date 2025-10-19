@@ -1,17 +1,17 @@
 package com.structurax.root.structurax.root.controller;
 
+import com.structurax.root.structurax.root.dto.ProjectOrderResponseDTO;
+import com.structurax.root.structurax.root.dto.ProjectOrdersDTO;
 import com.structurax.root.structurax.root.dto.PurchaseOrderDTO;
 import com.structurax.root.structurax.root.service.SupplierOrderService;
-import com.structurax.root.structurax.root.dto.ProjectOrderResponseDTO;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/supplier/orders")
@@ -20,8 +20,11 @@ public class SupplierOrderController {
 
     private static final Logger logger = LoggerFactory.getLogger(SupplierOrderController.class);
 
-    @Autowired
-    private SupplierOrderService supplierOrderService;
+    private final SupplierOrderService supplierOrderService;
+
+    public SupplierOrderController(SupplierOrderService supplierOrderService) {
+        this.supplierOrderService = supplierOrderService;
+    }
 
 
     @GetMapping
@@ -65,10 +68,10 @@ public class SupplierOrderController {
     }
 
     @GetMapping("/project/{projectId}")
-    public ResponseEntity<List<PurchaseOrderDTO>> getOrdersByProjectId(@PathVariable String projectId) {
+    public ResponseEntity<ProjectOrdersDTO> getOrdersByProjectId(@PathVariable String projectId) {
         try {
             logger.info("Fetching orders for project ID: {}", projectId);
-            List<PurchaseOrderDTO> orders = supplierOrderService.getOrdersByProjectId(projectId);
+            ProjectOrdersDTO orders = supplierOrderService.getOrdersByProjectId(projectId);
             return new ResponseEntity<>(orders, HttpStatus.OK);
         } catch (Exception e) {
             logger.error("Error fetching orders for project: {}", e.getMessage(), e);
@@ -88,6 +91,22 @@ public class SupplierOrderController {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
             }
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
+    }
+
+    @PutMapping("/{orderId}/status")
+    public ResponseEntity<Void> updateOrderStatus(@PathVariable Integer orderId, @RequestBody Map<String, Integer> statusUpdate) {
+        try {
+            Integer newStatus = statusUpdate.get("orderStatus");
+            if (newStatus == null) {
+                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            }
+            logger.info("Updating order status for order ID: {} to {}", orderId, newStatus);
+            supplierOrderService.updateOrderStatus(orderId, newStatus);
+            return new ResponseEntity<>(HttpStatus.OK);
+        } catch (Exception e) {
+            logger.error("Error updating order status: {}", e.getMessage(), e);
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 

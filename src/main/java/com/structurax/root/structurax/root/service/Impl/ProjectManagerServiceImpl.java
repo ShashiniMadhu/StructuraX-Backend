@@ -133,6 +133,11 @@ public class ProjectManagerServiceImpl implements ProjectManagerService {
         return  visitLogDAO.getProjectMaterialsByProjectId(projectId);
     }
 
+    @Override
+    public List<String> getOngoingProjectIds() {
+        return visitLogDAO.getOngoingProjectIds();
+    }
+
 
 
 }
