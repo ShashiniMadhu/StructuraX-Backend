@@ -66,10 +66,11 @@ public class QSDAOImpl implements QSDAO {
     public List<ProjectWithClientAndBOQDTO> getProjectsWithClientAndBOQByQSId(String qsId) {
         List<ProjectWithClientAndBOQDTO> projectList = new ArrayList<>();
         final String sql = """
-            SELECT p.*, c.client_id, c.first_name, c.last_name, c.email, 
-                   c.contact_number, c.type, c.is_have_plan, c.address
+            SELECT p.*, c.client_id, u.name, u.email, 
+                   u.phone_number, c.type, c.is_have_plan, u.address
             FROM project p 
             LEFT JOIN client c ON p.client_id = c.client_id 
+            LEFT JOIN users u ON c.user_id = u.user_id
             WHERE p.qs_id = ?
             """;
         try (Connection connection = databaseConnection.getConnection();
@@ -94,10 +95,15 @@ public class QSDAOImpl implements QSDAO {
                     if (rs.getString("client_id") != null) {
                         ClientDTO clientData = new ClientDTO();
                         clientData.setClientId(rs.getString("client_id"));
-                        clientData.setFirstName(rs.getString("first_name"));
-                        clientData.setLastName(rs.getString("last_name"));
+                        // Split name into first and last name
+                        String fullName = rs.getString("name");
+                        if (fullName != null) {
+                            String[] nameParts = fullName.split(" ", 2);
+                            clientData.setFirstName(nameParts[0]);
+                            clientData.setLastName(nameParts.length > 1 ? nameParts[1] : "");
+                        }
                         clientData.setEmail(rs.getString("email"));
-                        clientData.setContactNumber(rs.getString("contact_number"));
+                        clientData.setContactNumber(rs.getString("phone_number"));
                         clientData.setType(rs.getString("type"));
                         clientData.setIsHavePlan(rs.getBoolean("is_have_plan"));
                         clientData.setAddress(rs.getString("address"));
@@ -144,14 +150,18 @@ public class QSDAOImpl implements QSDAO {
     @Override
     public List<RequestSiteResourcesDTO> getRequestsByQSId(String qsId) {
         List<RequestSiteResourcesDTO> requests = new ArrayList<>();
-        final String sql = "SELECT rsr.*, p.name as project_name, " +
-                          "ss.name as site_supervisor_name, " +
-                          "qs.name as qs_officer_name " +
-                          "FROM request_site_resources rsr " +
-                          "LEFT JOIN project p ON rsr.project_id = p.project_id " +
-                          "LEFT JOIN employee ss ON rsr.site_supervisor_id = ss.employee_id " +
-                          "LEFT JOIN employee qs ON rsr.qs_id = qs.employee_id " +
-                          "WHERE rsr.qs_id = ? AND rsr.pm_approval = '1'";
+        final String sql = """
+            SELECT rsr.*, p.name as project_name, 
+                   u_ss.name as site_supervisor_name, 
+                   u_qs.name as qs_officer_name 
+            FROM request_site_resources rsr 
+            LEFT JOIN project p ON rsr.project_id = p.project_id 
+            LEFT JOIN employee ss ON rsr.site_supervisor_id = ss.employee_id 
+            LEFT JOIN users u_ss ON ss.user_id = u_ss.user_id 
+            LEFT JOIN employee qs ON rsr.qs_id = qs.employee_id 
+            LEFT JOIN users u_qs ON qs.user_id = u_qs.user_id 
+            WHERE rsr.qs_id = ? AND rsr.pm_approval = '1'
+            """;
         
         try (Connection connection = databaseConnection.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
