@@ -124,10 +124,11 @@ public class QuotationResponseDAOImpl implements QuotationResponseDAO {
     @Override
     public QuotationResponseWithSupplierDTO getQuotationResponseWithSupplierById(Integer responseId) {
         try {
-            String sql = "SELECT qr.response_id, qr.q_id, qr.supplier_id, s.supplier_name, s.email, s.phone, s.address, " +
+            String sql = "SELECT qr.response_id, qr.q_id, qr.supplier_id, u.name as supplier_name, u.email, u.phone_number, u.address, " +
                         "qr.total_amount, qr.delivery_date, qr.additional_note, qr.respond_date, qr.status " +
                         "FROM quotation_response qr " +
                         "JOIN supplier s ON qr.supplier_id = s.supplier_id " +
+                        "JOIN users u ON s.user_id = u.user_id " +
                         "WHERE qr.response_id = ?";
             return jdbcTemplate.queryForObject(sql, (rs, rowNum) -> {
                 QuotationResponseWithSupplierDTO response = new QuotationResponseWithSupplierDTO();
@@ -136,7 +137,7 @@ public class QuotationResponseDAOImpl implements QuotationResponseDAO {
                 response.setSupplierId(rs.getInt("supplier_id"));
                 response.setSupplierName(rs.getString("supplier_name"));
                 response.setSupplierEmail(rs.getString("email"));
-                response.setSupplierPhone(rs.getString("phone"));
+                response.setSupplierPhone(rs.getString("phone_number"));
                 response.setSupplierAddress(rs.getString("address"));
                 response.setTotalAmount(rs.getBigDecimal("total_amount"));
                 response.setDeliveryDate(rs.getObject("delivery_date", java.time.LocalDate.class));
@@ -153,13 +154,14 @@ public class QuotationResponseDAOImpl implements QuotationResponseDAO {
     @Override
     public List<QuotationResponseWithSupplierDTO> getQuotationResponsesWithSupplierByQuotationId(Integer qId) {
         String sql = "SELECT qr.response_id, qr.q_id, qr.supplier_id, " +
-                    "COALESCE(s.supplier_name, 'Unknown Supplier') as supplier_name, " +
-                    "COALESCE(s.email, 'No Email') as email, " +
-                    "COALESCE(s.phone, 'No Phone') as phone, " +
-                    "COALESCE(s.address, 'No Address') as address, " +
+                    "COALESCE(u.name, 'Unknown Supplier') as supplier_name, " +
+                    "COALESCE(u.email, 'No Email') as email, " +
+                    "COALESCE(u.phone_number, 'No Phone') as phone_number, " +
+                    "COALESCE(u.address, 'No Address') as address, " +
                     "qr.total_amount, qr.delivery_date, qr.additional_note, qr.respond_date, qr.status " +
                     "FROM quotation_response qr " +
                     "LEFT JOIN supplier s ON qr.supplier_id = s.supplier_id " +
+                    "LEFT JOIN users u ON s.user_id = u.user_id " +
                     "WHERE qr.q_id = ? " +
                     "ORDER BY qr.respond_date DESC";
         return jdbcTemplate.query(sql, (rs, rowNum) -> {
@@ -169,7 +171,7 @@ public class QuotationResponseDAOImpl implements QuotationResponseDAO {
             response.setSupplierId(rs.getInt("supplier_id"));
             response.setSupplierName(rs.getString("supplier_name"));
             response.setSupplierEmail(rs.getString("email"));
-            response.setSupplierPhone(rs.getString("phone"));
+            response.setSupplierPhone(rs.getString("phone_number"));
             response.setSupplierAddress(rs.getString("address"));
             response.setTotalAmount(rs.getBigDecimal("total_amount"));
             response.setDeliveryDate(rs.getObject("delivery_date", java.time.LocalDate.class));
@@ -182,10 +184,11 @@ public class QuotationResponseDAOImpl implements QuotationResponseDAO {
 
     @Override
     public List<QuotationResponseWithSupplierDTO> getQuotationResponsesWithSupplierBySupplierId(Integer supplierId) {
-        String sql = "SELECT qr.response_id, qr.q_id, qr.supplier_id, s.supplier_name, s.email, s.phone, s.address, " +
+        String sql = "SELECT qr.response_id, qr.q_id, qr.supplier_id, u.name as supplier_name, u.email, u.phone_number, u.address, " +
                     "qr.total_amount, qr.delivery_date, qr.additional_note, qr.respond_date, qr.status " +
                     "FROM quotation_response qr " +
                     "JOIN supplier s ON qr.supplier_id = s.supplier_id " +
+                    "JOIN users u ON s.user_id = u.user_id " +
                     "WHERE qr.supplier_id = ? " +
                     "ORDER BY qr.respond_date DESC";
         return jdbcTemplate.query(sql, (rs, rowNum) -> {
@@ -195,7 +198,7 @@ public class QuotationResponseDAOImpl implements QuotationResponseDAO {
             response.setSupplierId(rs.getInt("supplier_id"));
             response.setSupplierName(rs.getString("supplier_name"));
             response.setSupplierEmail(rs.getString("email"));
-            response.setSupplierPhone(rs.getString("phone"));
+            response.setSupplierPhone(rs.getString("phone_number"));
             response.setSupplierAddress(rs.getString("address"));
             response.setTotalAmount(rs.getBigDecimal("total_amount"));
             response.setDeliveryDate(rs.getObject("delivery_date", java.time.LocalDate.class));
@@ -209,13 +212,14 @@ public class QuotationResponseDAOImpl implements QuotationResponseDAO {
     @Override
     public List<QuotationResponseWithSupplierDTO> getAllQuotationResponsesWithSupplier() {
         String sql = "SELECT qr.response_id, qr.q_id, qr.supplier_id, " +
-                    "COALESCE(s.supplier_name, 'Unknown Supplier') as supplier_name, " +
-                    "COALESCE(s.email, 'No Email') as email, " +
-                    "COALESCE(s.phone, 'No Phone') as phone, " +
-                    "COALESCE(s.address, 'No Address') as address, " +
+                    "COALESCE(u.name, 'Unknown Supplier') as supplier_name, " +
+                    "COALESCE(u.email, 'No Email') as email, " +
+                    "COALESCE(u.phone_number, 'No Phone') as phone_number, " +
+                    "COALESCE(u.address, 'No Address') as address, " +
                     "qr.total_amount, qr.delivery_date, qr.additional_note, qr.respond_date, qr.status " +
                     "FROM quotation_response qr " +
                     "LEFT JOIN supplier s ON qr.supplier_id = s.supplier_id " +
+                    "LEFT JOIN users u ON s.user_id = u.user_id " +
                     "ORDER BY qr.respond_date DESC";
         return jdbcTemplate.query(sql, (rs, rowNum) -> {
             QuotationResponseWithSupplierDTO response = new QuotationResponseWithSupplierDTO();
@@ -224,7 +228,7 @@ public class QuotationResponseDAOImpl implements QuotationResponseDAO {
             response.setSupplierId(rs.getInt("supplier_id"));
             response.setSupplierName(rs.getString("supplier_name"));
             response.setSupplierEmail(rs.getString("email"));
-            response.setSupplierPhone(rs.getString("phone"));
+            response.setSupplierPhone(rs.getString("phone_number"));
             response.setSupplierAddress(rs.getString("address"));
             response.setTotalAmount(rs.getBigDecimal("total_amount"));
             response.setDeliveryDate(rs.getObject("delivery_date", java.time.LocalDate.class));
