@@ -1,11 +1,8 @@
 package com.structurax.root.structurax.root.dao.Impl;
 
-import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.Statement;
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -26,7 +23,6 @@ import com.structurax.root.structurax.root.dto.FullClientDTO;
 import com.structurax.root.structurax.root.dto.NewEmployeeDTO;
 import com.structurax.root.structurax.root.dto.Project1DTO;
 import com.structurax.root.structurax.root.dto.UserDTO;
-import com.structurax.root.structurax.root.util.DatabaseConnection;
 
 @Repository
 public class AdminDAOImpl implements AdminDAO {
