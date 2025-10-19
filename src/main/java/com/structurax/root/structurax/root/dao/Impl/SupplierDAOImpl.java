@@ -38,14 +38,17 @@ public class SupplierDAOImpl implements SupplierDAO {
 
     @Override
     public Optional<SupplierDTO> findByEmail(String email) {
-        String sql = "SELECT supplier_id, supplier_name, address, phone, joined_date, status, email, password FROM supplier WHERE email = ?";
+        String sql = "SELECT s.supplier_id, u.name, u.address, u.phone_number, u.joined_date, s.status, u.email, u.password " +
+                     "FROM supplier s " +
+                     "INNER JOIN users u ON s.user_id = u.user_id " +
+                     "WHERE u.email = ?";
         try {
             SupplierDTO supplier = jdbcTemplate.queryForObject(sql, (rs, rowNum) -> {
                 SupplierDTO s = new SupplierDTO();
                 s.setSupplier_id(rs.getInt("supplier_id"));
-                s.setSupplier_name(rs.getString("supplier_name"));
+                s.setSupplier_name(rs.getString("name"));
                 s.setAddress(rs.getString("address"));
-                s.setPhone(rs.getString("phone"));
+                s.setPhone(rs.getString("phone_number"));
                 s.setJoined_date(rs.getDate("joined_date"));
                 s.setStatus(rs.getString("status"));
                 s.setEmail(rs.getString("email"));
@@ -61,14 +64,17 @@ public class SupplierDAOImpl implements SupplierDAO {
 
     @Override
     public SupplierDTO getSupplierById(Integer supplierId) {
-        String sql = "SELECT supplier_id, supplier_name, address, phone, joined_date, status, email FROM supplier WHERE supplier_id = ?";
+        String sql = "SELECT s.supplier_id, u.name, u.address, u.phone_number, u.joined_date, s.status, u.email " +
+                     "FROM supplier s " +
+                     "INNER JOIN users u ON s.user_id = u.user_id " +
+                     "WHERE s.supplier_id = ?";
         try {
             return jdbcTemplate.queryForObject(sql, (rs, rowNum) -> {
                 SupplierDTO supplier = new SupplierDTO();
                 supplier.setSupplier_id(rs.getInt("supplier_id"));
-                supplier.setSupplier_name(rs.getString("supplier_name"));
+                supplier.setSupplier_name(rs.getString("name"));
                 supplier.setAddress(rs.getString("address"));
-                supplier.setPhone(rs.getString("phone"));
+                supplier.setPhone(rs.getString("phone_number"));
                 supplier.setJoined_date(rs.getDate("joined_date"));
                 supplier.setStatus(rs.getString("status"));
                 supplier.setEmail(rs.getString("email"));
@@ -87,14 +93,17 @@ public class SupplierDAOImpl implements SupplierDAO {
 
     @Override
     public List<SupplierDTO> getAllSuppliers() {
-        String sql = "SELECT supplier_id, supplier_name, address, phone, joined_date, status, email FROM supplier ORDER BY supplier_name";
+        String sql = "SELECT s.supplier_id, u.name, u.address, u.phone_number, u.joined_date, s.status, u.email " +
+                     "FROM supplier s " +
+                     "INNER JOIN users u ON s.user_id = u.user_id " +
+                     "ORDER BY u.name";
         try {
             List<SupplierDTO> suppliers = jdbcTemplate.query(sql, (rs, rowNum) -> {
                 SupplierDTO supplier = new SupplierDTO();
                 supplier.setSupplier_id(rs.getInt("supplier_id"));
-                supplier.setSupplier_name(rs.getString("supplier_name"));
+                supplier.setSupplier_name(rs.getString("name"));
                 supplier.setAddress(rs.getString("address"));
-                supplier.setPhone(rs.getString("phone"));
+                supplier.setPhone(rs.getString("phone_number"));
                 supplier.setJoined_date(rs.getDate("joined_date"));
                 supplier.setStatus(rs.getString("status"));
                 supplier.setEmail(rs.getString("email"));
