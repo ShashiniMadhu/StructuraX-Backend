@@ -64,4 +64,27 @@ public class DesignerServiceImpl implements DesignerService {
         return design;
     }
 
+    @Override
+    public List<DesignFullDTO> getOngoingProjects() {
+        logger.info("Fetching all ongoing projects");
+        List<DesignFullDTO> designs = designerDAO.getOngoingProjects();
+        logger.info("Fetched {} ongoing projects", designs.size());
+        return designs;
+    }
+
+    @Override
+    public List<DesignFullDTO> getCompletedProjects() {
+        logger.info("Fetching all completed projects");
+        List<DesignFullDTO> designs = designerDAO.getCompletedProjects();
+        logger.info("Fetched {} completed projects", designs.size());
+        return designs;
+    }
+
+    @Override
+    public DesignFullDTO markProjectAsComplete(String id) {
+        logger.info("Marking project as complete with ID: {}", id);
+        DesignFullDTO design = designerDAO.markProjectAsComplete(id);
+        logger.info("Project marked as complete: {}", design.getDesignId());
+        return design;
+    }
 }

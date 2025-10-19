@@ -49,4 +49,10 @@ public interface DesignerDAO {
      * @return Created design with generated ID
      */
     DesignDTO initializingDesign(DesignDTO designDTO);
+
+    List<DesignFullDTO> getOngoingProjects();
+
+    List<DesignFullDTO> getCompletedProjects();
+
+    DesignFullDTO markProjectAsComplete(String id);
 }

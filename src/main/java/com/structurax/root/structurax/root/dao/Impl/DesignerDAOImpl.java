@@ -375,4 +375,117 @@ public class DesignerDAOImpl implements DesignerDAO {
             }
         }
     }
+
+    @Override
+    public List<DesignFullDTO> getOngoingProjects() {
+        final List<DesignFullDTO> designList = new ArrayList<>();
+        final String sql = """
+        SELECT 
+            d.design_id,
+            d.project_id,
+            d.name,
+            d.type,
+            d.due_date,
+            d.priority,
+            d.price,
+            d.design_link,
+            d.description,
+            d.additional_note,
+            d.status,
+            d.client_id,
+            d.employee_id,
+            u.name as client_name
+        FROM design d
+        LEFT JOIN client c ON d.client_id = c.client_id
+        LEFT JOIN users u ON c.user_id = u.user_id
+        WHERE d.status = 'ongoing'
+        ORDER BY d.due_date ASC
+    """;
+
+        try (
+                Connection connection = databaseConnection.getConnection();
+                PreparedStatement preparedStatement = connection.prepareStatement(sql);
+                ResultSet resultSet = preparedStatement.executeQuery()
+        ) {
+            while (resultSet.next()) {
+                designList.add(mapResultSetToDesignFullDTO(resultSet));
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error fetching ongoing projects: " + e.getMessage(), e);
+        }
+
+        return designList;
+    }
+
+    @Override
+    public List<DesignFullDTO> getCompletedProjects() {
+        final List<DesignFullDTO> designList = new ArrayList<>();
+        final String sql = """
+        SELECT 
+            d.design_id,
+            d.project_id,
+            d.name,
+            d.type,
+            d.due_date,
+            d.priority,
+            d.price,
+            d.design_link,
+            d.description,
+            d.additional_note,
+            d.status,
+            d.client_id,
+            d.employee_id,
+            u.name as client_name
+        FROM design d
+        LEFT JOIN client c ON d.client_id = c.client_id
+        LEFT JOIN users u ON c.user_id = u.user_id
+        WHERE d.status = 'completed'
+        ORDER BY d.due_date DESC
+    """;
+
+        try (
+                Connection connection = databaseConnection.getConnection();
+                PreparedStatement preparedStatement = connection.prepareStatement(sql);
+                ResultSet resultSet = preparedStatement.executeQuery()
+        ) {
+            while (resultSet.next()) {
+                designList.add(mapResultSetToDesignFullDTO(resultSet));
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error fetching completed projects: " + e.getMessage(), e);
+        }
+
+        return designList;
+    }
+
+    @Override
+    public DesignFullDTO markProjectAsComplete(String id) {
+        final String updateSql = """
+        UPDATE design 
+        SET status = 'completed'
+        WHERE design_id = ?
+    """;
+
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
+
+        try {
+            connection = databaseConnection.getConnection();
+            preparedStatement = connection.prepareStatement(updateSql);
+            preparedStatement.setString(1, id);
+
+            int rowsAffected = preparedStatement.executeUpdate();
+            if (rowsAffected == 0) {
+                throw new RuntimeException("Design not found for marking complete: " + id);
+            }
+
+            return getDesignById(id);
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Error marking project as complete: " + e.getMessage(), e);
+        } finally {
+            closeResources(preparedStatement, connection);
+        }
+    }
+
 }
