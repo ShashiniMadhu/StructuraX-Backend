@@ -26,23 +26,30 @@ public class PurchaseOrderDAOImpl implements PurchaseOrderDAO {
         String sql = "INSERT INTO purchase_order (project_id, supplier_id, response_id, payment_status, estimated_delivery_date, order_date, order_status) VALUES (?, ?, ?, ?, ?, ?, ?)";
         KeyHolder keyHolder = new GeneratedKeyHolder();
         
-        jdbcTemplate.update(connection -> {
-            PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
-            ps.setString(1, purchaseOrder.getProjectId());
-            ps.setInt(2, purchaseOrder.getSupplierId());
-            ps.setInt(3, purchaseOrder.getResponseId());
-            ps.setString(4, purchaseOrder.getPaymentStatus());
-            ps.setObject(5, purchaseOrder.getEstimatedDeliveryDate());
-            ps.setObject(6, purchaseOrder.getOrderDate());
-            ps.setBoolean(7, purchaseOrder.getOrderStatus() != null ? purchaseOrder.getOrderStatus() : false);
-            return ps;
-        }, keyHolder);
-        
-        Number key = keyHolder.getKey();
-        if (key != null) {
-            return key.intValue();
+        try {
+            jdbcTemplate.update(connection -> {
+                PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+                ps.setString(1, purchaseOrder.getProjectId());
+                ps.setInt(2, purchaseOrder.getSupplierId());
+                ps.setInt(3, purchaseOrder.getResponseId());
+                ps.setString(4, purchaseOrder.getPaymentStatus());
+                ps.setObject(5, purchaseOrder.getEstimatedDeliveryDate());
+                ps.setObject(6, purchaseOrder.getOrderDate());
+                ps.setBoolean(7, purchaseOrder.getOrderStatus() != null ? purchaseOrder.getOrderStatus() : false);
+                return ps;
+            }, keyHolder);
+            
+            Number key = keyHolder.getKey();
+            if (key != null) {
+                return key.intValue();
+            }
+            return null;
+        } catch (Exception e) {
+            throw new RuntimeException("Error inserting purchase order: " + e.getMessage() + 
+                " | project_id=" + purchaseOrder.getProjectId() + 
+                ", supplier_id=" + purchaseOrder.getSupplierId() + 
+                ", response_id=" + purchaseOrder.getResponseId(), e);
         }
-        return null;
     }
 
     @Override
@@ -57,7 +64,7 @@ public class PurchaseOrderDAOImpl implements PurchaseOrderDAO {
             for (OrderItemDTO item : items) {
                 jdbcTemplate.update(sql, 
                     orderId,
-                    item.getItemId(),
+                    item.getItemId(), // Can be null for quotation-based items
                     item.getDescription(),
                     item.getUnitPrice(),
                     item.getQuantity()
@@ -65,7 +72,10 @@ public class PurchaseOrderDAOImpl implements PurchaseOrderDAO {
             }
             return true;
         } catch (Exception e) {
-            return false;
+            throw new RuntimeException("Error inserting purchase order items: " + e.getMessage() + 
+                " | orderId=" + orderId + 
+                ", itemCount=" + items.size() + 
+                ", firstItemDescription=" + (items.get(0) != null ? items.get(0).getDescription() : "null"), e);
         }
     }
 

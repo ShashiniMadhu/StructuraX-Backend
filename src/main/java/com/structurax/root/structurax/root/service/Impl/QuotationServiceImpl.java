@@ -10,12 +10,16 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.structurax.root.structurax.root.dao.QuotationDAO;
 import com.structurax.root.structurax.root.dao.QuotationResponseDAO;
+import com.structurax.root.structurax.root.dto.Project1DTO;
 import com.structurax.root.structurax.root.dto.QuotationDTO;
 import com.structurax.root.structurax.root.dto.QuotationItemDTO;
 import com.structurax.root.structurax.root.dto.QuotationResponseDTO;
 import com.structurax.root.structurax.root.dto.QuotationSupplierDTO;
 import com.structurax.root.structurax.root.dto.QuotationWithItemsDTO;
+import com.structurax.root.structurax.root.dto.SupplierDTO;
 import com.structurax.root.structurax.root.service.QuotationService;
+import com.structurax.root.structurax.root.service.SQSService;
+import com.structurax.root.structurax.root.service.SupplierService;
 
 @Service
 public class QuotationServiceImpl implements QuotationService {
@@ -25,10 +29,36 @@ public class QuotationServiceImpl implements QuotationService {
     
     @Autowired
     private QuotationResponseDAO quotationResponseDAO;
+    
+    @Autowired
+    private SQSService sqsService;
+    
+    @Autowired
+    private SupplierService supplierService;
 
     @Override
     @Transactional
     public Integer createQuotation(QuotationDTO quotation, List<QuotationItemDTO> items, List<Integer> supplierIds) {
+        // Validate that the project exists
+        if (quotation.getProjectId() == null || quotation.getProjectId().trim().isEmpty()) {
+            throw new IllegalArgumentException("Project ID is required");
+        }
+        
+        Project1DTO project = sqsService.getProjectById(quotation.getProjectId());
+        if (project == null) {
+            throw new IllegalArgumentException("Project with ID '" + quotation.getProjectId() + "' does not exist");
+        }
+        
+        // Validate suppliers exist before creating quotation
+        if (supplierIds != null && !supplierIds.isEmpty()) {
+            for (Integer supplierId : supplierIds) {
+                SupplierDTO supplier = supplierService.getSupplierById(supplierId);
+                if (supplier == null) {
+                    throw new IllegalArgumentException("Supplier with ID '" + supplierId + "' does not exist");
+                }
+            }
+        }
+        
         // Create the quotation first
         Integer qId = quotationDAO.insertQuotation(quotation);
         
@@ -54,6 +84,16 @@ public class QuotationServiceImpl implements QuotationService {
     @Override
     @Transactional
     public Integer createQuotation(QuotationDTO quotation, List<QuotationItemDTO> items) {
+        // Validate that the project exists
+        if (quotation.getProjectId() == null || quotation.getProjectId().trim().isEmpty()) {
+            throw new IllegalArgumentException("Project ID is required");
+        }
+        
+        Project1DTO project = sqsService.getProjectById(quotation.getProjectId());
+        if (project == null) {
+            throw new IllegalArgumentException("Project with ID '" + quotation.getProjectId() + "' does not exist");
+        }
+        
         // Create the quotation first
         Integer qId = quotationDAO.insertQuotation(quotation);
         
@@ -70,6 +110,16 @@ public class QuotationServiceImpl implements QuotationService {
 
     @Override
     public Integer createQuotation(QuotationDTO quotation) {
+        // Validate that the project exists
+        if (quotation.getProjectId() == null || quotation.getProjectId().trim().isEmpty()) {
+            throw new IllegalArgumentException("Project ID is required");
+        }
+        
+        Project1DTO project = sqsService.getProjectById(quotation.getProjectId());
+        if (project == null) {
+            throw new IllegalArgumentException("Project with ID '" + quotation.getProjectId() + "' does not exist");
+        }
+        
         return quotationDAO.insertQuotation(quotation);
     }
 
@@ -80,6 +130,12 @@ public class QuotationServiceImpl implements QuotationService {
 
     @Override
     public void addQuotationSupplier(Integer qId, Integer supplierId) {
+        // Validate that the supplier exists
+        SupplierDTO supplier = supplierService.getSupplierById(supplierId);
+        if (supplier == null) {
+            throw new IllegalArgumentException("Supplier with ID '" + supplierId + "' does not exist");
+        }
+        
         QuotationSupplierDTO quotationSupplier = new QuotationSupplierDTO(qId, supplierId);
         quotationDAO.insertQuotationSupplier(quotationSupplier);
     }
@@ -200,6 +256,16 @@ public class QuotationServiceImpl implements QuotationService {
     @Transactional
     public boolean updateQuotationWithItemsAndSuppliers(QuotationDTO quotation, List<QuotationItemDTO> items, List<Integer> supplierIds) {
         try {
+            // Validate suppliers exist before updating
+            if (supplierIds != null && !supplierIds.isEmpty()) {
+                for (Integer supplierId : supplierIds) {
+                    SupplierDTO supplier = supplierService.getSupplierById(supplierId);
+                    if (supplier == null) {
+                        throw new IllegalArgumentException("Supplier with ID '" + supplierId + "' does not exist");
+                    }
+                }
+            }
+            
             // Update the quotation
             boolean quotationUpdated = quotationDAO.updateQuotation(quotation);
             
