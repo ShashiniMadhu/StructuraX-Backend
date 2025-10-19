@@ -1,21 +1,29 @@
 package com.structurax.root.structurax.root.dao.Impl;
 
-import com.structurax.root.structurax.root.dao.AdminDAO;
-import com.structurax.root.structurax.root.dto.*;
-import com.structurax.root.structurax.root.util.DatabaseConnection;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.EmptyResultDataAccessException;
-import org.springframework.jdbc.core.BeanPropertyRowMapper;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.stereotype.Repository;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.jdbc.core.BeanPropertyRowMapper;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.stereotype.Repository;
+
+import com.structurax.root.structurax.root.dao.AdminDAO;
+import com.structurax.root.structurax.root.dto.AdminDTO;
+import com.structurax.root.structurax.root.dto.EmployeeDTO;
+import com.structurax.root.structurax.root.dto.SupplierDTO;
+import com.structurax.root.structurax.root.dto.UserDTO;
+import com.structurax.root.structurax.root.util.DatabaseConnection;
 
 @Repository
 public class AdminDAOImpl implements AdminDAO {
@@ -159,7 +167,11 @@ public class AdminDAOImpl implements AdminDAO {
 
     @Override
     public UserDTO getEmployeeById(String empId) {
-        final String sql = "SELECT * FROM employee WHERE employee_id = ?";
+        final String sql = "SELECT e.employee_id, e.user_id, e.availability, " +
+                          "u.name, u.email, u.phone_number, u.address, u.type, u.joined_date, u.profile_image_url " +
+                          "FROM employee e " +
+                          "JOIN users u ON e.user_id = u.user_id " +
+                          "WHERE e.employee_id = ?";
         Connection connection = null;
         PreparedStatement preparedStatement = null;
         ResultSet resultSet = null;
@@ -171,19 +183,18 @@ public class AdminDAOImpl implements AdminDAO {
             resultSet = preparedStatement.executeQuery();
 
             if (resultSet.next()) {
-                return new UserDTO(
-                        resultSet.getString("user_id"),
-                        resultSet.getString("name"),
-                        resultSet.getString("email"),
-                        resultSet.getString("phone_number"),
-                        resultSet.getString("address"),
-                        resultSet.getString("type"),
-                        resultSet.getDate("joined_date").toLocalDate(),
-                        null, // Don't expose password
-                        resultSet.getString("availability"), // Changed from getBoolean to getString
-                        resultSet.getString("profile_image_url")
-
-                );
+                UserDTO employee = new UserDTO();
+                employee.setUserId(resultSet.getInt("user_id"));
+                employee.setName(resultSet.getString("name"));
+                employee.setEmail(resultSet.getString("email"));
+                employee.setPhoneNumber(resultSet.getString("phone_number"));
+                employee.setAddress(resultSet.getString("address"));
+                employee.setType(resultSet.getString("type"));
+                employee.setJoinedDate(resultSet.getDate("joined_date").toLocalDate());
+                employee.setPassword(null); // Don't expose password
+                employee.setAvailability(resultSet.getString("availability"));
+                employee.setProfileImageUrl(resultSet.getString("profile_image_url"));
+                return employee;
             } else {
                 return null;
             }
