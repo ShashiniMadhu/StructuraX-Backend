@@ -6,6 +6,7 @@ import com.structurax.root.structurax.root.service.FinancialOfficerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.sql.SQLException;
 import java.util.Date;
 import java.util.List;
 
@@ -106,6 +107,52 @@ public class FinancialOfficerServiceImpl implements FinancialOfficerService {
     public List<LaborPaymentDTO> getAllLaborPayments() {
         return financialOfficerDAO.getAllLaborPayments();
     }
+
+    @Override
+    public LaborPaymentDTO updateLaborPaymentRecord(LaborPaymentDTO laborPaymentDTO) {
+        return  financialOfficerDAO.updateLaborPaymentRecord(laborPaymentDTO);
+    }
+
+    @Override
+    public LaborPaymentDTO getPaymentRecordById(int paymentId) {
+        return financialOfficerDAO.getLaborPaymentRecordById(paymentId);
+    }
+
+    @Override
+    public LaborPaymentDTO deletePaymentRecordById(int paymentId) {
+        return  financialOfficerDAO.deletePaymentRecordById(paymentId);
+    }
+
+    @Override
+    public List<PurchaseOrderDTO> getAllOrders() {
+        return financialOfficerDAO.getAllOrders();
+    }
+
+    @Override
+    public PurchaseOrderDTO updateOrdersPaymentStatus(PurchaseOrderDTO orderDTO) {
+        return financialOfficerDAO.updateOrderPaymentStatus(orderDTO);
+    }
+
+    @Override
+    public PettyCashDTO insertPettyCash(PettyCashDTO pettyCashDTO) {
+        return financialOfficerDAO.insertPettyCash(pettyCashDTO);
+    }
+
+    @Override
+    public Boolean updatePettyCash(PettyCashDTO pettyCashDTO) throws SQLException {
+        return financialOfficerDAO.updatePettyCash(pettyCashDTO);
+    }
+
+    @Override
+    public Boolean deletePettyCash(int pettyCashId) {
+        return financialOfficerDAO.deletePettyCash(pettyCashId);
+    }
+
+    @Override
+    public List<PettyCashDTO> getAllPettyCash() {
+        return financialOfficerDAO.getAllPettyCash();
+    }
+
 
 
 

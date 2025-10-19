@@ -3,6 +3,7 @@ package com.structurax.root.structurax.root.service;
 import com.structurax.root.structurax.root.dto.*;
 import org.springframework.stereotype.Service;
 
+import java.sql.SQLException;
 import java.util.Date;
 import java.util.List;
 
@@ -27,9 +28,22 @@ public interface FinancialOfficerService {
     PaymentPlanDTO updateFullPaymentPlan(PaymentPlanDTO paymentPlanDTO);
 
 
-    /* Lobor payments */
+    /* Labor payments */
     LaborPaymentDTO createLaborPayment(LaborPaymentDTO paymentDTO);
     List<LaborPaymentDTO> getAllLaborPayments();
+    LaborPaymentDTO updateLaborPaymentRecord(LaborPaymentDTO laborPaymentDTO);
+    LaborPaymentDTO getPaymentRecordById(int paymentId);
+    LaborPaymentDTO deletePaymentRecordById(int paymentId);
+
+    /* Order payments */
+    List<PurchaseOrderDTO> getAllOrders();
+    PurchaseOrderDTO updateOrdersPaymentStatus(PurchaseOrderDTO orderDTO);
+
+    // petty cash
+    PettyCashDTO insertPettyCash(PettyCashDTO pettyCashDTO);
+    Boolean updatePettyCash(PettyCashDTO pettyCashDTO) throws SQLException;
+    Boolean deletePettyCash(int pettyCashId);
+    List<PettyCashDTO> getAllPettyCash();
 
 
 

@@ -12,8 +12,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = "*")
 @RestController
 @RequestMapping("/financial_officer")
 public class FinancialOfficerController {
@@ -184,13 +185,101 @@ public class FinancialOfficerController {
         return new ResponseEntity<>(laborPaymentDTO,HttpStatus.OK);
     }
 
-    @GetMapping("labor_payment")
+    @GetMapping("/labor_payment")
     public ResponseEntity<List<LaborPaymentDTO>> getAllLaborPayments(){
         List<LaborPaymentDTO> paymentDTOS = financialOfficerService.getAllLaborPayments();
         System.out.println("Endpoint hit");
         return new ResponseEntity<>(paymentDTOS, HttpStatus.OK);
     }
 
+    @PutMapping("/labor_payment")
+    public ResponseEntity<LaborPaymentDTO> updateLaborPaymentRecord(@ModelAttribute LaborPaymentDTO laborPaymentDTO){
+        LaborPaymentDTO paymentDTO = financialOfficerService.updateLaborPaymentRecord(laborPaymentDTO);
+        return new ResponseEntity<>(paymentDTO,HttpStatus.OK);
+    }
+
+    @DeleteMapping("/labor_payment/{paymentId}")
+    public ResponseEntity<LaborPaymentDTO> deletePaymentRecordById(@PathVariable int paymentId){
+        LaborPaymentDTO paymentRecord = financialOfficerService.deletePaymentRecordById(paymentId);
+        return new ResponseEntity<>(paymentRecord, HttpStatus.OK);
+    }
+
+    @GetMapping("/orders")
+    public ResponseEntity<List<PurchaseOrderDTO>> getAllOrders(){
+        List<PurchaseOrderDTO> orderDTOS = financialOfficerService.getAllOrders();
+        return new ResponseEntity<>(orderDTOS, HttpStatus.OK);
+    }
+
+    @PutMapping("/orders")
+    public ResponseEntity<PurchaseOrderDTO> updateOrderPaymentStatus(@RequestBody PurchaseOrderDTO orderDTO){
+        PurchaseOrderDTO orderDTO1 = financialOfficerService.updateOrdersPaymentStatus(orderDTO);
+        return new ResponseEntity<>(orderDTO1,HttpStatus.OK);
+    }
+
+    @PostMapping("/petty_cash")
+    public ResponseEntity<PettyCashDTO> insertPettyCash(@RequestBody PettyCashDTO pettyCashDTO){
+        PettyCashDTO pettyCashDTO1 = financialOfficerService.insertPettyCash(pettyCashDTO);
+        return new ResponseEntity<>(pettyCashDTO1,HttpStatus.OK);
+    }
+
+    @PutMapping("/petty_cash")
+    public ResponseEntity<?> updatePettyCash(@RequestBody PettyCashDTO pettyCashDTO) {
+        try {
+            Boolean updated = financialOfficerService.updatePettyCash(pettyCashDTO);
+
+            if (Boolean.TRUE.equals(updated)) {
+                // success: return a message or the updated object
+                return ResponseEntity.ok(Map.of(
+                        "message", "Petty cash updated successfully",
+                        "pettyCashId", pettyCashDTO.getPettyCashId()
+                ));
+            } else {
+                // business rule prevented update -> return a message + 403 (Forbidden)
+                return ResponseEntity
+                        .status(HttpStatus.FORBIDDEN)
+                        .body(Map.of("message", "Cannot update petty cash: expense records already exist"));
+            }
+
+        } catch (Exception e) {
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", "Error updating petty cash"));
+        }
+    }
+
+
+    @DeleteMapping("/petty_cash/{pettyCashId}")
+    public ResponseEntity<?> deletePettyCash(@PathVariable int pettyCashId) {
+        try {
+            Boolean deleted = financialOfficerService.deletePettyCash(pettyCashId);
+
+            if (Boolean.TRUE.equals(deleted)) {
+                // Success
+                return ResponseEntity.ok(Map.of(
+                        "message", "Petty cash deleted successfully",
+                        "pettyCashId", pettyCashId
+                ));
+            } else {
+                // Not allowed due to existing expense records
+                return ResponseEntity
+                        .status(HttpStatus.FORBIDDEN)
+                        .body(Map.of("message", "Cannot delete petty cash: expense records already exist"));
+            }
+
+        } catch (Exception e) {
+            // Unexpected error
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", "Error deleting petty cash"));
+        }
+    }
+
+
+    @GetMapping("/petty_cash")
+    public ResponseEntity<List<PettyCashDTO>> getAllPettyCash(){
+        List<PettyCashDTO> pettyCashDTOList = financialOfficerService.getAllPettyCash();
+        return new ResponseEntity<>(pettyCashDTOList, HttpStatus.OK);
+    }
 
 
 

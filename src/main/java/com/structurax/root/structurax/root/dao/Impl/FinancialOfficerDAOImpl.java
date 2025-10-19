@@ -5,10 +5,8 @@ import com.structurax.root.structurax.root.dto.*;
 import com.structurax.root.structurax.root.util.DatabaseConnection;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.math.BigDecimal;
 import java.sql.*;
 import java.util.ArrayList;
@@ -816,6 +814,8 @@ public class FinancialOfficerDAOImpl implements FinancialOfficerDAO {
     }
 
 
+    /*-------------- Labor payments made by financial officer -----------*/
+
     @Override
     public LaborPaymentDTO createLaborPayment(LaborPaymentDTO paymentDTO) {
         String sql = "INSERT INTO labor_payment (project_id, amount, comment, date, receipt) VALUES (?, ?, ?, ?, ?)";
@@ -866,14 +866,10 @@ public class FinancialOfficerDAOImpl implements FinancialOfficerDAO {
                 payment.setComment(rs.getString("comment"));
                 payment.setDate(rs.getDate("date").toLocalDate());
 
-                // Set BLOB from MultipartFile
-                if (payment.getReceipt() != null && !payment.getReceipt().isEmpty()) {
-                    preparedStatement.setBinaryStream(
-                            (int) payment.getReceipt().getSize(),
-                            payment.getReceipt().getInputStream()
-                                        );
-                } else {
-                    preparedStatement.setNull(5, java.sql.Types.BLOB);
+                Blob blob = rs.getBlob("receipt");
+                if(blob != null){
+                    byte[] bytes = blob.getBytes(1,(int) blob.length());
+                    payment.setReceiptData(bytes);
                 }
 
 
@@ -881,11 +877,285 @@ public class FinancialOfficerDAOImpl implements FinancialOfficerDAO {
             }
         } catch (SQLException e) {
             e.printStackTrace();
+        }
+
+        return paymentList;
+    }
+
+    @Override
+    public LaborPaymentDTO updateLaborPaymentRecord(LaborPaymentDTO laborPaymentDTO) {
+        final String sql = "UPDATE labor_payment SET project_id = ?, amount = ?, comment = ?, date = ?, receipt = ? WHERE payment_id = ?";
+
+        try (
+                Connection connection = databaseConnection.getConnection();
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)
+        ) {
+            preparedStatement.setString(1, laborPaymentDTO.getProjectId());
+            preparedStatement.setBigDecimal(2, laborPaymentDTO.getAmount());
+            preparedStatement.setString(3, laborPaymentDTO.getComment());
+            preparedStatement.setDate(4, java.sql.Date.valueOf(laborPaymentDTO.getDate()));
+            // Set BLOB from MultipartFile
+            if (laborPaymentDTO.getReceipt() != null && !laborPaymentDTO.getReceipt().isEmpty()) {
+                preparedStatement.setBinaryStream(
+                        5,
+                        laborPaymentDTO.getReceipt().getInputStream(),
+                        (int) laborPaymentDTO.getReceipt().getSize()
+                );
+            } else {
+                preparedStatement.setNull(5, java.sql.Types.BLOB);
+            }
+
+            preparedStatement.setInt(6,laborPaymentDTO.getPaymentId());
+
+
+            int rowsAffected = preparedStatement.executeUpdate();
+            if (rowsAffected == 0) {
+                throw new RuntimeException("Labor payment record update failed. Payment ID may not exist.");
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error updating labor payment record: " + e.getMessage(), e);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
 
-        return paymentList;
+        return laborPaymentDTO;
+    }
+
+    @Override
+    public LaborPaymentDTO getLaborPaymentRecordById(int paymentId) {
+        final String sql = "SELECT * FROM labor_payment WHERE payment_id = ?";
+
+        try (
+                Connection connection = databaseConnection.getConnection();
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)
+        ) {
+            preparedStatement.setInt(1, paymentId);
+
+            try (ResultSet rs = preparedStatement.executeQuery()) {
+                if (rs.next()) {
+                    LaborPaymentDTO payment = new LaborPaymentDTO();
+                    payment.setPaymentId(rs.getInt("payment_id"));
+                    payment.setProjectId(rs.getString("project_id"));
+                    payment.setAmount(rs.getBigDecimal("amount"));
+                    payment.setComment(rs.getString("comment"));
+                    payment.setDate(rs.getDate("date").toLocalDate());
+
+                    // Retrieve receipt (BLOB)
+                    Blob receiptBlob = rs.getBlob("receipt");
+                    if (receiptBlob != null) {
+                        payment.setReceiptData(receiptBlob.getBytes(1, (int) receiptBlob.length()));
+                    } else {
+                        payment.setReceiptData(null);
+                    }
+
+                    return payment;
+                } else {
+                    return null; // no record found
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error fetching labor payment record: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public LaborPaymentDTO deletePaymentRecordById(int paymentId) {
+        // Step 1: Get the existing record before deleting
+        LaborPaymentDTO paymentDTO = getLaborPaymentRecordById(paymentId);
+
+        // If the record doesn’t exist, return null or throw an exception
+        if (paymentDTO == null) {
+            throw new RuntimeException("Payment record not found with ID: " + paymentId);
+        }
+
+        final String sql = "DELETE FROM labor_payment WHERE payment_id = ?";
+
+        try (
+                Connection connection = databaseConnection.getConnection();
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)
+        ) {
+            preparedStatement.setInt(1, paymentId);
+
+            int rowsAffected = preparedStatement.executeUpdate();
+
+            if (rowsAffected == 0) {
+                throw new RuntimeException("Failed to delete payment record with ID: " + paymentId);
+            }
+
+            // Step 2: Return the deleted record details
+            return paymentDTO;
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Error deleting payment record: " + e.getMessage(), e);
+        }
+    }
+
+
+    /*---------- confirm order payments ---------------*/
+
+    @Override
+    public List<PurchaseOrderDTO> getAllOrders() {
+        List<PurchaseOrderDTO> orderList = new ArrayList<>();
+        final String sql = "SELECT * FROM purchase_order";
+
+        try (
+                Connection connection = databaseConnection.getConnection();
+                PreparedStatement preparedStatement = connection.prepareStatement(sql);
+                ResultSet rs = preparedStatement.executeQuery()
+        ) {
+            while (rs.next()) {
+                PurchaseOrderDTO order = new PurchaseOrderDTO();
+                order.setOrderId(rs.getInt("order_id"));
+                order.setProjectId(rs.getString("project_id"));
+                order.setSupplierId(rs.getInt("supplier_id"));
+                order.setResponseId(rs.getInt("response_id"));
+                order.setPaymentStatus(rs.getString("payment_status"));
+                order.setEstimatedDeliveryDate(rs.getDate("estimated_delivery_date").toLocalDate());
+                order.setOrderDate(rs.getDate("order_date").toLocalDate());
+                order.setOrderStatus(rs.getBoolean("order_status"));
+
+
+                orderList.add(order);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return orderList;
+    }
+
+    @Override
+    public PurchaseOrderDTO updateOrderPaymentStatus(PurchaseOrderDTO orderDTO) {
+        final String sql = "UPDATE purchase_order SET payment_status = ?  WHERE order_id = ?";
+
+        try (
+                Connection connection = databaseConnection.getConnection();
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)
+        ) {
+            preparedStatement.setString(1, orderDTO.getPaymentStatus());
+            preparedStatement.setInt(2, orderDTO.getOrderId());
+
+            int rowsAffected = preparedStatement.executeUpdate();
+            if (rowsAffected == 0) {
+                throw new RuntimeException("Order payment record update failed. Oder ID may not exist.");
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error updating order payment status: " + e.getMessage(), e);
+        }
+
+        return orderDTO;
+    }
+
+    /*---------- petty cash -------------*/
+
+    @Override
+    public PettyCashDTO insertPettyCash(PettyCashDTO pettyCashDTO) {
+        final String sql = "INSERT INTO petty_cash(project_id, date, amount, employee_id) " +
+                " VALUES(?,?,?,?)";
+
+        try (
+                Connection connection = databaseConnection.getConnection();
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)
+        ) {
+            preparedStatement.setString(1, pettyCashDTO.getProjectId());
+            preparedStatement.setDate(2, java.sql.Date.valueOf(pettyCashDTO.getDate()));
+            preparedStatement.setBigDecimal(3, pettyCashDTO.getAmount());
+            preparedStatement.setString(4, pettyCashDTO.getEmployeeId());
+
+            preparedStatement.executeUpdate();
+        } catch (Exception e) {
+            throw new RuntimeException("Error inserting petty cash: " + e.getMessage(), e);
+        }
+
+        return pettyCashDTO;
+    }
+
+    @Override
+    public Boolean updatePettyCash(PettyCashDTO pettyCashDTO) throws SQLException {
+        String checkSql = "SELECT COUNT(*) FROM petty_cash_record WHERE petty_cash_id = ?";
+        try (
+                Connection connection = databaseConnection.getConnection();
+                PreparedStatement checkStmt = connection.prepareStatement(checkSql)
+        ) {
+            checkStmt.setInt(1, pettyCashDTO.getPettyCashId());
+            ResultSet rs = checkStmt.executeQuery();
+            if (rs.next() && rs.getInt(1) > 0) {
+                throw new IllegalStateException("Cannot update petty cash with existing expense records");
+            }
+        }
+
+        String updateSql = "UPDATE petty_cash SET amount = ?, date = ?, employee_id = ? WHERE petty_cash_id = ?";
+        try (
+                Connection connection = databaseConnection.getConnection();
+                PreparedStatement updateStmt = connection.prepareStatement(updateSql)
+        ) {
+            updateStmt.setBigDecimal(1, pettyCashDTO.getAmount());
+            updateStmt.setDate(2, java.sql.Date.valueOf(pettyCashDTO.getDate()));
+            updateStmt.setString(3, pettyCashDTO.getEmployeeId());
+            updateStmt.setInt(4, pettyCashDTO.getPettyCashId());
+            return updateStmt.executeUpdate() > 0;
+        }
+    }
+
+    @Override
+    public Boolean deletePettyCash(int pettyCashId) {
+        // Check if petty cash has any related expenses
+        String checkSql = "SELECT COUNT(*) FROM petty_cash_record WHERE petty_cash_id = ?";
+
+        try (
+                Connection connection = databaseConnection.getConnection();
+                PreparedStatement checkStmt = connection.prepareStatement(checkSql)
+        ) {
+            checkStmt.setInt(1, pettyCashId);
+            ResultSet rs = checkStmt.executeQuery();
+            if (rs.next() && rs.getInt(1) > 0) {
+                // There are related records → cannot delete
+                throw new IllegalStateException("Cannot delete petty cash with existing expense records");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        // Proceed with delete if no related records
+        String deleteSql = "DELETE FROM petty_cash WHERE petty_cash_id = ?";
+        try (
+                Connection connection = databaseConnection.getConnection();
+                PreparedStatement deleteStmt = connection.prepareStatement(deleteSql)
+        ) {
+            deleteStmt.setInt(1, pettyCashId);
+            return deleteStmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return false;
+    }
+
+    @Override
+    public List<PettyCashDTO> getAllPettyCash() {
+        List<PettyCashDTO> pettyCashDTOList = new ArrayList<>();
+        final String sql = "SELECT * FROM petty_cash";
+
+        try (
+                Connection connection = databaseConnection.getConnection();
+                PreparedStatement preparedStatement = connection.prepareStatement(sql);
+                ResultSet rs = preparedStatement.executeQuery()
+        ) {
+            while (rs.next()) {
+                PettyCashDTO pettyCashDTO = new PettyCashDTO();
+                pettyCashDTO.setPettyCashId(rs.getInt("petty_cash_id"));
+                pettyCashDTO.setProjectId(rs.getString("project_id"));
+                pettyCashDTO.setAmount(rs.getBigDecimal("amount"));
+                pettyCashDTO.setDate(rs.getDate("date").toLocalDate());
+                pettyCashDTO.setEmployeeId(rs.getString("employee_id"));
+
+                pettyCashDTOList.add(pettyCashDTO);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return pettyCashDTOList;
+
     }
 
 
