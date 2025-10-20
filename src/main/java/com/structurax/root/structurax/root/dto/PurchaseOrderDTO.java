@@ -1,7 +1,12 @@
 package com.structurax.root.structurax.root.dto;
 
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
+
 import java.time.LocalDate;
 
+
+@AllArgsConstructor
 public class PurchaseOrderDTO {
     private Integer orderId;
     private String projectId;

@@ -13,7 +13,7 @@ public class JwtUtil {
     private final String secret = "secretsecretsecretsecretsecretsecretsecret123";
     private final long expirationMs = 86400000; // 1 day
 
-    public String generateToken(String email, String type, Integer userId, String employeeId, String clientId, String supplierId, String adminId) {
+    public String generateToken(String email, String type, Integer userId, String employeeId, String clientId, int supplierId, String adminId) {
         // Create the builder first
         JwtBuilder builder = Jwts.builder()
                 .setSubject(email)
@@ -30,7 +30,7 @@ public class JwtUtil {
         if (clientId != null) {
             builder.claim("clientId", clientId);
         }
-        if (supplierId != null) {
+        if (supplierId != 0) {
             builder.claim("supplierId", supplierId);
         }
         if (adminId != null) {

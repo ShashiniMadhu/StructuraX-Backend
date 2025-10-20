@@ -22,7 +22,7 @@ public class ProjectManagerDAOImpl implements ProjectManagerDAO {
         if (dto.getProjectId() == null) {
             throw new IllegalArgumentException("Project ID is required and cannot be null");
         }
-        
+
         String sql = "INSERT INTO site_visit_log(project_id, date, description, status) VALUES (?, ?, ?, ?)";
 
         try (
@@ -164,12 +164,12 @@ public class ProjectManagerDAOImpl implements ProjectManagerDAO {
         }
     }
 
-   @Override
+    @Override
     public List<ProjectInitiateDTO> getProjectsByPmIdAndStatus(String pmId , String status){
         List<ProjectInitiateDTO> projects = new ArrayList<>();
         String sql = "SELECT project_id, name ,status ,budget,description,location,category,estimated_value,start_date,due_date,client_id,qs_id,pm_id,ss_id FROM project WHERE pm_id = ? AND status = ?";
         try (Connection conn = databaseConnection.getConnection();
-        PreparedStatement pstmt = conn.prepareStatement(sql)){
+             PreparedStatement pstmt = conn.prepareStatement(sql)){
             pstmt.setString(1,pmId);
             pstmt.setString(2, status);
             ResultSet rs = pstmt.executeQuery();
@@ -202,7 +202,7 @@ public class ProjectManagerDAOImpl implements ProjectManagerDAO {
             throw new RuntimeException(e);
         }
         return projects;
-   }
+    }
 
 
     @Override
@@ -224,7 +224,7 @@ public class ProjectManagerDAOImpl implements ProjectManagerDAO {
         String sql = """
         SELECT request_id, project_id, date, site_supervisor_id, pm_id, pm_approval
         FROM request_site_resources 
-        WHERE pm_id = ? AND pm_approval = 'pending'
+        WHERE pm_id = ? AND pm_approval = 'Pending'
     """;
 
         try (Connection conn = databaseConnection.getConnection();
@@ -658,6 +658,16 @@ public class ProjectManagerDAOImpl implements ProjectManagerDAO {
         return ongoingProjectIds;
     }
 
-
-
 }
+
+
+
+
+
+
+
+
+
+
+
+

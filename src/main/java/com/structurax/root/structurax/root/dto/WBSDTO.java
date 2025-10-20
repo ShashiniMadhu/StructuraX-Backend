@@ -3,7 +3,7 @@ package com.structurax.root.structurax.root.dto;
 public class WBSDTO {
     private int taskId;
     private String projectId;
-    private Integer parentId;
+    private Integer parentId;  // Changed to Integer to allow null values
     private String name;
     private String status;
     private Boolean milestone;
@@ -18,6 +18,14 @@ public class WBSDTO {
         this.projectId = projectId;
         this.parentId = parentId;
         this.name = name;
+        this.status = status;
+        this.milestone = milestone;
+    }
+
+    public WBSDTO(int taskId, String projectId, Integer parentId, String status, Boolean milestone) {
+        this.taskId = taskId;
+        this.projectId = projectId;
+        this.parentId = parentId;
         this.status = status;
         this.milestone = milestone;
     }

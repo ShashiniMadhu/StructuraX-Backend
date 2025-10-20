@@ -1,6 +1,10 @@
 package com.structurax.root.structurax.root.dto;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
+
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -8,9 +12,6 @@ import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 @Data
 @NoArgsConstructor
@@ -71,4 +72,54 @@ public class UserDTO {
         this.availability = availability;
         this.profileImageUrl = profileImageUrl;
     }
+
+    // Explicit getters for compatibility when Lombok is not processing annotations.
+    public String getName() {
+        return name;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public String getPhoneNumber() {
+        return phoneNumber;
+    }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public LocalDate getJoinedDate() {
+        return joinedDate;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public String getAvailability() {
+        return availability;
+    }
+
+    public String getProfileImageUrl() {
+        return profileImageUrl;
+    }
+
+    public int getUserId() {
+        return userId;
+    }
+
+    public String getResetToken() {
+        return resetToken;
+    }
+
+    public LocalDateTime getTokenExpiry() {
+        return tokenExpiry;
+    }
 }
+

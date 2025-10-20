@@ -43,9 +43,7 @@ public interface QuotationService {
     boolean deleteQuotation(Integer qId);
     boolean deleteQuotationItem(Integer itemId);
     
-    // Close quotation if no responses or all rejected
+    // Close quotation operations
     boolean closeQuotationIfNoResponsesOrAllRejected(Integer qId);
-    
-    // Batch process all quotations to close eligible ones
     Map<String, Object> closeAllEligibleQuotations();
 }

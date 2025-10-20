@@ -10,21 +10,21 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ClientOneDTO {
-    @JsonProperty("client_id")
-    private String clientId;
+//    @JsonProperty("client_id")
+//    private String clientId;
 
-    @JsonProperty("first_name")
-    private String firstName;
+    @JsonProperty("name")
+    private String name;
 
-    @JsonProperty("last_name")
-    private String lastName;
+//    @JsonProperty("last_name")
+//    private String lastName;
 
     private String email;
 
-    private String password;
 
-    @JsonProperty("contact_number")
-    private String contactNumber;
+
+    @JsonProperty("phone_number")
+    private String phoneNumber;
 
     private String type; // e.g., individual, company, etc.
 
@@ -35,7 +35,7 @@ public class ClientOneDTO {
 
     private String design_link;
 
-    private String role="Project_Owner";
+//    private String role="Project_Owner";
 
 
 }

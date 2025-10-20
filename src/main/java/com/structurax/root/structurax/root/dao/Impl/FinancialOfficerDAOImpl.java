@@ -6,8 +6,10 @@ import com.structurax.root.structurax.root.util.DatabaseConnection;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.sql.*;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Date;
@@ -651,8 +653,8 @@ public class FinancialOfficerDAOImpl implements FinancialOfficerDAO {
 
     @Override
     public LaborSalaryDTO insertSalary(LaborSalaryDTO laborSalaryDTO) {
-        final String sql = "INSERT INTO labor_salary (project_id, attendance_id, labor_rate) " +
-                "VALUES (?, ?, ?)"; // No cost here
+        final String sql = "INSERT INTO labor_salary (project_id, attendance_id, labor_rate,cost) " +
+                "VALUES (?, ?, ?,?)"; // No cost here
 
         try (
                 Connection connection = databaseConnection.getConnection();
@@ -661,6 +663,7 @@ public class FinancialOfficerDAOImpl implements FinancialOfficerDAO {
             preparedStatement.setString(1, laborSalaryDTO.getProjectId());
             preparedStatement.setInt(2, laborSalaryDTO.getAttendanceId());
             preparedStatement.setBigDecimal(3, laborSalaryDTO.getLaborRate());
+            preparedStatement.setBigDecimal(4,laborSalaryDTO.getCost());
 
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
@@ -779,7 +782,6 @@ public class FinancialOfficerDAOImpl implements FinancialOfficerDAO {
     }
 
 
-
     @Override
     public PaymentPlanDTO deletePaymentPlanById(String id) {
         PaymentPlanDTO paymentPlan = getPaymentPlanByProjectId(id);
@@ -813,7 +815,577 @@ public class FinancialOfficerDAOImpl implements FinancialOfficerDAO {
     }
 
 
+    /*-------------- Labor payments made by financial officer -----------*/
+
+    @Override
+    public LaborPaymentDTO createLaborPayment(LaborPaymentDTO paymentDTO) {
+        String sql = "INSERT INTO labor_payment (project_id, amount, comment, date, receipt) VALUES (?, ?, ?, ?, ?)";
+
+        try (
+                Connection connection = databaseConnection.getConnection();
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)
+        ) {
+            preparedStatement.setString(1, paymentDTO.getProjectId());
+            preparedStatement.setBigDecimal(2, paymentDTO.getAmount());
+            preparedStatement.setString(3, paymentDTO.getComment());
+            preparedStatement.setDate(4, java.sql.Date.valueOf(paymentDTO.getDate()));
+
+            // Set BLOB from MultipartFile
+            if (paymentDTO.getReceipt() != null && !paymentDTO.getReceipt().isEmpty()) {
+                preparedStatement.setBinaryStream(
+                        5,
+                        paymentDTO.getReceipt().getInputStream(),
+                        (int) paymentDTO.getReceipt().getSize()
+                );
+            } else {
+                preparedStatement.setNull(5, java.sql.Types.BLOB);
+            }
+
+            preparedStatement.executeUpdate();
+        } catch (Exception e) {
+            throw new RuntimeException("Error inserting labor payment: " + e.getMessage(), e);
+        }
+
+        return paymentDTO;
+    }
+
+    @Override
+    public List<LaborPaymentDTO> getAllLaborPayments() {
+        List<LaborPaymentDTO> paymentList = new ArrayList<>();
+        final String sql = "SELECT * FROM labor_payment";
+
+        try (
+                Connection connection = databaseConnection.getConnection();
+                PreparedStatement preparedStatement = connection.prepareStatement(sql);
+                ResultSet rs = preparedStatement.executeQuery()
+        ) {
+            while (rs.next()) {
+                LaborPaymentDTO payment = new LaborPaymentDTO();
+                payment.setPaymentId(rs.getInt("payment_id"));
+                payment.setProjectId(rs.getString("project_id"));
+                payment.setAmount(rs.getBigDecimal("amount"));
+                payment.setComment(rs.getString("comment"));
+                payment.setDate(rs.getDate("date").toLocalDate());
+
+                Blob blob = rs.getBlob("receipt");
+                if(blob != null){
+                    byte[] bytes = blob.getBytes(1,(int) blob.length());
+                    payment.setReceiptData(bytes);
+                }
 
 
+                paymentList.add(payment);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return paymentList;
+    }
+
+    @Override
+    public LaborPaymentDTO updateLaborPaymentRecord(LaborPaymentDTO laborPaymentDTO) {
+        final String sql = "UPDATE labor_payment SET project_id = ?, amount = ?, comment = ?, date = ?, receipt = ? WHERE payment_id = ?";
+
+        try (
+                Connection connection = databaseConnection.getConnection();
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)
+        ) {
+            preparedStatement.setString(1, laborPaymentDTO.getProjectId());
+            preparedStatement.setBigDecimal(2, laborPaymentDTO.getAmount());
+            preparedStatement.setString(3, laborPaymentDTO.getComment());
+            preparedStatement.setDate(4, java.sql.Date.valueOf(laborPaymentDTO.getDate()));
+            // Set BLOB from MultipartFile
+            if (laborPaymentDTO.getReceipt() != null && !laborPaymentDTO.getReceipt().isEmpty()) {
+                preparedStatement.setBinaryStream(
+                        5,
+                        laborPaymentDTO.getReceipt().getInputStream(),
+                        (int) laborPaymentDTO.getReceipt().getSize()
+                );
+            } else {
+                preparedStatement.setNull(5, java.sql.Types.BLOB);
+            }
+
+            preparedStatement.setInt(6,laborPaymentDTO.getPaymentId());
+
+
+            int rowsAffected = preparedStatement.executeUpdate();
+            if (rowsAffected == 0) {
+                throw new RuntimeException("Labor payment record update failed. Payment ID may not exist.");
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error updating labor payment record: " + e.getMessage(), e);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        return laborPaymentDTO;
+    }
+
+    @Override
+    public LaborPaymentDTO getLaborPaymentRecordById(int paymentId) {
+        final String sql = "SELECT * FROM labor_payment WHERE payment_id = ?";
+
+        try (
+                Connection connection = databaseConnection.getConnection();
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)
+        ) {
+            preparedStatement.setInt(1, paymentId);
+
+            try (ResultSet rs = preparedStatement.executeQuery()) {
+                if (rs.next()) {
+                    LaborPaymentDTO payment = new LaborPaymentDTO();
+                    payment.setPaymentId(rs.getInt("payment_id"));
+                    payment.setProjectId(rs.getString("project_id"));
+                    payment.setAmount(rs.getBigDecimal("amount"));
+                    payment.setComment(rs.getString("comment"));
+                    payment.setDate(rs.getDate("date").toLocalDate());
+
+                    // Retrieve receipt (BLOB)
+                    Blob receiptBlob = rs.getBlob("receipt");
+                    if (receiptBlob != null) {
+                        payment.setReceiptData(receiptBlob.getBytes(1, (int) receiptBlob.length()));
+                    } else {
+                        payment.setReceiptData(null);
+                    }
+
+                    return payment;
+                } else {
+                    return null; // no record found
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error fetching labor payment record: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public LaborPaymentDTO deletePaymentRecordById(int paymentId) {
+        // Step 1: Get the existing record before deleting
+        LaborPaymentDTO paymentDTO = getLaborPaymentRecordById(paymentId);
+
+        // If the record doesn’t exist, return null or throw an exception
+        if (paymentDTO == null) {
+            throw new RuntimeException("Payment record not found with ID: " + paymentId);
+        }
+
+        final String sql = "DELETE FROM labor_payment WHERE payment_id = ?";
+
+        try (
+                Connection connection = databaseConnection.getConnection();
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)
+        ) {
+            preparedStatement.setInt(1, paymentId);
+
+            int rowsAffected = preparedStatement.executeUpdate();
+
+            if (rowsAffected == 0) {
+                throw new RuntimeException("Failed to delete payment record with ID: " + paymentId);
+            }
+
+            // Step 2: Return the deleted record details
+            return paymentDTO;
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Error deleting payment record: " + e.getMessage(), e);
+        }
+    }
+
+
+    /*---------- confirm order payments ---------------*/
+
+    @Override
+    public List<PurchaseOrderDTO> getAllOrders() {
+        List<PurchaseOrderDTO> orderList = new ArrayList<>();
+        final String sql = "SELECT * FROM purchase_order ";
+
+        try (
+                Connection connection = databaseConnection.getConnection();
+                PreparedStatement preparedStatement = connection.prepareStatement(sql);
+                ResultSet rs = preparedStatement.executeQuery()
+        ) {
+            while (rs.next()) {
+                PurchaseOrderDTO order = new PurchaseOrderDTO();
+                order.setOrderId(rs.getInt("order_id"));
+                order.setProjectId(rs.getString("project_id"));
+                order.setSupplierId(rs.getInt("supplier_id"));
+                order.setResponseId(rs.getInt("response_id"));
+                order.setPaymentStatus(rs.getString("payment_status"));
+                order.setEstimatedDeliveryDate(rs.getDate("estimated_delivery_date").toLocalDate());
+                order.setOrderDate(rs.getDate("order_date").toLocalDate());
+                order.setOrderStatus(rs.getBoolean("order_status"));
+
+
+                orderList.add(order);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return orderList;
+    }
+
+    @Override
+    public PurchaseOrderDTO updateOrderPaymentStatus(PurchaseOrderDTO orderDTO) {
+        final String sql = "UPDATE purchase_order SET payment_status = ?  WHERE order_id = ?";
+
+        try (
+                Connection connection = databaseConnection.getConnection();
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)
+        ) {
+            preparedStatement.setString(1, orderDTO.getPaymentStatus());
+            preparedStatement.setInt(2, orderDTO.getOrderId());
+
+            int rowsAffected = preparedStatement.executeUpdate();
+            if (rowsAffected == 0) {
+                throw new RuntimeException("Order payment record update failed. Oder ID may not exist.");
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error updating order payment status: " + e.getMessage(), e);
+        }
+
+        return orderDTO;
+    }
+
+    /*---------- petty cash -------------*/
+
+    @Override
+    public PettyCashDTO insertPettyCash(PettyCashDTO pettyCashDTO) {
+        final String sql = "INSERT INTO petty_cash(project_id, date, amount, employee_id) " +
+                " VALUES(?,?,?,?)";
+
+        try (
+                Connection connection = databaseConnection.getConnection();
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)
+        ) {
+            preparedStatement.setString(1, pettyCashDTO.getProjectId());
+            preparedStatement.setDate(2, java.sql.Date.valueOf(pettyCashDTO.getDate()));
+            preparedStatement.setBigDecimal(3, pettyCashDTO.getAmount());
+            preparedStatement.setString(4, pettyCashDTO.getEmployeeId());
+
+            preparedStatement.executeUpdate();
+        } catch (Exception e) {
+            throw new RuntimeException("Error inserting petty cash: " + e.getMessage(), e);
+        }
+
+        return pettyCashDTO;
+    }
+
+    @Override
+    public Boolean updatePettyCash(PettyCashDTO pettyCashDTO) throws SQLException {
+        String checkSql = "SELECT COUNT(*) FROM petty_cash_record WHERE petty_cash_id = ?";
+        try (
+                Connection connection = databaseConnection.getConnection();
+                PreparedStatement checkStmt = connection.prepareStatement(checkSql)
+        ) {
+            checkStmt.setInt(1, pettyCashDTO.getPettyCashId());
+            ResultSet rs = checkStmt.executeQuery();
+            if (rs.next() && rs.getInt(1) > 0) {
+                throw new IllegalStateException("Cannot update petty cash with existing expense records");
+            }
+        }
+
+        String updateSql = "UPDATE petty_cash SET amount = ?, date = ?, employee_id = ? WHERE petty_cash_id = ?";
+        try (
+                Connection connection = databaseConnection.getConnection();
+                PreparedStatement updateStmt = connection.prepareStatement(updateSql)
+        ) {
+            updateStmt.setBigDecimal(1, pettyCashDTO.getAmount());
+            updateStmt.setDate(2, java.sql.Date.valueOf(pettyCashDTO.getDate()));
+            updateStmt.setString(3, pettyCashDTO.getEmployeeId());
+            updateStmt.setInt(4, pettyCashDTO.getPettyCashId());
+            return updateStmt.executeUpdate() > 0;
+        }
+    }
+
+    @Override
+    public Boolean deletePettyCash(int pettyCashId) {
+        // Check if petty cash has any related expenses
+        String checkSql = "SELECT COUNT(*) FROM petty_cash_record WHERE petty_cash_id = ?";
+
+        try (
+                Connection connection = databaseConnection.getConnection();
+                PreparedStatement checkStmt = connection.prepareStatement(checkSql)
+        ) {
+            checkStmt.setInt(1, pettyCashId);
+            ResultSet rs = checkStmt.executeQuery();
+            if (rs.next() && rs.getInt(1) > 0) {
+                // There are related records → cannot delete
+                throw new IllegalStateException("Cannot delete petty cash with existing expense records");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        // Proceed with delete if no related records
+        String deleteSql = "DELETE FROM petty_cash WHERE petty_cash_id = ?";
+        try (
+                Connection connection = databaseConnection.getConnection();
+                PreparedStatement deleteStmt = connection.prepareStatement(deleteSql)
+        ) {
+            deleteStmt.setInt(1, pettyCashId);
+            return deleteStmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return false;
+    }
+
+    @Override
+    public List<PettyCashDTO> getAllPettyCash() {
+        List<PettyCashDTO> pettyCashDTOList = new ArrayList<>();
+        final String sql = "SELECT * FROM petty_cash";
+
+        try (
+                Connection connection = databaseConnection.getConnection();
+                PreparedStatement preparedStatement = connection.prepareStatement(sql);
+                ResultSet rs = preparedStatement.executeQuery()
+        ) {
+            while (rs.next()) {
+                PettyCashDTO pettyCashDTO = new PettyCashDTO();
+                pettyCashDTO.setPettyCashId(rs.getInt("petty_cash_id"));
+                pettyCashDTO.setProjectId(rs.getString("project_id"));
+                pettyCashDTO.setAmount(rs.getBigDecimal("amount"));
+                pettyCashDTO.setDate(rs.getDate("date").toLocalDate());
+                pettyCashDTO.setEmployeeId(rs.getString("employee_id"));
+
+                pettyCashDTOList.add(pettyCashDTO);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return pettyCashDTOList;
+
+    }
+
+    @Override
+    public List<PaymentConfirmationDTO> getAllConfirmations() {
+        final String sql = "SELECT " +
+                "pc.payment_id AS pc_payment_id, pc.project_id, pc.amount AS pc_amount, " +
+                "pc.document_id, pc.status, pc.confirmation_date, " +
+                "p.amount AS payment_amount, p.due_date ,p.paid_date, p.status " +
+                "FROM payment_confirmation pc " +
+                "INNER JOIN payment p ON pc.payment_id = p.payment_id";
+
+        List<PaymentConfirmationDTO> confirmationDTOS = new ArrayList<>();
+
+        try (Connection connection = databaseConnection.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sql);
+             ResultSet rs = preparedStatement.executeQuery()) {
+
+            while (rs.next()) {
+                PaymentConfirmationDTO confirmationDTO = new PaymentConfirmationDTO();
+                confirmationDTO.setPaymentId(rs.getInt("pc_payment_id"));
+                confirmationDTO.setProjectId(rs.getString("project_id"));
+                confirmationDTO.setAmount(rs.getDouble("pc_amount"));
+                confirmationDTO.setDocumentId(rs.getInt("document_id"));
+                confirmationDTO.setStatus(rs.getString("status"));
+
+                Date date = rs.getDate("confirmation_date");
+                if (date != null) {
+                    confirmationDTO.setConfirmationDate(((java.sql.Date) date).toLocalDate());
+                }
+
+                confirmationDTOS.add(confirmationDTO);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return confirmationDTOS;
+
+}
+
+    @Override
+    public List<PaymentConfirmationDTO> getConfirmationsByProject(String projectId) {
+        final String sql = "SELECT * FROM payment_confirmation WHERE project_id = ?";
+        List<PaymentConfirmationDTO> confirmationDTOS = new ArrayList<>();
+
+        try (
+                Connection connection = databaseConnection.getConnection();
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)
+        ) {
+            preparedStatement.setString(1, projectId);
+            try (ResultSet rs = preparedStatement.executeQuery()) {
+                while (rs.next()) {
+                    PaymentConfirmationDTO confirmationDTO = new PaymentConfirmationDTO();
+                    confirmationDTO.setConfirmationId(rs.getInt("confirmation_id"));
+                    confirmationDTO.setPaymentId(rs.getInt("payment_id"));
+                    confirmationDTO.setProjectId(rs.getString("project_id"));
+                    confirmationDTO.setAmount(rs.getDouble("amount"));
+                    confirmationDTO.setDocumentId(rs.getInt("document_id"));
+                    confirmationDTO.setStatus(rs.getString("status"));
+                    if(rs.getDate("confirmation_date") != null) {
+                        confirmationDTO.setConfirmationDate(rs.getDate("confirmation_date").toLocalDate());
+                    }
+                    confirmationDTOS.add(confirmationDTO);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return confirmationDTOS;
+    }
+
+    @Override
+    public PaymentConfirmationDTO insertConfirmation(PaymentConfirmationDTO dto) {
+        final String sql = "INSERT INTO payment_confirmation (project_id, payment_id,amount, document_id, status, confirmation_date) " +
+                "VALUES (?, ?, ?, ?, ?,?)";
+        try (Connection connection = databaseConnection.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+
+            // Validate required fields
+            if (dto.getProjectId() == null || dto.getProjectId().isEmpty()) {
+                throw new IllegalArgumentException("Project ID cannot be null or empty");
+            }
+
+            preparedStatement.setString(1, dto.getProjectId());
+            preparedStatement.setInt(2,dto.getPaymentId());
+            preparedStatement.setDouble(3, dto.getAmount());
+            preparedStatement.setInt(4, dto.getDocumentId());
+            preparedStatement.setString(5, dto.getStatus() != null ? dto.getStatus() : "Pending");
+
+            if (dto.getConfirmationDate() != null) {
+                preparedStatement.setDate(6, java.sql.Date.valueOf(dto.getConfirmationDate()));
+            } else {
+                preparedStatement.setDate(6, java.sql.Date.valueOf(LocalDate.now())); // default to today
+            }
+
+            int affectedRows = preparedStatement.executeUpdate();
+            if (affectedRows == 0) {
+                throw new SQLException("Inserting confirmation failed, no rows affected.");
+            }
+
+            try (ResultSet generatedKeys = preparedStatement.getGeneratedKeys()) {
+                if (generatedKeys.next()) {
+                    dto.setConfirmationId(generatedKeys.getInt(1));
+                }
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return dto;
+    }
+
+
+    @Override
+    public PaymentConfirmationDTO updateConfirmation(PaymentConfirmationDTO dto) {
+        final String sql = "UPDATE payment_confirmation SET status = ?, amount = ?, document_id = ?, confirmation_date = ? " +
+                "WHERE confirmation_id = ?";
+        try (Connection connection = databaseConnection.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+
+            preparedStatement.setString(1, dto.getStatus());
+            preparedStatement.setDouble(2, dto.getAmount());
+            preparedStatement.setInt(3, dto.getDocumentId());
+            preparedStatement.setDate(4, java.sql.Date.valueOf(dto.getConfirmationDate()));
+            preparedStatement.setInt(5, dto.getConfirmationId());
+
+            preparedStatement.executeUpdate();
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return dto;
+    }
+
+
+    @Override
+    public void deleteConfirmation(int confirmationId) {
+        final String sql = "DELETE FROM payment_confirmation WHERE confirmation_id = ?";
+        try (Connection connection = databaseConnection.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+
+            preparedStatement.setInt(1, confirmationId);
+            preparedStatement.executeUpdate();
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    @Override
+    public List<PaymentDTO> getAllPayments() {
+        List<PaymentDTO> paymentDTOS = new ArrayList<>();
+        final String sql = "SELECT * FROM payment";
+
+        try (
+                Connection connection = databaseConnection.getConnection();
+                PreparedStatement preparedStatement = connection.prepareStatement(sql);
+                ResultSet rs = preparedStatement.executeQuery()
+        ) {
+            while (rs.next()) {
+                PaymentDTO payment = new PaymentDTO();
+                payment.setPaymentId(rs.getInt("payment_id"));
+                payment.setAmount(rs.getDouble("amount"));
+                payment.setStatus(rs.getString("status"));
+                payment.setDuedate(rs.getDate("due_date").toLocalDate());
+                payment.setPaiddate(rs.getDate("paid_date").toLocalDate());
+
+
+                paymentDTOS.add(payment);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return paymentDTOS;
+    }
+
+    @Override
+    public BigDecimal calculateProjectExpenses(String projectId) {
+        BigDecimal totalExpenses = BigDecimal.ZERO;
+
+        final String laborPaymentsSql = "SELECT SUM(amount) FROM labor_payment WHERE project_id =? AND status='paid'";
+        final String pettyCashSql = "SELECT SUM(amount) FROM petty_cash WHERE project_id = ?";
+        final String orderPaymentSql = "SELECT SUM(q.total_amount) AS total_amount\n" +
+                "FROM quotation_response q\n" +
+                "INNER JOIN purchase_order p ON q.response_id = p.response_id\n" +
+                "WHERE p.project_id = ? AND p.payment_status = 'paid';";
+
+        try (Connection conn = databaseConnection.getConnection()) {
+            // 1️⃣ Labor payments
+            try (PreparedStatement ps = conn.prepareStatement(laborPaymentsSql)) {
+                ps.setString(1, projectId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        BigDecimal laborSum = rs.getBigDecimal(1);
+                        if (laborSum != null) totalExpenses = totalExpenses.add(laborSum);
+                    }
+                }
+            }
+
+            // 2️⃣ Petty cash
+            try (PreparedStatement ps = conn.prepareStatement(pettyCashSql)) {
+                ps.setString(1, projectId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        BigDecimal pettySum = rs.getBigDecimal(1);
+                        if (pettySum != null) totalExpenses = totalExpenses.add(pettySum);
+                    }
+                }
+            }
+
+            // 3️⃣ Purchase order payments
+            try (PreparedStatement ps = conn.prepareStatement(orderPaymentSql)) {
+                ps.setString(1, projectId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        BigDecimal orderSum = rs.getBigDecimal(1);
+                        if (orderSum != null) totalExpenses = totalExpenses.add(orderSum);
+                    }
+                }
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return totalExpenses;
+    }
 
 }

@@ -84,6 +84,21 @@ public class BOQDAOImpl implements BOQDAO {
     }
 
     @Override
+    public BOQDTO getBOQByProjectId(String projectId) {
+        String sql = "SELECT boq_id, project_id, date, qs_id, status FROM boq WHERE project_id = ? ORDER BY date DESC LIMIT 1";
+        List<BOQDTO> results = jdbcTemplate.query(sql, (rs, rowNum) -> {
+            BOQDTO boq = new BOQDTO();
+            boq.setBoqId(rs.getString("boq_id"));
+            boq.setProjectId(rs.getString("project_id"));
+            boq.setDate(rs.getObject("date", java.time.LocalDate.class));
+            boq.setQsId(rs.getString("qs_id"));
+            boq.setStatus(BOQDTO.Status.valueOf(rs.getString("status").toUpperCase()));
+            return boq;
+        }, projectId);
+        return results.isEmpty() ? null : results.get(0);
+    }
+
+    @Override
     public List<BOQitemDTO> getBOQItemsByBOQId(String boqId) {
         String sql = "SELECT item_id, boq_id, item_description, rate, unit, quantity, amount FROM boq_item WHERE boq_id = ?";
         return jdbcTemplate.query(sql, new Object[]{boqId}, (rs, rowNum) -> {
@@ -157,10 +172,11 @@ public class BOQDAOImpl implements BOQDAO {
         String sql = """
             SELECT b.boq_id, b.project_id, b.date, b.qs_id, b.status,
                    p.name as project_name, p.location as project_location, p.category as project_category,
-                   e.name as qs_name
+                   u.name as qs_name
             FROM boq b
             LEFT JOIN project p ON b.project_id = p.project_id
             LEFT JOIN employee e ON b.qs_id = e.employee_id
+            LEFT JOIN users u ON e.user_id = u.user_id
             ORDER BY b.date DESC
             """;
         

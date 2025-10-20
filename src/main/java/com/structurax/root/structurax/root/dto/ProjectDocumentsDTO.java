@@ -1,10 +1,11 @@
 package com.structurax.root.structurax.root.dto;
 
+import java.time.LocalDate;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
+
 import lombok.Getter;
 import lombok.Setter;
-
-import java.time.LocalDate;
 
 @Getter
 @Setter
@@ -16,10 +17,13 @@ public class ProjectDocumentsDTO {
 
     @JsonProperty("project_id")
     private String projectId;
+    
     @JsonProperty("document_url")
     private String documentUrl;
 
     private String description;
+    
+    private String type;
 
     @JsonProperty("upload_date")
     private LocalDate uploadDate;

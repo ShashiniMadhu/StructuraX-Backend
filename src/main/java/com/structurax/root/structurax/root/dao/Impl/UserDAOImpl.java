@@ -101,4 +101,40 @@ public class UserDAOImpl implements UserDAO {
             return "";
         }
     }
+
+    @Override
+    public Optional<UserDTO> getUserProfileByAnyId(String id) {
+        String sql = null;
+
+        // Pattern detection
+        if (id.startsWith("EMP") || id.startsWith("DSN")) {
+            // Employee ID pattern
+            sql = "SELECT u.* FROM users u " +
+                    "INNER JOIN employee e ON u.user_id = e.user_id " +
+                    "WHERE e.employee_id = ?";
+        } else if (id.startsWith("CLI")) {
+            // Client ID pattern
+            sql = "SELECT u.* FROM users u " +
+                    "INNER JOIN client c ON u.user_id = c.user_id " +
+                    "WHERE c.client_id = ?";
+        } else if (id.matches("\\d+")) {
+            // Pure integer pattern (Supplier ID)
+            sql = "SELECT u.* FROM users u " +
+                    "INNER JOIN supplier s ON u.user_id = s.user_id " +
+                    "WHERE s.supplier_id = ?";
+        } else {
+            // Unknown pattern
+            return Optional.empty();
+        }
+
+        try {
+            UserDTO user = jdbcTemplate.queryForObject(sql,
+                    new BeanPropertyRowMapper<>(UserDTO.class), id);
+            return Optional.ofNullable(user);
+        } catch (EmptyResultDataAccessException e) {
+            return Optional.empty();
+        }
+    }
+
+
 }

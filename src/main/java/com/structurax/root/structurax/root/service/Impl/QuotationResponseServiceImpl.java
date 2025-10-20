@@ -112,6 +112,16 @@ public class QuotationResponseServiceImpl implements QuotationResponseService {
             throw new RuntimeException("Quotation not found with ID: " + response.getQId());
         }
         
+        // Validate that the project exists
+        if (quotation.getProjectId() == null || quotation.getProjectId().isEmpty()) {
+            throw new RuntimeException("Project ID is null or empty in quotation: " + response.getQId());
+        }
+        
+        // Validate that the supplier exists
+        if (response.getSupplierId() == null) {
+            throw new RuntimeException("Supplier ID is null in quotation response: " + responseId);
+        }
+        
         // Use the delivery date from quotation response if estimated delivery date is not provided
         LocalDate finalDeliveryDate = estimatedDeliveryDate;
         if (finalDeliveryDate == null) {
@@ -150,8 +160,14 @@ public class QuotationResponseServiceImpl implements QuotationResponseService {
             for (QuotationItemDTO quotationItem : quotationItems) {
                 OrderItemDTO orderItem = new OrderItemDTO();
                 orderItem.setOrderId(purchaseOrderId);
+                // Now item_id references quotation_item.item_id
                 orderItem.setItemId(quotationItem.getItemId());
-                orderItem.setDescription(quotationItem.getDescription());
+                // Use quotation item name in description if description is empty
+                String description = quotationItem.getDescription();
+                if (description == null || description.trim().isEmpty()) {
+                    description = quotationItem.getName();
+                }
+                orderItem.setDescription(description);
                 orderItem.setUnitPrice(quotationItem.getAmount()); // Using amount as unit price
                 orderItem.setQuantity(quotationItem.getQuantity());
                 orderItems.add(orderItem);

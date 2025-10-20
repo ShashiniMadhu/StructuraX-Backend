@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Date;
 import java.util.List;
 
 @CrossOrigin(origins = "http://localhost:5173")
@@ -90,6 +91,13 @@ public class SiteSupervisorController {
         return new ResponseEntity<>(requestDTOS, HttpStatus.OK);
     }
 
+    @GetMapping("/labor_requests")
+    public ResponseEntity<List<RequestSiteResourcesDTO>> getAllLaborRequests(){
+        List<RequestSiteResourcesDTO> requestDTOS = siteSupervisorService.getAllLaborRequests();
+        System.out.println("Endpoint hit");
+        return new ResponseEntity<>(requestDTOS, HttpStatus.OK);
+    }
+
     /*@GetMapping("/requests/{id}")
     public ResponseEntity<RequestDTO> getRequestById(@PathVariable Integer id){
         RequestDTO request = siteSupervisorService.getRequestById(id);
@@ -152,9 +160,75 @@ public class SiteSupervisorController {
         return new ResponseEntity<>(request, HttpStatus.OK);
     }
 
+    @PostMapping("/daily_updates")
+    public ResponseEntity<DailyUpdatesDTO> insertDailyUpdates(@RequestBody DailyUpdatesDTO dailyUpdatesDTO){
+        siteSupervisorService.insertDailyUpdates(dailyUpdatesDTO);
+        ///System.out.println("Received projectId: " + paymentPlanDTO.getProjectId());
+        return new ResponseEntity<>(dailyUpdatesDTO, HttpStatus.OK);
+    }
+
+    @GetMapping("/daily_updates/{ssId}")
+    public ResponseEntity<List<DailyUpdatesDTO>> getAllDailyUpdatesBySsId(@PathVariable String ssId){
+        List<DailyUpdatesDTO> updatesDTOS = siteSupervisorService.getAllDailyUpdatesBySsId(ssId);
+        return new ResponseEntity<>(updatesDTOS, HttpStatus.OK);
+    }
+
+    @PutMapping("daily_updates")
+    public ResponseEntity<DailyUpdatesDTO> updateDailyUpdates(@RequestBody DailyUpdatesDTO dailyUpdatesDTO){
+        siteSupervisorService.updateDailyUpdates(dailyUpdatesDTO);
+        return new ResponseEntity<>(dailyUpdatesDTO,HttpStatus.OK);
+    }
+
+    @DeleteMapping("/daily_updates/{updateId}")
+    public ResponseEntity<String> deleteDailyUpdate(@PathVariable int updateId) {
+        boolean deleted = siteSupervisorService.deleteDailyUpdate(updateId);
+        if (deleted) {
+            return ResponseEntity.ok("Deleted successfully");
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Update not found");
+        }
+    }
+
+    @PutMapping("/wbs")
+    public ResponseEntity<WBSDTO> updateWbsStatus(@RequestBody WBSDTO wbsdto){
+        siteSupervisorService.updateWbsStatus(wbsdto);
+        return new ResponseEntity<>(wbsdto,HttpStatus.OK);
+    }
+
+    @GetMapping("/wbs/{ssId}")
+    public ResponseEntity<List<WBSDTO>> getAllWbsBySsId(@PathVariable String ssId){
+        List<WBSDTO> wbsdtos = siteSupervisorService.getAllWbsBySsId(ssId);
+        return new ResponseEntity<>(wbsdtos, HttpStatus.OK);
+    }
+
+    @PostMapping("/petty_cash_record")
+    public ResponseEntity<PettyCashRecordDTO> insertPettyCashRecord(@RequestBody PettyCashRecordDTO recordDTO){
+        siteSupervisorService.insertPettyCashRecord(recordDTO);
+        return new ResponseEntity<>(recordDTO, HttpStatus.OK);
+    }
 
 
+    @GetMapping("/petty_cash/{ssId}")
+    public ResponseEntity<List<PettyCashDTO>> getAllPettyCashBySsId(@PathVariable String ssId){
+        List<PettyCashDTO> pettyCashDTOList = siteSupervisorService.getPettyCashBySsId(ssId);
+        return new ResponseEntity<>(pettyCashDTOList, HttpStatus.OK);
+    }
 
 
+    @PutMapping("/petty_cash_record")
+    public ResponseEntity<PettyCashRecordDTO> updatePettyCashRecord(@RequestBody PettyCashRecordDTO recordDTO){
+        siteSupervisorService.updatePettyCashRecord(recordDTO);
+        return new ResponseEntity<>(recordDTO,HttpStatus.OK);
+    }
+
+    @DeleteMapping("/petty_cash_record/{recordId}")
+    public ResponseEntity<String> deletePettyCashRecord(@PathVariable int recordId) {
+        boolean deleted = siteSupervisorService.deletePettyCashRecord(recordId);
+        if (deleted) {
+            return ResponseEntity.ok("Deleted successfully");
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("record not found");
+        }
+    }
 
 }
