@@ -47,12 +47,12 @@ public class ProjectManagerServiceImpl implements ProjectManagerService {
 
     @Override
     public boolean approveRequestSiteResource(Integer requestId) {
-        return visitLogDAO.updateRequestSiteResourceApproval(requestId, "accepted");
+        return visitLogDAO.updateRequestSiteResourceApproval(requestId, "Approved");
     }
 
     @Override
     public boolean rejectRequestSiteResource(Integer requestId) {
-        return visitLogDAO.updateRequestSiteResourceApproval(requestId, "rejected");
+        return visitLogDAO.updateRequestSiteResourceApproval(requestId, "Rejected");
     }
 
     @Override
