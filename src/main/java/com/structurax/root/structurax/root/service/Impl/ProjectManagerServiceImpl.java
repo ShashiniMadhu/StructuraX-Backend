@@ -1,24 +1,13 @@
+
 package com.structurax.root.structurax.root.service.Impl;
 
-import java.util.List;
-
+import com.structurax.root.structurax.root.dao.ProjectManagerDAO;
+import com.structurax.root.structurax.root.dto.*;
+import com.structurax.root.structurax.root.service.ProjectManagerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.structurax.root.structurax.root.dao.ProjectManagerDAO;
-import com.structurax.root.structurax.root.dto.BOQitemDTO;
-import com.structurax.root.structurax.root.dto.DailyUpdatesDTO;
-import com.structurax.root.structurax.root.dto.DesignDTO;
-import com.structurax.root.structurax.root.dto.PaymentDTO;
-import com.structurax.root.structurax.root.dto.ProjectInitiateDTO;
-import com.structurax.root.structurax.root.dto.ProjectMaterialsDTO;
-import com.structurax.root.structurax.root.dto.RequestSiteResourceDTO;
-import com.structurax.root.structurax.root.dto.SiteResourcesDTO;
-import com.structurax.root.structurax.root.dto.SiteVisitLogDTO;
-import com.structurax.root.structurax.root.dto.TodoDTO;
-import com.structurax.root.structurax.root.dto.VisitRequestDTO;
-import com.structurax.root.structurax.root.dto.WBSDTO;
-import com.structurax.root.structurax.root.service.ProjectManagerService;
+import java.util.List;
 
 @Service
 public class ProjectManagerServiceImpl implements ProjectManagerService {
@@ -31,17 +20,10 @@ public class ProjectManagerServiceImpl implements ProjectManagerService {
         return visitLogDAO.createVisitLog(dto);
     }
 
-    @Override
-    public List<SiteVisitLogDTO> getAllVisitLogs() {
-        // Since the DAO method is not in the interface, we'll use getSiteVisitLogsByPmId
-        // For now, return empty list or implement differently
-        throw new UnsupportedOperationException("getAllVisitLogs not supported - use getSiteVisitLogsByPmId instead");
-    }
 
     @Override
-    public SiteVisitLogDTO getVisitLogById(Integer id) {
-        // This method is not in the DAO interface
-        throw new UnsupportedOperationException("getVisitLogById not supported");
+    public List<SiteVisitLogDTO> getSiteVisitLogsByPmId(String pmId) {
+        return visitLogDAO.getSiteVisitLogsByPmId(pmId);
     }
 
     @Override
@@ -50,10 +32,10 @@ public class ProjectManagerServiceImpl implements ProjectManagerService {
     }
 
     @Override
-    public List<VisitRequestDTO> getAllVisitRequests(){
-        // Need to pass pmId - for now throw exception or get from context
-        throw new UnsupportedOperationException("getAllVisitRequests requires pmId parameter");
+    public List<VisitRequestDTO> getAllVisitRequests( String pmId){
+        return visitLogDAO.getAllVisitRequests(pmId);
     }
+
     @Override
     public  boolean updateVisitRequest(VisitRequestDTO dto){
         return  visitLogDAO.updateVisitRequest(dto);
@@ -133,9 +115,8 @@ public class ProjectManagerServiceImpl implements ProjectManagerService {
         return visitLogDAO.getBOQItemsByProjectId(projectId);
     }
     @Override
-    public PaymentDTO getPaymentByProjectId(String projectId) {
-        List<PaymentDTO> payments = visitLogDAO.getPaymentByProjectId(projectId);
-        return payments.isEmpty() ? null : payments.get(0);
+    public List<PaymentDTO> getPaymentByProjectId(String projectId) {
+        return visitLogDAO.getPaymentByProjectId(projectId);
     }
 
     @Override
@@ -147,18 +128,16 @@ public class ProjectManagerServiceImpl implements ProjectManagerService {
     public List<SiteResourcesDTO> getSiteResourcesByRequestId(Integer requestId) {
         return visitLogDAO.getSiteResourcesByRequestId(requestId);
     }
-    
-    @Override
-    public List<ProjectMaterialsDTO> getProjectMaterialsByProjectId(String projectId) {
-        return visitLogDAO.getProjectMaterialsByProjectId(projectId);
-    }
 
+    @Override
+    public List<ProjectMaterialsDTO> getProjectMaterialsByProjectId(String projectId){
+        return  visitLogDAO.getProjectMaterialsByProjectId(projectId);
+    }
 
     @Override
     public List<String> getOngoingProjectIds() {
         return visitLogDAO.getOngoingProjectIds();
     }
-
 
 
 }
