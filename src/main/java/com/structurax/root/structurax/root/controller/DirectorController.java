@@ -1,10 +1,7 @@
 package com.structurax.root.structurax.root.controller;
 
 
-import com.structurax.root.structurax.root.dto.ClientDTO;
-import com.structurax.root.structurax.root.dto.ProjectDTO;
-import com.structurax.root.structurax.root.dto.ProjectInitiateDTO;
-import com.structurax.root.structurax.root.dto.ProjectStartDTO;
+import com.structurax.root.structurax.root.dto.*;
 import com.structurax.root.structurax.root.service.DirectorService;
 import com.structurax.root.structurax.root.service.MailService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,19 +25,19 @@ public class DirectorController {
     private MailService mailService;
 
     @PostMapping("/add_client")
-    public String addClient(@RequestBody ClientDTO clientDTO) {
-        directorService.createClient( clientDTO);
+    public String addClient(@RequestBody ClientOneDTO clientOneDTO) {
+        directorService.createClient(clientOneDTO);
         return "Client registered successfully";
 
     }
 
     @GetMapping("/get_all_client_withplan")
-    public List<ClientDTO> getClients() {
+    public List<ClientWithPlaneDTO> getClients() {
         return directorService.getClientWithPlan();
     }
 
     @GetMapping("/get_all_client_withoutplan")
-    public List<ClientDTO> getClientWithoutPlan() {
+    public List<ClientWithPlaneDTO> getClientWithoutPlan() {
         return directorService.getClientWithoutPlan();
     }
 
@@ -72,6 +69,26 @@ public class DirectorController {
             @RequestBody ProjectStartDTO projectStartDTO) throws SQLException {
         directorService.startProject(projectId, projectStartDTO);
         return new ResponseEntity<>("Project started successfully", HttpStatus.OK);
+    }
+    @GetMapping("/get_all_document_by_id/{id}")
+    public List<AllProjectDocumentDTO> getAllProjectDocuments(@PathVariable String id) {
+        return directorService.getAllDocumentsByProjectId(id);
+    }
+
+    @GetMapping("/get_all_employee")
+    public List<GetEmployeeDTO> getAllEmployees() throws SQLException {
+        return directorService.getAllEmployee();
+    }
+
+    @GetMapping("/{id}")
+    public EmployeeByIdDTO getEmployee(@PathVariable String id) {
+       return directorService.getEmployeeById(id);
+    }
+
+    @GetMapping("/{projectId}/progress")
+    public ResponseEntity<Double> getProjectProgress(@PathVariable String projectId) {
+        double progress = directorService.calculateProjectProgress(projectId);
+        return ResponseEntity.ok(Math.round(progress * 10.0) / 10.0);
     }
 
 

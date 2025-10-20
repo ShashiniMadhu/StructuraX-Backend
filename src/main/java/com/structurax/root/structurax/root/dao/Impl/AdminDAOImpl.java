@@ -84,7 +84,7 @@ public class AdminDAOImpl implements AdminDAO {
         final List<EmployeeDTO> employeeList = new ArrayList<>();
         final String sql = """
         SELECT 
-            e.emp_id AS employee_id,
+            e.employee_id AS employee_id,
             u.name,
             u.email,
             u.phone_number,
@@ -159,7 +159,23 @@ public class AdminDAOImpl implements AdminDAO {
 
     @Override
     public UserDTO getEmployeeById(String empId) {
-        final String sql = "SELECT * FROM employee WHERE employee_id = ?";
+        final String sql = """
+        SELECT 
+            e.employee_id,
+            e.user_id,
+            u.name,
+            u.email,
+            u.phone_number,
+            u.address,
+            u.type,
+            u.joined_date,
+            u.availability,
+            u.profile_image_url
+        FROM employee e
+        INNER JOIN users u ON e.user_id = u.user_id
+        WHERE e.employee_id = ?
+    """;
+
         Connection connection = null;
         PreparedStatement preparedStatement = null;
         ResultSet resultSet = null;
@@ -171,6 +187,7 @@ public class AdminDAOImpl implements AdminDAO {
             resultSet = preparedStatement.executeQuery();
 
             if (resultSet.next()) {
+                LocalDate localDate = resultSet.getDate("joined_date") != null ? resultSet.getDate("joined_date").toLocalDate() : null;
                 return new UserDTO(
                         resultSet.getString("user_id"),
                         resultSet.getString("name"),
@@ -178,11 +195,10 @@ public class AdminDAOImpl implements AdminDAO {
                         resultSet.getString("phone_number"),
                         resultSet.getString("address"),
                         resultSet.getString("type"),
-                        resultSet.getDate("joined_date").toLocalDate(),
+                        localDate,
                         null, // Don't expose password
-                        resultSet.getString("availability"), // Changed from getBoolean to getString
+                        resultSet.getString("availability"),
                         resultSet.getString("profile_image_url")
-
                 );
             } else {
                 return null;
@@ -194,6 +210,7 @@ public class AdminDAOImpl implements AdminDAO {
             closeResources(resultSet, preparedStatement, connection);
         }
     }
+
 
     // Helper method to generate employee ID
     private String generateEmployeeId() {
