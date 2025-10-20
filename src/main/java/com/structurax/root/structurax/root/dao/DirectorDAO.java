@@ -6,10 +6,10 @@ import java.sql.SQLException;
 import java.util.List;
 
 public interface DirectorDAO {
-    ClientDTO createClient (ClientDTO clientDTO, String otp);
-    List<ClientDTO> getClientWithPlan();
+    ClientOneDTO createClient (ClientOneDTO clientOneDTO, String otp);
+    List<ClientWithPlaneDTO> getClientWithPlan();
 
-    List<ClientDTO> getClientWithoutPlan();
+    List<ClientWithPlaneDTO> getClientWithoutPlan();
     ProjectInitiateDTO initializeProject(ProjectInitiateDTO projectInitiateDTO);
     List<ProjectInitiateDTO> getAllProjects();
 
@@ -19,6 +19,10 @@ public interface DirectorDAO {
     List<ProjectInitiateDTO> getPendingProjects();
 
     void startProject(String projectId, ProjectStartDTO projectStartDTO) throws SQLException;
+    List<AllProjectDocumentDTO> getAllDocumentsById(String projectId);
+    List<GetEmployeeDTO> getAllEmployees() throws SQLException;
+    EmployeeByIdDTO getEmployeeById(String empid);
 
+    double calculateProjectProgress(String projectId);
 
 }
