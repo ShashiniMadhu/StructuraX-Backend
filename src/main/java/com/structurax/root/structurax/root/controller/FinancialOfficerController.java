@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -280,6 +281,58 @@ public class FinancialOfficerController {
         List<PettyCashDTO> pettyCashDTOList = financialOfficerService.getAllPettyCash();
         return new ResponseEntity<>(pettyCashDTOList, HttpStatus.OK);
     }
+
+    @GetMapping("/payment_confirmation")
+    public ResponseEntity<List<PaymentConfirmationDTO>> getAllConfirmations() {
+        List<PaymentConfirmationDTO> confirmations = financialOfficerService.getAllConfirmations();
+        return new ResponseEntity<>(confirmations, HttpStatus.OK);
+    }
+
+    // Get confirmations by project
+    @GetMapping("/payment_confirmation/{projectId}")
+    public ResponseEntity<List<PaymentConfirmationDTO>> getConfirmationsByProject(@PathVariable String projectId) {
+        List<PaymentConfirmationDTO> confirmations = financialOfficerService.getConfirmationsByProject(projectId);
+        return new ResponseEntity<>(confirmations, HttpStatus.OK);
+    }
+
+    // Create a new confirmation
+    @PostMapping("/payment_confirmation")
+    public ResponseEntity<PaymentConfirmationDTO> createConfirmation(@RequestBody PaymentConfirmationDTO dto) {
+        PaymentConfirmationDTO created = financialOfficerService.insertConfirmation(dto);
+        return new ResponseEntity<>(created, HttpStatus.CREATED);
+    }
+
+    // Update a confirmation
+    @PutMapping("/payment_confirmation")
+    public ResponseEntity<PaymentConfirmationDTO> updateConfirmation(@RequestBody PaymentConfirmationDTO dto) {
+        PaymentConfirmationDTO updated = financialOfficerService.updateConfirmation(dto);
+        return new ResponseEntity<>(updated, HttpStatus.OK);
+    }
+
+    // Delete a confirmation
+    @DeleteMapping("/payment_confirmation/{confirmationId}")
+    public ResponseEntity<Void> deleteConfirmation(@PathVariable int confirmationId) {
+        financialOfficerService.deleteConfirmation(confirmationId);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+
+    @GetMapping("/payments")
+    public ResponseEntity<List<PaymentDTO>> getAllPayments(){
+        List<PaymentDTO> paymentDTOS = financialOfficerService.getAllPayments();
+        return new ResponseEntity<>(paymentDTOS, HttpStatus.OK);
+    }
+
+    @GetMapping("/expenses/{projectId}")
+    public ResponseEntity<BigDecimal> getProjectExpenses(@PathVariable String projectId) {
+        if (projectId == null || projectId.isEmpty()) {
+            return ResponseEntity.badRequest().body(BigDecimal.ZERO);
+        }
+
+        BigDecimal totalExpenses = financialOfficerService.calculateProjectExpenses(projectId);
+        return ResponseEntity.ok(totalExpenses);
+    }
+
 
 
 

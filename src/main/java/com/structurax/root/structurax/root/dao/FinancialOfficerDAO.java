@@ -2,6 +2,7 @@ package com.structurax.root.structurax.root.dao;
 
 import com.structurax.root.structurax.root.dto.*;
 
+import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.util.Date;
 import java.util.List;
@@ -77,5 +78,22 @@ public interface FinancialOfficerDAO {
     Boolean updatePettyCash(PettyCashDTO pettyCashDTO) throws SQLException;
     Boolean deletePettyCash(int pettyCashId);
     List<PettyCashDTO> getAllPettyCash();
+
+    // payment confirmation
+    List<PaymentConfirmationDTO> getAllConfirmations();
+
+    List<PaymentConfirmationDTO> getConfirmationsByProject(String projectId);
+
+    PaymentConfirmationDTO insertConfirmation(PaymentConfirmationDTO dto);
+
+    PaymentConfirmationDTO updateConfirmation(PaymentConfirmationDTO dto);
+
+    void deleteConfirmation(int confirmationId);
+
+    List<PaymentDTO> getAllPayments();
+
+    // project expenses
+    BigDecimal calculateProjectExpenses(String projectId);
+
 
 }

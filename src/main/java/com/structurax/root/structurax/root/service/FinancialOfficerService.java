@@ -3,6 +3,7 @@ package com.structurax.root.structurax.root.service;
 import com.structurax.root.structurax.root.dto.*;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.util.Date;
 import java.util.List;
@@ -74,6 +75,22 @@ public interface FinancialOfficerService {
     List<LaborSalaryDTO> updateSalaryRecord(List<LaborSalaryDTO> laborSalaryDTO);
 
     LaborSalaryDTO deleteSalaryRecordById(int salaryId);
+
+
+    // payment confirmation
+    List<PaymentConfirmationDTO> getAllConfirmations();
+
+    List<PaymentConfirmationDTO> getConfirmationsByProject(String projectId);
+
+    PaymentConfirmationDTO insertConfirmation(PaymentConfirmationDTO dto);
+
+    PaymentConfirmationDTO updateConfirmation(PaymentConfirmationDTO dto);
+
+    void deleteConfirmation(int confirmationId);
+
+    List<PaymentDTO> getAllPayments();
+
+    BigDecimal calculateProjectExpenses(String projectId);
 
 
 

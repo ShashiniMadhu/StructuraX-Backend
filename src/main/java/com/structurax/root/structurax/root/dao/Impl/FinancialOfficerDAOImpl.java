@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.sql.*;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Date;
@@ -996,7 +997,7 @@ public class FinancialOfficerDAOImpl implements FinancialOfficerDAO {
     @Override
     public List<PurchaseOrderDTO> getAllOrders() {
         List<PurchaseOrderDTO> orderList = new ArrayList<>();
-        final String sql = "SELECT * FROM purchase_order";
+        final String sql = "SELECT * FROM purchase_order ";
 
         try (
                 Connection connection = databaseConnection.getConnection();
@@ -1158,5 +1159,233 @@ public class FinancialOfficerDAOImpl implements FinancialOfficerDAO {
 
     }
 
+    @Override
+    public List<PaymentConfirmationDTO> getAllConfirmations() {
+        final String sql = "SELECT " +
+                "pc.payment_id AS pc_payment_id, pc.project_id, pc.amount AS pc_amount, " +
+                "pc.document_id, pc.status, pc.confirmation_date, " +
+                "p.amount AS payment_amount, p.due_date ,p.paid_date, p.status " +
+                "FROM payment_confirmation pc " +
+                "INNER JOIN payment p ON pc.payment_id = p.payment_id";
+
+        List<PaymentConfirmationDTO> confirmationDTOS = new ArrayList<>();
+
+        try (Connection connection = databaseConnection.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sql);
+             ResultSet rs = preparedStatement.executeQuery()) {
+
+            while (rs.next()) {
+                PaymentConfirmationDTO confirmationDTO = new PaymentConfirmationDTO();
+                confirmationDTO.setPaymentId(rs.getInt("pc_payment_id"));
+                confirmationDTO.setProjectId(rs.getString("project_id"));
+                confirmationDTO.setAmount(rs.getDouble("pc_amount"));
+                confirmationDTO.setDocumentId(rs.getInt("document_id"));
+                confirmationDTO.setStatus(rs.getString("status"));
+
+                Date date = rs.getDate("confirmation_date");
+                if (date != null) {
+                    confirmationDTO.setConfirmationDate(((java.sql.Date) date).toLocalDate());
+                }
+
+                confirmationDTOS.add(confirmationDTO);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return confirmationDTOS;
+
+}
+
+    @Override
+    public List<PaymentConfirmationDTO> getConfirmationsByProject(String projectId) {
+        final String sql = "SELECT * FROM payment_confirmation WHERE project_id = ?";
+        List<PaymentConfirmationDTO> confirmationDTOS = new ArrayList<>();
+
+        try (
+                Connection connection = databaseConnection.getConnection();
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)
+        ) {
+            preparedStatement.setString(1, projectId);
+            try (ResultSet rs = preparedStatement.executeQuery()) {
+                while (rs.next()) {
+                    PaymentConfirmationDTO confirmationDTO = new PaymentConfirmationDTO();
+                    confirmationDTO.setConfirmationId(rs.getInt("confirmation_id"));
+                    confirmationDTO.setPaymentId(rs.getInt("payment_id"));
+                    confirmationDTO.setProjectId(rs.getString("project_id"));
+                    confirmationDTO.setAmount(rs.getDouble("amount"));
+                    confirmationDTO.setDocumentId(rs.getInt("document_id"));
+                    confirmationDTO.setStatus(rs.getString("status"));
+                    if(rs.getDate("confirmation_date") != null) {
+                        confirmationDTO.setConfirmationDate(rs.getDate("confirmation_date").toLocalDate());
+                    }
+                    confirmationDTOS.add(confirmationDTO);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return confirmationDTOS;
+    }
+
+    @Override
+    public PaymentConfirmationDTO insertConfirmation(PaymentConfirmationDTO dto) {
+        final String sql = "INSERT INTO payment_confirmation (project_id, payment_id,amount, document_id, status, confirmation_date) " +
+                "VALUES (?, ?, ?, ?, ?,?)";
+        try (Connection connection = databaseConnection.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+
+            // Validate required fields
+            if (dto.getProjectId() == null || dto.getProjectId().isEmpty()) {
+                throw new IllegalArgumentException("Project ID cannot be null or empty");
+            }
+
+            preparedStatement.setString(1, dto.getProjectId());
+            preparedStatement.setInt(2,dto.getPaymentId());
+            preparedStatement.setDouble(3, dto.getAmount());
+            preparedStatement.setInt(4, dto.getDocumentId());
+            preparedStatement.setString(5, dto.getStatus() != null ? dto.getStatus() : "Pending");
+
+            if (dto.getConfirmationDate() != null) {
+                preparedStatement.setDate(6, java.sql.Date.valueOf(dto.getConfirmationDate()));
+            } else {
+                preparedStatement.setDate(6, java.sql.Date.valueOf(LocalDate.now())); // default to today
+            }
+
+            int affectedRows = preparedStatement.executeUpdate();
+            if (affectedRows == 0) {
+                throw new SQLException("Inserting confirmation failed, no rows affected.");
+            }
+
+            try (ResultSet generatedKeys = preparedStatement.getGeneratedKeys()) {
+                if (generatedKeys.next()) {
+                    dto.setConfirmationId(generatedKeys.getInt(1));
+                }
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return dto;
+    }
+
+
+    @Override
+    public PaymentConfirmationDTO updateConfirmation(PaymentConfirmationDTO dto) {
+        final String sql = "UPDATE payment_confirmation SET status = ?, amount = ?, document_id = ?, confirmation_date = ? " +
+                "WHERE confirmation_id = ?";
+        try (Connection connection = databaseConnection.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+
+            preparedStatement.setString(1, dto.getStatus());
+            preparedStatement.setDouble(2, dto.getAmount());
+            preparedStatement.setInt(3, dto.getDocumentId());
+            preparedStatement.setDate(4, java.sql.Date.valueOf(dto.getConfirmationDate()));
+            preparedStatement.setInt(5, dto.getConfirmationId());
+
+            preparedStatement.executeUpdate();
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return dto;
+    }
+
+
+    @Override
+    public void deleteConfirmation(int confirmationId) {
+        final String sql = "DELETE FROM payment_confirmation WHERE confirmation_id = ?";
+        try (Connection connection = databaseConnection.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+
+            preparedStatement.setInt(1, confirmationId);
+            preparedStatement.executeUpdate();
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    @Override
+    public List<PaymentDTO> getAllPayments() {
+        List<PaymentDTO> paymentDTOS = new ArrayList<>();
+        final String sql = "SELECT * FROM payment";
+
+        try (
+                Connection connection = databaseConnection.getConnection();
+                PreparedStatement preparedStatement = connection.prepareStatement(sql);
+                ResultSet rs = preparedStatement.executeQuery()
+        ) {
+            while (rs.next()) {
+                PaymentDTO payment = new PaymentDTO();
+                payment.setPaymentId(rs.getInt("payment_id"));
+                payment.setAmount(rs.getDouble("amount"));
+                payment.setStatus(rs.getString("status"));
+                payment.setDuedate(rs.getDate("due_date").toLocalDate());
+                payment.setPaiddate(rs.getDate("paid_date").toLocalDate());
+
+
+                paymentDTOS.add(payment);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return paymentDTOS;
+    }
+
+    @Override
+    public BigDecimal calculateProjectExpenses(String projectId) {
+        BigDecimal totalExpenses = BigDecimal.ZERO;
+
+        final String laborPaymentsSql = "SELECT SUM(amount) FROM labor_payment WHERE project_id =? AND status='paid'";
+        final String pettyCashSql = "SELECT SUM(amount) FROM petty_cash WHERE project_id = ?";
+        final String orderPaymentSql = "SELECT SUM(q.total_amount) AS total_amount\n" +
+                "FROM quotation_response q\n" +
+                "INNER JOIN purchase_order p ON q.response_id = p.response_id\n" +
+                "WHERE p.project_id = ? AND p.payment_status = 'paid';";
+
+        try (Connection conn = databaseConnection.getConnection()) {
+            // 1️⃣ Labor payments
+            try (PreparedStatement ps = conn.prepareStatement(laborPaymentsSql)) {
+                ps.setString(1, projectId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        BigDecimal laborSum = rs.getBigDecimal(1);
+                        if (laborSum != null) totalExpenses = totalExpenses.add(laborSum);
+                    }
+                }
+            }
+
+            // 2️⃣ Petty cash
+            try (PreparedStatement ps = conn.prepareStatement(pettyCashSql)) {
+                ps.setString(1, projectId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        BigDecimal pettySum = rs.getBigDecimal(1);
+                        if (pettySum != null) totalExpenses = totalExpenses.add(pettySum);
+                    }
+                }
+            }
+
+            // 3️⃣ Purchase order payments
+            try (PreparedStatement ps = conn.prepareStatement(orderPaymentSql)) {
+                ps.setString(1, projectId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        BigDecimal orderSum = rs.getBigDecimal(1);
+                        if (orderSum != null) totalExpenses = totalExpenses.add(orderSum);
+                    }
+                }
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return totalExpenses;
+    }
 
 }
