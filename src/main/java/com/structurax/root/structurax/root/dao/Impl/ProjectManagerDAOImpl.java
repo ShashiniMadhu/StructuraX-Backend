@@ -1,31 +1,14 @@
 package com.structurax.root.structurax.root.dao.Impl;
 
-import java.sql.Connection;
-import java.sql.Date;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.List;
-
+import com.structurax.root.structurax.root.dao.ProjectManagerDAO;
+import com.structurax.root.structurax.root.dto.*;
+import com.structurax.root.structurax.root.util.DatabaseConnection;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
-import com.structurax.root.structurax.root.dao.ProjectManagerDAO;
-import com.structurax.root.structurax.root.dto.BOQitemDTO;
-import com.structurax.root.structurax.root.dto.DailyUpdatesDTO;
-import com.structurax.root.structurax.root.dto.DesignDTO;
-import com.structurax.root.structurax.root.dto.PaymentDTO;
-import com.structurax.root.structurax.root.dto.ProjectInitiateDTO;
-import com.structurax.root.structurax.root.dto.ProjectMaterialsDTO;
-import com.structurax.root.structurax.root.dto.RequestSiteResourceDTO;
-import com.structurax.root.structurax.root.dto.SiteResourcesDTO;
-import com.structurax.root.structurax.root.dto.SiteVisitLogDTO;
-import com.structurax.root.structurax.root.dto.TodoDTO;
-import com.structurax.root.structurax.root.dto.VisitRequestDTO;
-import com.structurax.root.structurax.root.dto.WBSDTO;
-import com.structurax.root.structurax.root.util.DatabaseConnection;
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 
 @Repository
 public class ProjectManagerDAOImpl implements ProjectManagerDAO {
@@ -39,7 +22,7 @@ public class ProjectManagerDAOImpl implements ProjectManagerDAO {
         if (dto.getProjectId() == null) {
             throw new IllegalArgumentException("Project ID is required and cannot be null");
         }
-        
+
         String sql = "INSERT INTO site_visit_log(project_id, date, description, status) VALUES (?, ?, ?, ?)";
 
         try (
@@ -52,12 +35,7 @@ public class ProjectManagerDAOImpl implements ProjectManagerDAO {
             ps.setString(4, dto.getStatus());
 
             ps.executeUpdate();
-            // Get generated keys if needed
-            try (ResultSet rs = ps.getGeneratedKeys()) {
-                if (rs.next()) {
-                    dto.setId(rs.getInt(1));
-                }
-            }
+            ResultSet rs = ps.getGeneratedKeys();
 
         } catch (SQLException e) {
             throw new RuntimeException("Error creating visit log", e);
@@ -65,88 +43,44 @@ public class ProjectManagerDAOImpl implements ProjectManagerDAO {
         return dto;
     }
 
-    public List<SiteVisitLogDTO> getAllVisitLogs() {
-        String sql = "SELECT * FROM site_visit_log";
-        List<SiteVisitLogDTO> list = new ArrayList<>();
 
-        try (
-                Connection conn = databaseConnection.getConnection();
-                PreparedStatement ps = conn.prepareStatement(sql);
-                ResultSet rs = ps.executeQuery()
-        ) {
-            while (rs.next()) {
-                SiteVisitLogDTO dto = new SiteVisitLogDTO(
-                        rs.getInt("visit_id"),
-                        rs.getString("project_id"),
-                        rs.getDate("date").toLocalDate(),
-                        rs.getString("description"),
-                        rs.getString("status")
-                );
-                list.add(dto);
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException("Error reading visit logs", e);
-        }
-        return list;
-    }
-    
     @Override
     public List<SiteVisitLogDTO> getSiteVisitLogsByPmId(String pmId) {
-        String sql = "SELECT svl.* FROM site_visit_log svl " +
-                     "INNER JOIN project p ON svl.project_id = p.project_id " +
-                     "WHERE p.pm_id = ?";
-        List<SiteVisitLogDTO> list = new ArrayList<>();
+        String sql = """
+        SELECT svl.visit_id, svl.project_id, svl.date, svl.description, svl.status 
+        FROM site_visit_log svl
+        INNER JOIN project p ON svl.project_id = p.project_id
+        WHERE p.pm_id = ?
+        ORDER BY svl.date DESC
+        """;
 
-        try (
-                Connection conn = databaseConnection.getConnection();
-                PreparedStatement ps = conn.prepareStatement(sql)
-        ) {
+        List<SiteVisitLogDTO> siteVisitLogs = new ArrayList<>();
+
+        try (Connection conn = databaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
             ps.setString(1, pmId);
-            ResultSet rs = ps.executeQuery();
-            
-            while (rs.next()) {
-                SiteVisitLogDTO dto = new SiteVisitLogDTO(
-                        rs.getInt("visit_id"),
-                        rs.getString("project_id"),
-                        rs.getDate("date").toLocalDate(),
-                        rs.getString("description"),
-                        rs.getString("status")
-                );
-                list.add(dto);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    SiteVisitLogDTO dto = new SiteVisitLogDTO(
+                            rs.getInt("visit_id"),
+                            rs.getString("project_id"),
+                            rs.getDate("date") != null ? rs.getDate("date").toLocalDate() : null,
+                            rs.getString("description"),
+                            rs.getString("status")
+                    );
+                    siteVisitLogs.add(dto);
+                }
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Error reading visit logs for PM: " + pmId, e);
-        }
-        return list;
-    }
-
-    public SiteVisitLogDTO getVisitLogById(Integer id) {
-        String sql = "SELECT * FROM site_visit_log WHERE id = ?";
-        SiteVisitLogDTO dto = null;
-
-        try (
-                Connection conn = databaseConnection.getConnection();
-                PreparedStatement ps = conn.prepareStatement(sql)
-        ) {
-            ps.setInt(1, id);
-            ResultSet rs = ps.executeQuery();
-
-            if (rs.next()) {
-                dto = new SiteVisitLogDTO(
-                        rs.getInt("id"),
-                        rs.getString("project_id"),
-                        rs.getDate("visit_date").toLocalDate(),
-                        rs.getString("description"),
-                        rs.getString("status")
-                );
-            }
-
-        } catch (SQLException e) {
-            throw new RuntimeException("Error fetching visit log by ID", e);
+            throw new RuntimeException("Error fetching site visit logs by PM ID: " + pmId, e);
         }
 
-        return dto;
+        return siteVisitLogs;
     }
+
+
     @Override
     public boolean updateVisitLog(SiteVisitLogDTO dto) {
         // Validate required fields
@@ -177,31 +111,31 @@ public class ProjectManagerDAOImpl implements ProjectManagerDAO {
         }
     }
 
+
     @Override
-    public List<VisitRequestDTO> getAllVisitRequests(String pmId){
-        // Modified to only return pending requests for the given PM
-        String sql = "SELECT vr.* FROM visit_request vr " +
-                     "INNER JOIN project p ON vr.project_id = p.project_id " +
-                     "WHERE p.pm_id = ? AND vr.status = 'pending'";
+    public List<VisitRequestDTO> getAllVisitRequests(String pmId) {
+        // Modified to only return pending requests
+        String sql = "SELECT * FROM visit_request WHERE pm_id = ? AND status = 'pending'";
         List<VisitRequestDTO> list = new ArrayList<>();
 
         try (
                 Connection conn = databaseConnection.getConnection();
-                PreparedStatement ps = conn.prepareStatement(sql)
+                PreparedStatement ps = conn.prepareStatement(sql);
         ){
-            ps.setString(1, pmId);
-            ResultSet rs = ps.executeQuery();
-            
-            while (rs.next()){
-                VisitRequestDTO dto = new VisitRequestDTO(
-                        rs.getString("project_id"),
-                        rs.getDate("from_date").toLocalDate(),
-                        rs.getDate("to_date").toLocalDate(),
-                        rs.getString("purpose"),
-                        rs.getString("status")
-                );
-                dto.setId(rs.getInt("request_id")); // Set the ID from database
-                list.add(dto);
+            ps.setString(1, pmId); // Set the pmId parameter
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()){
+                    VisitRequestDTO dto = new VisitRequestDTO(
+                            rs.getString("project_id"),
+                            rs.getDate("from_date").toLocalDate(),
+                            rs.getDate("to_date").toLocalDate(),
+                            rs.getString("purpose"),
+                            rs.getString("status")
+                    );
+                    dto.setId(rs.getInt("request_id")); // Set the ID from database
+                    list.add(dto);
+                }
             }
         } catch(SQLException e) {
             throw new RuntimeException("Error reading visit requests", e);
@@ -230,12 +164,12 @@ public class ProjectManagerDAOImpl implements ProjectManagerDAO {
         }
     }
 
-   @Override
+    @Override
     public List<ProjectInitiateDTO> getProjectsByPmIdAndStatus(String pmId , String status){
         List<ProjectInitiateDTO> projects = new ArrayList<>();
         String sql = "SELECT project_id, name ,status ,budget,description,location,category,estimated_value,start_date,due_date,client_id,qs_id,pm_id,ss_id FROM project WHERE pm_id = ? AND status = ?";
         try (Connection conn = databaseConnection.getConnection();
-        PreparedStatement pstmt = conn.prepareStatement(sql)){
+             PreparedStatement pstmt = conn.prepareStatement(sql)){
             pstmt.setString(1,pmId);
             pstmt.setString(2, status);
             ResultSet rs = pstmt.executeQuery();
@@ -268,7 +202,7 @@ public class ProjectManagerDAOImpl implements ProjectManagerDAO {
             throw new RuntimeException(e);
         }
         return projects;
-   }
+    }
 
 
     @Override
@@ -290,7 +224,7 @@ public class ProjectManagerDAOImpl implements ProjectManagerDAO {
         String sql = """
         SELECT request_id, project_id, date, site_supervisor_id, pm_id, pm_approval
         FROM request_site_resources 
-        WHERE pm_id = ? AND pm_approval = 'Pending'
+        WHERE pm_id = ? AND pm_approval = 'pending'
     """;
 
         try (Connection conn = databaseConnection.getConnection();
@@ -646,6 +580,7 @@ public class ProjectManagerDAOImpl implements ProjectManagerDAO {
         return boqItems;
     }
 
+
     @Override
     public List<PaymentDTO> getPaymentByProjectId(String projectId) {
         List<PaymentDTO> payments = new ArrayList<>();
@@ -656,53 +591,50 @@ public class ProjectManagerDAOImpl implements ProjectManagerDAO {
     """;
 
         try (Connection connection = databaseConnection.getConnection();
-             PreparedStatement stmt = connection.prepareStatement(sql)) {
+             PreparedStatement statement = connection.prepareStatement(sql)) {
 
-            stmt.setString(1, projectId);
+            statement.setString(1, projectId);
+            ResultSet resultSet = statement.executeQuery();
 
-            try (ResultSet rs = stmt.executeQuery()) {
-                while (rs.next()) {
-                    PaymentDTO payment = new PaymentDTO();
-                    payment.setPaymentId(rs.getInt("payment_id"));
-                    payment.setInvoiceId(rs.getInt("invoice_id"));
-                    payment.setDuedate(rs.getDate("due_date").toLocalDate());
-
-                    Date paidDate = rs.getDate("paid_date");
-                    if (paidDate != null) {
-                        payment.setPaiddate(paidDate.toLocalDate());
-                    }
-
-                    payment.setStatus(rs.getString("status"));
-                    payment.setAmount(rs.getDouble("amount"));
-                    payments.add(payment);
-                }
+            while (resultSet.next()) {
+                PaymentDTO payment = new PaymentDTO();
+                payment.setPaymentId(resultSet.getInt("payment_id"));
+                payment.setInvoiceId(resultSet.getInt("invoice_id"));
+                payment.setDuedate(resultSet.getDate("due_date") != null ?
+                        resultSet.getDate("due_date").toLocalDate() : null);
+                payment.setPaiddate(resultSet.getDate("paid_date") != null ?
+                        resultSet.getDate("paid_date").toLocalDate() : null);
+                payment.setStatus(resultSet.getString("status"));
+                payment.setAmount(resultSet.getDouble("amount"));
+                payments.add(payment);
             }
         } catch (SQLException e) {
             e.printStackTrace();
+            // Log the error properly
         }
         return payments;
     }
-    
+
     @Override
     public List<ProjectMaterialsDTO> getProjectMaterialsByProjectId(String projectId) {
         List<ProjectMaterialsDTO> materials = new ArrayList<>();
         String sql = "SELECT * FROM project_materials WHERE project_id = ?";
-
         try (Connection connection = databaseConnection.getConnection();
-             PreparedStatement stmt = connection.prepareStatement(sql)) {
+             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
 
-            stmt.setString(1, projectId);
+            preparedStatement.setString(1, projectId);
 
-            try (ResultSet rs = stmt.executeQuery()) {
-                while (rs.next()) {
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                while (resultSet.next()) {
                     ProjectMaterialsDTO material = new ProjectMaterialsDTO();
-                    material.setProjectId(rs.getString("project_id"));
-                    material.setTools(rs.getString("tools"));
+                    material.setMaterialId(resultSet.getInt("materials_id"));
+                    material.setProjectId(resultSet.getString("project_id"));
+                    material.setTools(resultSet.getString("tools"));
                     materials.add(material);
                 }
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Error fetching project materials for project: " + projectId, e);
+            e.printStackTrace();
         }
         return materials;
     }
@@ -726,14 +658,16 @@ public class ProjectManagerDAOImpl implements ProjectManagerDAO {
         return ongoingProjectIds;
     }
 
-
-
-
-
-
-
-
-
-
-
 }
+
+
+
+
+
+
+
+
+
+
+
+
