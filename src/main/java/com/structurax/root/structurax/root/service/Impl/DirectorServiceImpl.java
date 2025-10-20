@@ -1,10 +1,7 @@
 package com.structurax.root.structurax.root.service.Impl;
 
 import com.structurax.root.structurax.root.dao.DirectorDAO;
-import com.structurax.root.structurax.root.dto.ClientDTO;
-import com.structurax.root.structurax.root.dto.ProjectDTO;
-import com.structurax.root.structurax.root.dto.ProjectInitiateDTO;
-import com.structurax.root.structurax.root.dto.ProjectStartDTO;
+import com.structurax.root.structurax.root.dto.*;
 import com.structurax.root.structurax.root.service.DirectorService;
 import com.structurax.root.structurax.root.service.MailService;
 import com.structurax.root.structurax.root.util.OtpUtil;
@@ -24,25 +21,25 @@ public class DirectorServiceImpl implements DirectorService {
     private MailService mailService;
 
     @Override
-    public ClientDTO createClient(ClientDTO clientDTO) {
+    public ClientOneDTO createClient(ClientOneDTO clientOneDTO) {
         String otp = OtpUtil.generateOtp();
 
-        ClientDTO createdClient = directorDAO.createClient(clientDTO,otp);
+        ClientOneDTO createdClient = directorDAO.createClient(clientOneDTO,otp);
 
-        mailService.sendClientRegisterOtp(clientDTO.getEmail(),clientDTO.getFirstName(),otp);
+        mailService.sendClientRegisterOtp(clientOneDTO.getEmail(),clientOneDTO.getName(),otp);
 
         return createdClient;
     }
 
     @Override
-    public List<ClientDTO> getClientWithPlan() {
-        List<ClientDTO> clients = directorDAO.getClientWithPlan();
+    public List<ClientWithPlaneDTO> getClientWithPlan() {
+        List<ClientWithPlaneDTO> clients = directorDAO.getClientWithPlan();
         return clients;
     }
 
     @Override
-    public List<ClientDTO> getClientWithoutPlan() {
-        List<ClientDTO> clients = directorDAO.getClientWithoutPlan();
+    public List<ClientWithPlaneDTO> getClientWithoutPlan() {
+        List<ClientWithPlaneDTO> clients = directorDAO.getClientWithoutPlan();
         return clients;
     }
 
@@ -73,6 +70,27 @@ public class DirectorServiceImpl implements DirectorService {
     @Override
     public void startProject(String projectId, ProjectStartDTO projectStartDTO) throws SQLException {
         directorDAO.startProject(projectId, projectStartDTO);
+    }
+
+    @Override
+    public List<AllProjectDocumentDTO> getAllDocumentsByProjectId(String projectId) {
+        List<AllProjectDocumentDTO> documents = directorDAO.getAllDocumentsById(projectId);
+        return documents;
+    }
+
+    @Override
+    public List<GetEmployeeDTO> getAllEmployee() throws SQLException {
+        return directorDAO.getAllEmployees();
+    }
+
+    @Override
+    public EmployeeByIdDTO getEmployeeById(String empid) {
+        return directorDAO.getEmployeeById(empid);
+    }
+
+    @Override
+    public double calculateProjectProgress(String projectId) {
+        return directorDAO.calculateProjectProgress(projectId);
     }
 
 

@@ -152,7 +152,8 @@ public class AdminController {
     public ResponseEntity<?> getEmployeeById(@PathVariable @Pattern(regexp = "^EMP_\\d{3}$", message = "Employee ID must follow format EMP_XXX") String id) {
         try {
             final UserDTO employee = adminService.getEmployeeById(id);
-           if (employee == null) {
+
+            if (employee == null) {
                 return new ResponseEntity<>("Employee not found with id: " + id, HttpStatus.NOT_FOUND);
             }
             return ResponseEntity.ok(employee);
