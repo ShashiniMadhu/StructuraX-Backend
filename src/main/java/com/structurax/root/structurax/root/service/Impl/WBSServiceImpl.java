@@ -1,63 +1,124 @@
 package com.structurax.root.structurax.root.service.Impl;
 
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
 import com.structurax.root.structurax.root.dao.WBSDAO;
 import com.structurax.root.structurax.root.dto.WBSDTO;
 import com.structurax.root.structurax.root.service.WBSService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 @Service
 public class WBSServiceImpl implements WBSService {
-
-    private static final Logger logger = LoggerFactory.getLogger(WBSServiceImpl.class);
-    private final WBSDAO wbsDAO;
-
-    public WBSServiceImpl(WBSDAO wbsDAO) {
-        this.wbsDAO = wbsDAO;
+    
+    @Autowired
+    private WBSDAO wbsDAO;
+    
+    @Override
+    public int createWBSTask(WBSDTO wbs) {
+        // Validate required fields
+        if (wbs.getProjectId() == null || wbs.getProjectId().trim().isEmpty()) {
+            throw new IllegalArgumentException("Project ID is required");
+        }
+        if (wbs.getName() == null || wbs.getName().trim().isEmpty()) {
+            throw new IllegalArgumentException("Task name is required");
+        }
+        if (wbs.getStatus() == null || wbs.getStatus().trim().isEmpty()) {
+            throw new IllegalArgumentException("Status is required");
+        }
+        
+        return wbsDAO.insertWBSTask(wbs);
     }
-
+    
+    @Override
+    public List<Integer> createBulkWBSTasks(List<WBSDTO> wbsTasks) {
+        // Validate list
+        if (wbsTasks == null || wbsTasks.isEmpty()) {
+            throw new IllegalArgumentException("WBS tasks list cannot be null or empty");
+        }
+        
+        // Validate each task
+        for (int i = 0; i < wbsTasks.size(); i++) {
+            WBSDTO wbs = wbsTasks.get(i);
+            if (wbs.getProjectId() == null || wbs.getProjectId().trim().isEmpty()) {
+                throw new IllegalArgumentException("Project ID is required for task at index " + i);
+            }
+            if (wbs.getName() == null || wbs.getName().trim().isEmpty()) {
+                throw new IllegalArgumentException("Task name is required for task at index " + i);
+            }
+            if (wbs.getStatus() == null || wbs.getStatus().trim().isEmpty()) {
+                throw new IllegalArgumentException("Status is required for task at index " + i);
+            }
+        }
+        
+        return wbsDAO.insertBulkWBSTasks(wbsTasks);
+    }
+    
     @Override
     public List<WBSDTO> getWBSByProjectId(String projectId) {
-        logger.info("Fetching all WBS tasks for project_id: {}", projectId);
+        if (projectId == null || projectId.trim().isEmpty()) {
+            throw new IllegalArgumentException("Project ID is required");
+        }
         return wbsDAO.getWBSByProjectId(projectId);
     }
-
+    
     @Override
-    public WBSDTO getWBSByTaskId(Integer taskId) {
-        logger.info("Fetching WBS task with task_id: {}", taskId);
+    public WBSDTO getWBSByTaskId(int taskId) {
+        if (taskId <= 0) {
+            throw new IllegalArgumentException("Task ID must be positive");
+        }
         return wbsDAO.getWBSByTaskId(taskId);
     }
-
+    
     @Override
-    public List<WBSDTO> getWBSByParentId(Integer parentId) {
-        logger.info("Fetching child WBS tasks for parent_id: {}", parentId);
-        return wbsDAO.getWBSByParentId(parentId);
+    public boolean updateWBSTask(WBSDTO wbs) {
+        // Validate required fields
+        if (wbs.getTaskId() <= 0) {
+            throw new IllegalArgumentException("Task ID is required for update");
+        }
+        if (wbs.getProjectId() == null || wbs.getProjectId().trim().isEmpty()) {
+            throw new IllegalArgumentException("Project ID is required");
+        }
+        if (wbs.getName() == null || wbs.getName().trim().isEmpty()) {
+            throw new IllegalArgumentException("Task name is required");
+        }
+        if (wbs.getStatus() == null || wbs.getStatus().trim().isEmpty()) {
+            throw new IllegalArgumentException("Status is required");
+        }
+        
+        return wbsDAO.updateWBSTask(wbs);
     }
-
+    
     @Override
-    public List<WBSDTO> getRootWBSTasks(String projectId) {
-        logger.info("Fetching root WBS tasks for project_id: {}", projectId);
-        return wbsDAO.getRootWBSTasks(projectId);
+    public boolean updateWBSMilestone(int taskId, boolean milestone) {
+        if (taskId <= 0) {
+            throw new IllegalArgumentException("Task ID must be positive");
+        }
+        return wbsDAO.updateWBSMilestone(taskId, milestone);
     }
-
+    
     @Override
-    public WBSDTO createWBS(WBSDTO wbsDTO) {
-        logger.info("Creating new WBS task for project_id: {}", wbsDTO.getProjectId());
-        return wbsDAO.createWBS(wbsDTO);
+    public boolean deleteWBSTask(int taskId) {
+        if (taskId <= 0) {
+            throw new IllegalArgumentException("Task ID must be positive");
+        }
+        return wbsDAO.deleteWBSTask(taskId);
     }
-
+    
     @Override
-    public void updateWBS(WBSDTO wbsDTO) {
-        logger.info("Updating WBS task with task_id: {}", wbsDTO.getTaskId());
-        wbsDAO.updateWBS(wbsDTO);
+    public int deleteCompleteWBS(String projectId) {
+        if (projectId == null || projectId.trim().isEmpty()) {
+            throw new IllegalArgumentException("Project ID is required");
+        }
+        return wbsDAO.deleteWBSByProjectId(projectId);
     }
-
+    
     @Override
-    public void deleteWBS(Integer taskId) {
-        logger.info("Deleting WBS task with task_id: {}", taskId);
-        wbsDAO.deleteWBS(taskId);
+    public List<WBSDTO> getChildTasks(int parentId) {
+        if (parentId <= 0) {
+            throw new IllegalArgumentException("Parent ID must be positive");
+        }
+        return wbsDAO.getChildTasks(parentId);
     }
 }

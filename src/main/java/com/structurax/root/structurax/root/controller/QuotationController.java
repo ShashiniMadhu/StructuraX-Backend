@@ -4,7 +4,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.structurax.root.structurax.root.dto.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,40 +16,30 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
+import com.structurax.root.structurax.root.dto.Project1DTO;
+import com.structurax.root.structurax.root.dto.PurchaseOrderDTO;
+import com.structurax.root.structurax.root.dto.QuotationDTO;
+import com.structurax.root.structurax.root.dto.QuotationItemDTO;
+import com.structurax.root.structurax.root.dto.QuotationResponseDTO;
+import com.structurax.root.structurax.root.dto.QuotationResponseWithSupplierDTO;
+import com.structurax.root.structurax.root.dto.SupplierDTO;
+import com.structurax.root.structurax.root.dto.UserDTO;
 import com.structurax.root.structurax.root.service.AdminService;
 import com.structurax.root.structurax.root.service.MailService;
 import com.structurax.root.structurax.root.service.PurchaseOrderService;
 import com.structurax.root.structurax.root.service.QuotationResponseService;
 import com.structurax.root.structurax.root.service.QuotationService;
-import com.structurax.root.structurax.root.service.SQSService;
-import com.structurax.root.structurax.root.service.SupplierService;
 
 @RestController
 @RequestMapping("/quotation")
 @CrossOrigin(origins = "http://localhost:5173")
 public class QuotationController {
-
+    
     @Autowired
     private QuotationService quotationService;
-
+    
     @Autowired
     private QuotationResponseService quotationResponseService;
-
-    @Autowired
-    private SupplierService supplierService;
-
-    @Autowired
-    private MailService mailService;
-
-    @Autowired
-    private AdminService adminService;
-
-    @Autowired
-    private SQSService sqsService;
-
-    @Autowired
-    private PurchaseOrderService purchaseOrderService;
 
     /**
      * Create a new quotation with items
@@ -58,30 +47,78 @@ public class QuotationController {
     @PostMapping("/create")
     public ResponseEntity<Map<String, Object>> createQuotation(@RequestBody Map<String, Object> request) {
         Map<String, Object> response = new HashMap<>();
-
+        
         try {
             // Extract quotation data
+            @SuppressWarnings("unchecked")
             Map<String, Object> quotationData = (Map<String, Object>) request.get("quotation");
+
+            if (quotationData == null) {
+                response.put("success", false);
+                response.put("message", "Quotation data is missing");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+            }
+
             QuotationDTO quotation = new QuotationDTO();
             quotation.setProjectId((String) quotationData.get("projectId"));
             quotation.setQsId((String) quotationData.get("qsId"));
-            quotation.setDate(java.sql.Date.valueOf(java.time.LocalDate.parse((String) quotationData.get("date"))));
-            quotation.setDeadline(java.sql.Date.valueOf(java.time.LocalDate.parse((String) quotationData.get("deadline"))));
+
+            // Parse date
+            try {
+                String dateStr = (String) quotationData.get("date");
+                quotation.setDate(java.sql.Date.valueOf(java.time.LocalDate.parse(dateStr)));
+            } catch (Exception e) {
+                response.put("success", false);
+                response.put("message", "Invalid date format. Use YYYY-MM-DD format.");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+            }
+
+            // Parse deadline
+            try {
+                String deadlineStr = (String) quotationData.get("deadline");
+                quotation.setDeadline(java.sql.Date.valueOf(java.time.LocalDate.parse(deadlineStr)));
+            } catch (Exception e) {
+                response.put("success", false);
+                response.put("message", "Invalid deadline format. Use YYYY-MM-DD format.");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+            }
+
             quotation.setStatus((String) quotationData.get("status"));
             quotation.setDescription((String) quotationData.get("description"));
 
             // Extract items data
+            @SuppressWarnings("unchecked")
             List<Map<String, Object>> itemsData = (List<Map<String, Object>>) request.get("items");
-            List<QuotationItemDTO> items = null;
 
+            List<QuotationItemDTO> items = null;
+            
             if (itemsData != null && !itemsData.isEmpty()) {
                 items = new java.util.ArrayList<>();
                 for (Map<String, Object> itemData : itemsData) {
                     QuotationItemDTO item = new QuotationItemDTO();
                     item.setName((String) itemData.get("name"));
                     item.setDescription((String) itemData.get("description"));
-                    item.setAmount(new java.math.BigDecimal(itemData.get("amount").toString()));
-                    item.setQuantity(Integer.valueOf(itemData.get("quantity").toString()));
+
+                    // Parse amount
+                    try {
+                        Object amountObj = itemData.get("amount");
+                        item.setAmount(new java.math.BigDecimal(amountObj.toString()));
+                    } catch (Exception e) {
+                        response.put("success", false);
+                        response.put("message", "Invalid amount format for item: " + itemData.get("name"));
+                        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+                    }
+
+                    // Parse quantity
+                    try {
+                        Object quantityObj = itemData.get("quantity");
+                        item.setQuantity(Integer.valueOf(quantityObj.toString()));
+                    } catch (Exception e) {
+                        response.put("success", false);
+                        response.put("message", "Invalid quantity format for item: " + itemData.get("name"));
+                        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+                    }
+
                     items.add(item);
                 }
             }
@@ -89,26 +126,106 @@ public class QuotationController {
             // Extract suppliers data
             List<Integer> supplierIds = null;
             if (request.containsKey("supplierIds")) {
+                @SuppressWarnings("unchecked")
                 List<Object> supplierData = (List<Object>) request.get("supplierIds");
+
                 if (supplierData != null && !supplierData.isEmpty()) {
                     supplierIds = new java.util.ArrayList<>();
                     for (Object supplierId : supplierData) {
-                        supplierIds.add(Integer.valueOf(supplierId.toString()));
+                        try {
+                            supplierIds.add(Integer.valueOf(supplierId.toString()));
+                        } catch (Exception e) {
+                            response.put("success", false);
+                            response.put("message", "Invalid supplier ID format");
+                            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+                        }
                     }
                 }
             }
 
+            // Create quotation
             Integer qId;
             if (supplierIds != null && !supplierIds.isEmpty()) {
                 qId = quotationService.createQuotation(quotation, items, supplierIds);
             } else {
                 qId = quotationService.createQuotation(quotation, items);
             }
-
+            
             if (qId != null) {
                 response.put("success", true);
                 response.put("message", "Quotation created successfully");
                 response.put("qId", qId);
+                
+                // Send emails to suppliers if status is 'sent' or 'pending' (auto-send for both)
+                if (supplierIds != null && !supplierIds.isEmpty()) {
+                    int emailCount = 0;
+                    List<Map<String, Object>> emailResults = new java.util.ArrayList<>();
+                    
+                    try {
+                        Project1DTO project = sqsService.getProjectById(quotation.getProjectId());
+                        String projectName = project != null ? project.getName() : "Project #" + quotation.getProjectId();
+                        
+                        UserDTO qsEmployee = adminService.getEmployeeById(quotation.getQsId());
+                        String qsName = qsEmployee != null ? qsEmployee.getName() : "QS";
+                        String qsEmail = qsEmployee != null ? qsEmployee.getEmail() : "noreply@structurax.com";
+                        
+                        for (Integer supplierId : supplierIds) {
+                            try {
+                                SupplierDTO supplier = supplierService.getSupplierById(supplierId);
+                                
+                                if (supplier != null && supplier.getEmail() != null && !supplier.getEmail().isEmpty()) {
+                                    mailService.sendQuotationRequest(
+                                        supplier.getEmail(),
+                                        supplier.getSupplier_name(),
+                                        qId,
+                                        projectName,
+                                        qsName,
+                                        qsEmail,
+                                        quotation.getDeadline() != null ? quotation.getDeadline().toString() : "Not specified"
+                                    );
+                                    
+                                    emailCount++;
+                                    Map<String, Object> emailResult = new HashMap<>();
+                                    emailResult.put("supplierId", supplierId);
+                                    emailResult.put("supplierName", supplier.getSupplier_name());
+                                    emailResult.put("email", supplier.getEmail());
+                                    emailResult.put("status", "sent");
+                                    emailResults.add(emailResult);
+                                } else {
+                                    Map<String, Object> emailResult = new HashMap<>();
+                                    emailResult.put("supplierId", supplierId);
+                                    emailResult.put("status", "failed");
+                                    emailResult.put("reason", supplier == null ? "Supplier not found" : "Email not found");
+                                    emailResults.add(emailResult);
+                                }
+                            } catch (Exception e) {
+                                Map<String, Object> emailResult = new HashMap<>();
+                                emailResult.put("supplierId", supplierId);
+                                emailResult.put("status", "failed");
+                                emailResult.put("reason", e.getMessage());
+                                emailResults.add(emailResult);
+                            }
+                        }
+                        
+                        // Update status to 'sent' after emails are sent
+                        if (emailCount > 0 && "pending".equalsIgnoreCase(quotation.getStatus())) {
+                            quotationService.updateQuotationStatus(qId, "sent");
+                        }
+                        
+                        response.put("emailsSent", emailCount);
+                        response.put("totalSuppliers", supplierIds.size());
+                        response.put("emailResults", emailResults);
+                        
+                        if (emailCount > 0) {
+                            response.put("message", "Quotation created and " + emailCount + " email(s) sent successfully");
+                        } else {
+                            response.put("warning", "Quotation created but no emails were sent");
+                        }
+                    } catch (Exception e) {
+                        response.put("warning", "Quotation created but email sending failed: " + e.getMessage());
+                    }
+                }
+                
                 return ResponseEntity.ok(response);
             } else {
                 response.put("success", false);
@@ -116,6 +233,11 @@ public class QuotationController {
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
             }
 
+
+        } catch (IllegalArgumentException e) {
+            response.put("success", false);
+            response.put("message", e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         } catch (Exception e) {
             response.put("success", false);
             response.put("message", "Error creating quotation: " + e.getMessage());
@@ -129,13 +251,13 @@ public class QuotationController {
     @GetMapping("/all")
     public ResponseEntity<Map<String, Object>> getAllQuotations() {
         Map<String, Object> response = new HashMap<>();
-
+        
         try {
             List<QuotationDTO> quotations = quotationService.getAllQuotations();
             response.put("success", true);
             response.put("quotations", quotations);
             return ResponseEntity.ok(response);
-
+            
         } catch (Exception e) {
             response.put("success", false);
             response.put("message", "Error fetching quotations: " + e.getMessage());
@@ -149,13 +271,13 @@ public class QuotationController {
     @GetMapping("/qs/{qsId}")
     public ResponseEntity<Map<String, Object>> getQuotationsByQsId(@PathVariable String qsId) {
         Map<String, Object> response = new HashMap<>();
-
+        
         try {
             List<QuotationDTO> quotations = quotationService.getQuotationsByQsId(qsId);
             response.put("success", true);
             response.put("quotations", quotations);
             return ResponseEntity.ok(response);
-
+            
         } catch (Exception e) {
             response.put("success", false);
             response.put("message", "Error fetching quotations for QS: " + e.getMessage());
@@ -169,13 +291,13 @@ public class QuotationController {
     @GetMapping("/{qId}/with-items")
     public ResponseEntity<Map<String, Object>> getQuotationWithItems(@PathVariable Integer qId) {
         Map<String, Object> response = new HashMap<>();
-
+        
         try {
             QuotationDTO quotation = quotationService.getQuotationById(qId);
             List<QuotationItemDTO> items = quotationService.getQuotationItemsByQuotationId(qId);
-            List<com.structurax.root.structurax.root.dto.QuotationSupplierDTO> suppliers =
+            List<com.structurax.root.structurax.root.dto.QuotationSupplierDTO> suppliers = 
                 quotationService.getQuotationSuppliersByQuotationId(qId);
-
+            
             if (quotation != null) {
                 response.put("success", true);
                 response.put("quotation", quotation);
@@ -187,7 +309,7 @@ public class QuotationController {
                 response.put("message", "Quotation not found");
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
             }
-
+            
         } catch (Exception e) {
             response.put("success", false);
             response.put("message", "Error fetching quotation with items and suppliers: " + e.getMessage());
@@ -201,14 +323,14 @@ public class QuotationController {
     @GetMapping("/{qId}/suppliers")
     public ResponseEntity<Map<String, Object>> getQuotationSuppliers(@PathVariable Integer qId) {
         Map<String, Object> response = new HashMap<>();
-
+        
         try {
-            List<com.structurax.root.structurax.root.dto.QuotationSupplierDTO> suppliers =
+            List<com.structurax.root.structurax.root.dto.QuotationSupplierDTO> suppliers = 
                 quotationService.getQuotationSuppliersByQuotationId(qId);
             response.put("success", true);
             response.put("suppliers", suppliers);
             return ResponseEntity.ok(response);
-
+            
         } catch (Exception e) {
             response.put("success", false);
             response.put("message", "Error fetching quotation suppliers: " + e.getMessage());
@@ -222,13 +344,13 @@ public class QuotationController {
     @GetMapping("/{qId}/items")
     public ResponseEntity<Map<String, Object>> getQuotationItems(@PathVariable Integer qId) {
         Map<String, Object> response = new HashMap<>();
-
+        
         try {
             List<QuotationItemDTO> items = quotationService.getQuotationItemsByQuotationId(qId);
             response.put("success", true);
             response.put("items", items);
             return ResponseEntity.ok(response);
-
+            
         } catch (Exception e) {
             response.put("success", false);
             response.put("message", "Error fetching quotation items: " + e.getMessage());
@@ -241,14 +363,14 @@ public class QuotationController {
      */
     @PutMapping("/{qId}/status")
     public ResponseEntity<Map<String, Object>> updateQuotationStatus(
-        @PathVariable Integer qId,
-        @RequestBody Map<String, String> request) {
+            @PathVariable Integer qId, 
+            @RequestBody Map<String, String> request) {
         Map<String, Object> response = new HashMap<>();
-
+        
         try {
             String status = request.get("status");
             boolean updated = quotationService.updateQuotationStatus(qId, status);
-
+            
             if (updated) {
                 response.put("success", true);
                 response.put("message", "Quotation status updated successfully");
@@ -258,7 +380,7 @@ public class QuotationController {
                 response.put("message", "Failed to update quotation status");
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
             }
-
+            
         } catch (Exception e) {
             response.put("success", false);
             response.put("message", "Error updating quotation status: " + e.getMessage());
@@ -271,10 +393,10 @@ public class QuotationController {
      */
     @PutMapping("/{qId}")
     public ResponseEntity<Map<String, Object>> updateQuotationWithItems(
-        @PathVariable Integer qId,
-        @RequestBody Map<String, Object> request) {
+            @PathVariable Integer qId,
+            @RequestBody Map<String, Object> request) {
         Map<String, Object> response = new HashMap<>();
-
+        
         try {
             // Extract quotation data
             Map<String, Object> quotationData = (Map<String, Object>) request.get("quotation");
@@ -290,7 +412,7 @@ public class QuotationController {
             // Extract items data
             List<Map<String, Object>> itemsData = (List<Map<String, Object>>) request.get("items");
             List<QuotationItemDTO> items = null;
-
+            
             if (itemsData != null) {
                 items = new java.util.ArrayList<>();
                 for (Map<String, Object> itemData : itemsData) {
@@ -305,7 +427,7 @@ public class QuotationController {
             }
 
             boolean updated = quotationService.updateQuotationWithItems(quotation, items);
-
+            
             if (updated) {
                 response.put("success", true);
                 response.put("message", "Quotation updated successfully");
@@ -315,7 +437,7 @@ public class QuotationController {
                 response.put("message", "Failed to update quotation");
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
             }
-
+            
         } catch (Exception e) {
             response.put("success", false);
             response.put("message", "Error updating quotation: " + e.getMessage());
@@ -329,10 +451,10 @@ public class QuotationController {
     @DeleteMapping("/{qId}")
     public ResponseEntity<Map<String, Object>> deleteQuotation(@PathVariable Integer qId) {
         Map<String, Object> response = new HashMap<>();
-
+        
         try {
             boolean deleted = quotationService.deleteQuotation(qId);
-
+            
             if (deleted) {
                 response.put("success", true);
                 response.put("message", "Quotation deleted successfully");
@@ -342,7 +464,7 @@ public class QuotationController {
                 response.put("message", "Failed to delete quotation");
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
             }
-
+            
         } catch (Exception e) {
             response.put("success", false);
             response.put("message", "Error deleting quotation: " + e.getMessage());
@@ -351,22 +473,22 @@ public class QuotationController {
     }
 
     /**
-     * Add supplier to existing quotation
+     * Add supplier to existing quotation5
      */
     @PostMapping("/{qId}/suppliers")
     public ResponseEntity<Map<String, Object>> addQuotationSupplier(
-        @PathVariable Integer qId,
-        @RequestBody Map<String, Integer> request) {
+            @PathVariable Integer qId,
+            @RequestBody Map<String, Integer> request) {
         Map<String, Object> response = new HashMap<>();
-
+        
         try {
             Integer supplierId = request.get("supplierId");
             quotationService.addQuotationSupplier(qId, supplierId);
-
+            
             response.put("success", true);
             response.put("message", "Supplier added to quotation successfully");
             return ResponseEntity.ok(response);
-
+            
         } catch (Exception e) {
             response.put("success", false);
             response.put("message", "Error adding supplier to quotation: " + e.getMessage());
@@ -379,18 +501,18 @@ public class QuotationController {
      */
     @PostMapping("/{qId}/items")
     public ResponseEntity<Map<String, Object>> addQuotationItem(
-        @PathVariable Integer qId,
-        @RequestBody QuotationItemDTO item) {
+            @PathVariable Integer qId,
+            @RequestBody QuotationItemDTO item) {
         Map<String, Object> response = new HashMap<>();
-
+        
         try {
             item.setQId(qId);
             quotationService.addQuotationItem(item);
-
+            
             response.put("success", true);
             response.put("message", "Item added to quotation successfully");
             return ResponseEntity.ok(response);
-
+            
         } catch (Exception e) {
             response.put("success", false);
             response.put("message", "Error adding item to quotation: " + e.getMessage());
@@ -404,10 +526,10 @@ public class QuotationController {
     @DeleteMapping("/items/{itemId}")
     public ResponseEntity<Map<String, Object>> deleteQuotationItem(@PathVariable Integer itemId) {
         Map<String, Object> response = new HashMap<>();
-
+        
         try {
             boolean deleted = quotationService.deleteQuotationItem(itemId);
-
+            
             if (deleted) {
                 response.put("success", true);
                 response.put("message", "Quotation item deleted successfully");
@@ -417,7 +539,7 @@ public class QuotationController {
                 response.put("message", "Failed to delete quotation item");
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
             }
-
+            
         } catch (Exception e) {
             response.put("success", false);
             response.put("message", "Error deleting quotation item: " + e.getMessage());
@@ -433,19 +555,19 @@ public class QuotationController {
     @GetMapping("/responses/test")
     public ResponseEntity<Map<String, Object>> testQuotationResponseDatabase() {
         Map<String, Object> response = new HashMap<>();
-
+        
         try {
             List<QuotationResponseDTO> basicResponses = quotationResponseService.getAllQuotationResponses();
-            List<QuotationResponseWithSupplierDTO> responsesWithSupplier =
+            List<QuotationResponseWithSupplierDTO> responsesWithSupplier = 
                 quotationResponseService.getAllQuotationResponsesWithSupplier();
-
+            
             response.put("success", true);
             response.put("basicResponsesCount", basicResponses.size());
             response.put("responsesWithSupplierCount", responsesWithSupplier.size());
             response.put("basicResponses", basicResponses);
             response.put("responsesWithSupplier", responsesWithSupplier);
             return ResponseEntity.ok(response);
-
+            
         } catch (Exception e) {
             response.put("success", false);
             response.put("error", e.getMessage());
@@ -463,14 +585,14 @@ public class QuotationController {
     @GetMapping("/responses/all")
     public ResponseEntity<Map<String, Object>> getAllQuotationResponsesWithSupplier() {
         Map<String, Object> response = new HashMap<>();
-
+        
         try {
-            List<QuotationResponseWithSupplierDTO> responses =
+            List<QuotationResponseWithSupplierDTO> responses = 
                 quotationResponseService.getAllQuotationResponsesWithSupplier();
             response.put("success", true);
             response.put("responses", responses);
             return ResponseEntity.ok(response);
-
+            
         } catch (Exception e) {
             response.put("success", false);
             response.put("message", "Error fetching quotation responses: " + e.getMessage());
@@ -484,14 +606,14 @@ public class QuotationController {
     @GetMapping("/{qId}/responses")
     public ResponseEntity<Map<String, Object>> getQuotationResponsesByQuotationId(@PathVariable Integer qId) {
         Map<String, Object> response = new HashMap<>();
-
+        
         try {
-            List<QuotationResponseWithSupplierDTO> responses =
+            List<QuotationResponseWithSupplierDTO> responses = 
                 quotationResponseService.getQuotationResponsesWithSupplierByQuotationId(qId);
             response.put("success", true);
             response.put("responses", responses);
             return ResponseEntity.ok(response);
-
+            
         } catch (Exception e) {
             response.put("success", false);
             response.put("message", "Error fetching quotation responses: " + e.getMessage());
@@ -505,14 +627,14 @@ public class QuotationController {
     @GetMapping("/responses/supplier/{supplierId}")
     public ResponseEntity<Map<String, Object>> getQuotationResponsesBySupplierId(@PathVariable Integer supplierId) {
         Map<String, Object> response = new HashMap<>();
-
+        
         try {
-            List<QuotationResponseWithSupplierDTO> responses =
+            List<QuotationResponseWithSupplierDTO> responses = 
                 quotationResponseService.getQuotationResponsesWithSupplierBySupplierId(supplierId);
             response.put("success", true);
             response.put("responses", responses);
             return ResponseEntity.ok(response);
-
+            
         } catch (Exception e) {
             response.put("success", false);
             response.put("message", "Error fetching quotation responses for supplier: " + e.getMessage());
@@ -526,11 +648,11 @@ public class QuotationController {
     @GetMapping("/responses/{responseId}")
     public ResponseEntity<Map<String, Object>> getQuotationResponseById(@PathVariable Integer responseId) {
         Map<String, Object> response = new HashMap<>();
-
+        
         try {
-            QuotationResponseWithSupplierDTO quotationResponse =
+            QuotationResponseWithSupplierDTO quotationResponse = 
                 quotationResponseService.getQuotationResponseWithSupplierById(responseId);
-
+            
             if (quotationResponse != null) {
                 response.put("success", true);
                 response.put("response", quotationResponse);
@@ -540,7 +662,7 @@ public class QuotationController {
                 response.put("message", "Quotation response not found");
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
             }
-
+            
         } catch (Exception e) {
             response.put("success", false);
             response.put("message", "Error fetching quotation response: " + e.getMessage());
@@ -554,10 +676,10 @@ public class QuotationController {
     @PostMapping("/responses")
     public ResponseEntity<Map<String, Object>> createQuotationResponse(@RequestBody QuotationResponseDTO quotationResponse) {
         Map<String, Object> response = new HashMap<>();
-
+        
         try {
             Integer responseId = quotationResponseService.createQuotationResponse(quotationResponse);
-
+            
             if (responseId != null) {
                 response.put("success", true);
                 response.put("message", "Quotation response created successfully");
@@ -568,7 +690,7 @@ public class QuotationController {
                 response.put("message", "Failed to create quotation response");
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
             }
-
+            
         } catch (Exception e) {
             response.put("success", false);
             response.put("message", "Error creating quotation response: " + e.getMessage());
@@ -581,14 +703,14 @@ public class QuotationController {
      */
     @PutMapping("/responses/{responseId}/status")
     public ResponseEntity<Map<String, Object>> updateQuotationResponseStatus(
-        @PathVariable Integer responseId,
-        @RequestBody Map<String, String> request) {
+            @PathVariable Integer responseId, 
+            @RequestBody Map<String, String> request) {
         Map<String, Object> response = new HashMap<>();
-
+        
         try {
             String status = request.get("status");
             boolean updated = quotationResponseService.updateQuotationResponseStatus(responseId, status);
-
+            
             if (updated) {
                 response.put("success", true);
                 response.put("message", "Quotation response status updated successfully");
@@ -598,65 +720,7 @@ public class QuotationController {
                 response.put("message", "Failed to update quotation response status");
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
             }
-
-        } catch (Exception e) {
-            response.put("success", false);
-            response.put("message", "Error updating quotation response status: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-        }
-    }
-
-    /**
-     * Update quotation response status and auto-check for quotation closure
-     */
-    @PutMapping("/responses/{responseId}/status-with-auto-close")
-    public ResponseEntity<Map<String, Object>> updateQuotationResponseStatusWithAutoClose(
-        @PathVariable Integer responseId,
-        @RequestBody Map<String, String> request) {
-        Map<String, Object> response = new HashMap<>();
-
-        try {
-            String status = request.get("status");
-
-            // Get the quotation response to find the quotation ID
-            QuotationResponseDTO quotationResponse = quotationResponseService.getQuotationResponseById(responseId);
-            if (quotationResponse == null) {
-                response.put("success", false);
-                response.put("message", "Quotation response not found");
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
-            }
-
-            // Update the status
-            boolean updated = quotationResponseService.updateQuotationResponseStatus(responseId, status);
-
-            if (updated) {
-                response.put("success", true);
-                response.put("message", "Quotation response status updated successfully");
-                response.put("responseId", responseId);
-                response.put("newStatus", status);
-
-                // If status is rejected, try to close the quotation
-                if ("rejected".equalsIgnoreCase(status)) {
-                    boolean closed = quotationService.closeQuotationIfNoResponsesOrAllRejected(quotationResponse.getQId());
-                    if (closed) {
-                        response.put("quotationClosed", true);
-                        response.put("quotationId", quotationResponse.getQId());
-                        response.put("message", "Quotation response status updated and quotation closed automatically");
-                    } else {
-                        response.put("quotationClosed", false);
-                        response.put("quotationId", quotationResponse.getQId());
-                    }
-                } else {
-                    response.put("quotationClosed", false);
-                }
-
-                return ResponseEntity.ok(response);
-            } else {
-                response.put("success", false);
-                response.put("message", "Failed to update quotation response status");
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-            }
-
+            
         } catch (Exception e) {
             response.put("success", false);
             response.put("message", "Error updating quotation response status: " + e.getMessage());
@@ -669,14 +733,14 @@ public class QuotationController {
      */
     @PutMapping("/responses/{responseId}")
     public ResponseEntity<Map<String, Object>> updateQuotationResponse(
-        @PathVariable Integer responseId,
-        @RequestBody QuotationResponseDTO quotationResponse) {
+            @PathVariable Integer responseId,
+            @RequestBody QuotationResponseDTO quotationResponse) {
         Map<String, Object> response = new HashMap<>();
-
+        
         try {
             quotationResponse.setResponseId(responseId);
             boolean updated = quotationResponseService.updateQuotationResponse(quotationResponse);
-
+            
             if (updated) {
                 response.put("success", true);
                 response.put("message", "Quotation response updated successfully");
@@ -686,7 +750,7 @@ public class QuotationController {
                 response.put("message", "Failed to update quotation response");
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
             }
-
+            
         } catch (Exception e) {
             response.put("success", false);
             response.put("message", "Error updating quotation response: " + e.getMessage());
@@ -700,10 +764,10 @@ public class QuotationController {
     @DeleteMapping("/responses/{responseId}")
     public ResponseEntity<Map<String, Object>> deleteQuotationResponse(@PathVariable Integer responseId) {
         Map<String, Object> response = new HashMap<>();
-
+        
         try {
             boolean deleted = quotationResponseService.deleteQuotationResponse(responseId);
-
+            
             if (deleted) {
                 response.put("success", true);
                 response.put("message", "Quotation response deleted successfully");
@@ -713,7 +777,7 @@ public class QuotationController {
                 response.put("message", "Failed to delete quotation response");
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
             }
-
+            
         } catch (Exception e) {
             response.put("success", false);
             response.put("message", "Error deleting quotation response: " + e.getMessage());
@@ -728,21 +792,21 @@ public class QuotationController {
      */
     @PostMapping("/responses/{responseId}/create-purchase-order")
     public ResponseEntity<Map<String, Object>> createPurchaseOrderFromResponse(
-        @PathVariable Integer responseId,
-        @RequestBody(required = false) Map<String, Object> request) {
+            @PathVariable Integer responseId,
+            @RequestBody(required = false) Map<String, Object> request) {
         Map<String, Object> response = new HashMap<>();
-
+        
         try {
             // Extract additional purchase order details (all optional)
             String deliveryDateStr = null;
             String paymentStatus = "pending";
             Boolean orderStatus = false;
-
+            
             if (request != null) {
                 deliveryDateStr = (String) request.get("estimatedDeliveryDate");
                 String requestPaymentStatus = (String) request.get("paymentStatus");
                 Boolean requestOrderStatus = (Boolean) request.get("orderStatus");
-
+                
                 if (requestPaymentStatus != null && !requestPaymentStatus.isEmpty()) {
                     paymentStatus = requestPaymentStatus;
                 }
@@ -750,7 +814,7 @@ public class QuotationController {
                     orderStatus = requestOrderStatus;
                 }
             }
-
+            
             java.time.LocalDate deliveryDate = null;
             if (deliveryDateStr != null && !deliveryDateStr.isEmpty()) {
                 try {
@@ -761,11 +825,11 @@ public class QuotationController {
                     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
                 }
             }
-
+            
             // Create purchase order from quotation response
             Integer purchaseOrderId = quotationResponseService.createPurchaseOrderFromResponse(
                 responseId, deliveryDate, paymentStatus, orderStatus);
-
+            
             if (purchaseOrderId != null) {
                 response.put("success", true);
                 response.put("message", "Purchase order created successfully from quotation response");
@@ -776,7 +840,7 @@ public class QuotationController {
                 response.put("message", "Failed to create purchase order from quotation response");
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
             }
-
+            
         } catch (Exception e) {
             response.put("success", false);
             response.put("message", "Error creating purchase order: " + e.getMessage());
@@ -956,37 +1020,66 @@ public class QuotationController {
 
             for (Integer supplierId : supplierIds) {
                 try {
+                    System.out.println("=== DEBUG: Processing supplier ID: " + supplierId);
+                    
                     SupplierDTO supplier = supplierService.getSupplierById(supplierId);
-                    if (supplier != null && supplier.getEmail() != null && !supplier.getEmail().isEmpty()) {
-                        mailService.sendQuotationRequest(
-                            supplier.getEmail(),
-                            supplier.getSupplier_name(),
-                            qId,
-                            projectName,
-                            qsName,
-                            qsEmail,
-                            quotation.getDeadline() != null ? quotation.getDeadline().toString() : "Not specified"
-                        );
-
-                        emailsSent++;
-                        Map<String, Object> emailResult = new HashMap<>();
-                        emailResult.put("supplierId", supplierId);
-                        emailResult.put("supplierName", supplier.getSupplier_name());
-                        emailResult.put("email", supplier.getEmail());
-                        emailResult.put("status", "sent");
-                        emailResults.add(emailResult);
-                    } else {
+                    System.out.println("=== DEBUG: Supplier data: " + supplier);
+                    
+                    if (supplier == null) {
+                        System.out.println("=== ERROR: Supplier is null for ID: " + supplierId);
                         Map<String, Object> emailResult = new HashMap<>();
                         emailResult.put("supplierId", supplierId);
                         emailResult.put("status", "failed");
-                        emailResult.put("reason", "Invalid supplier or email not found");
+                        emailResult.put("reason", "Supplier not found in database");
                         emailResults.add(emailResult);
+                        continue;
                     }
+                    
+                    System.out.println("=== DEBUG: Supplier email: " + supplier.getEmail());
+                    System.out.println("=== DEBUG: Supplier name: " + supplier.getSupplier_name());
+                    
+                    if (supplier.getEmail() == null || supplier.getEmail().isEmpty()) {
+                        System.out.println("=== ERROR: Supplier email is null or empty for ID: " + supplierId);
+                        Map<String, Object> emailResult = new HashMap<>();
+                        emailResult.put("supplierId", supplierId);
+                        emailResult.put("supplierName", supplier.getSupplier_name());
+                        emailResult.put("status", "failed");
+                        emailResult.put("reason", "Supplier email not found in users table");
+                        emailResults.add(emailResult);
+                        continue;
+                    }
+                    
+                    System.out.println("=== DEBUG: Sending email to: " + supplier.getEmail());
+                    
+                    mailService.sendQuotationRequest(
+                        supplier.getEmail(),
+                        supplier.getSupplier_name(),
+                        qId,
+                        projectName,
+                        qsName,
+                        qsEmail,
+                        quotation.getDeadline() != null ? quotation.getDeadline().toString() : "Not specified"
+                    );
+
+                    System.out.println("=== SUCCESS: Email sent to: " + supplier.getEmail());
+                    
+                    emailsSent++;
+                    Map<String, Object> emailResult = new HashMap<>();
+                    emailResult.put("supplierId", supplierId);
+                    emailResult.put("supplierName", supplier.getSupplier_name());
+                    emailResult.put("email", supplier.getEmail());
+                    emailResult.put("status", "sent");
+                    emailResults.add(emailResult);
+                    
                 } catch (Exception e) {
+                    System.out.println("=== ERROR: Exception for supplier ID " + supplierId + ": " + e.getMessage());
+                    e.printStackTrace();
+                    
                     Map<String, Object> emailResult = new HashMap<>();
                     emailResult.put("supplierId", supplierId);
                     emailResult.put("status", "failed");
                     emailResult.put("reason", "Error: " + e.getMessage());
+                    emailResult.put("errorType", e.getClass().getSimpleName());
                     emailResults.add(emailResult);
                 }
             }
@@ -1132,6 +1225,9 @@ public class QuotationController {
 
             for (SupplierDTO supplier : activeSuppliers) {
                 try {
+                    System.out.println("=== DEBUG: Sending to all suppliers - Processing: " + supplier.getSupplier_name());
+                    System.out.println("=== DEBUG: Supplier ID: " + supplier.getSupplier_id() + ", Email: " + supplier.getEmail());
+                    
                     mailService.sendQuotationRequest(
                         supplier.getEmail(),
                         supplier.getSupplier_name(),
@@ -1142,11 +1238,14 @@ public class QuotationController {
                         quotation.getDeadline() != null ? quotation.getDeadline().toString() : "Not specified"
                     );
 
+                    System.out.println("=== SUCCESS: Email sent to: " + supplier.getEmail());
+
                     // Add supplier to quotation_supplier table if not already added
                     try {
                         quotationService.addQuotationSupplier(qId, supplier.getSupplier_id());
                     } catch (Exception e) {
                         // Supplier might already be added, ignore duplicate errors
+                        System.out.println("=== INFO: Supplier already linked or error linking: " + e.getMessage());
                     }
 
                     emailsSent++;
@@ -1158,11 +1257,16 @@ public class QuotationController {
                     emailResults.add(emailResult);
 
                 } catch (Exception e) {
+                    System.out.println("=== ERROR: Failed to send email to " + supplier.getSupplier_name() + ": " + e.getMessage());
+                    e.printStackTrace();
+                    
                     Map<String, Object> emailResult = new HashMap<>();
                     emailResult.put("supplierId", supplier.getSupplier_id());
                     emailResult.put("supplierName", supplier.getSupplier_name());
+                    emailResult.put("email", supplier.getEmail());
                     emailResult.put("status", "failed");
                     emailResult.put("reason", "Error: " + e.getMessage());
+                    emailResult.put("errorType", e.getClass().getSimpleName());
                     emailResults.add(emailResult);
                 }
             }
@@ -1392,6 +1496,7 @@ public class QuotationController {
     }
 	
 	// ============ SUPPLIER QUOTATION ENDPOINTS (from Dev) ============
+
     // These endpoints bridge the gap between SupplierQuotationController and frontend expectations
 
     /**

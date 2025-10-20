@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Getter
 @Setter
@@ -27,4 +28,7 @@ public class PaymentConfirmationDTO {
     private String status; // e.g., "Pending", "Approved", "Rejected"
     @JsonProperty("confirmation_date")
     private LocalDate confirmationDate;
+
+    private List<ProjectDocumentsDTO> documents;
+    private PaymentDTO payments;
 }

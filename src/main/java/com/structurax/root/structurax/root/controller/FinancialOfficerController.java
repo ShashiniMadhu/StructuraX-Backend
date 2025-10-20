@@ -1,6 +1,7 @@
 package com.structurax.root.structurax.root.controller;
 
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.structurax.root.structurax.root.dto.*;
 import com.structurax.root.structurax.root.service.FinancialOfficerService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,10 +10,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = "*")
 @RestController
 @RequestMapping("/financial_officer")
 public class FinancialOfficerController {
@@ -144,10 +147,26 @@ public class FinancialOfficerController {
 
 
     @PostMapping("/labor_salary")
-    public ResponseEntity<LaborSalaryDTO> insertSalary(@RequestBody LaborSalaryDTO laborSalaryDTO){
-        financialOfficerService.insertSalary(laborSalaryDTO);
-        return new ResponseEntity<>(laborSalaryDTO, HttpStatus.OK);
+    public ResponseEntity<?> insertLaborSalary(@RequestBody Object body) {
+        try {
+            if (body instanceof List<?>) {
+                List<?> list = (List<?>) body;
+                for (Object obj : list) {
+                    LaborSalaryDTO dto = new ObjectMapper().convertValue(obj, LaborSalaryDTO.class);
+                    financialOfficerService.insertSalary(dto);
+                }
+                return ResponseEntity.ok("Multiple salaries inserted successfully");
+            } else {
+                LaborSalaryDTO dto = new ObjectMapper().convertValue(body, LaborSalaryDTO.class);
+                financialOfficerService.insertSalary(dto);
+                return ResponseEntity.ok("Single salary inserted successfully");
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error inserting salaries: " + e.getMessage());
+        }
     }
+
 
     @DeleteMapping("/labor_salary/{salaryId}")
     public ResponseEntity<LaborSalaryDTO> deleteSalaryRecordById(@PathVariable int salaryId){
@@ -159,6 +178,159 @@ public class FinancialOfficerController {
     public ResponseEntity<List<LaborSalaryDTO>> updateSalaryRecord(@RequestBody List<LaborSalaryDTO> laborSalaryDTOList) {
         List<LaborSalaryDTO> updatedList = financialOfficerService.updateSalaryRecord(laborSalaryDTOList);
         return new ResponseEntity<>(updatedList, HttpStatus.OK);
+    }
+
+    @PostMapping("/labor_payment")
+    public ResponseEntity<LaborPaymentDTO> createLaborPayment(@ModelAttribute LaborPaymentDTO paymentDTO){
+        LaborPaymentDTO laborPaymentDTO = financialOfficerService.createLaborPayment(paymentDTO);
+        return new ResponseEntity<>(laborPaymentDTO,HttpStatus.OK);
+    }
+
+    @GetMapping("/labor_payment")
+    public ResponseEntity<List<LaborPaymentDTO>> getAllLaborPayments(){
+        List<LaborPaymentDTO> paymentDTOS = financialOfficerService.getAllLaborPayments();
+        System.out.println("Endpoint hit");
+        return new ResponseEntity<>(paymentDTOS, HttpStatus.OK);
+    }
+
+    @PutMapping("/labor_payment")
+    public ResponseEntity<LaborPaymentDTO> updateLaborPaymentRecord(@ModelAttribute LaborPaymentDTO laborPaymentDTO){
+        LaborPaymentDTO paymentDTO = financialOfficerService.updateLaborPaymentRecord(laborPaymentDTO);
+        return new ResponseEntity<>(paymentDTO,HttpStatus.OK);
+    }
+
+    @DeleteMapping("/labor_payment/{paymentId}")
+    public ResponseEntity<LaborPaymentDTO> deletePaymentRecordById(@PathVariable int paymentId){
+        LaborPaymentDTO paymentRecord = financialOfficerService.deletePaymentRecordById(paymentId);
+        return new ResponseEntity<>(paymentRecord, HttpStatus.OK);
+    }
+
+    @GetMapping("/orders")
+    public ResponseEntity<List<PurchaseOrderDTO>> getAllOrders(){
+        List<PurchaseOrderDTO> orderDTOS = financialOfficerService.getAllOrders();
+        return new ResponseEntity<>(orderDTOS, HttpStatus.OK);
+    }
+
+    @PutMapping("/orders")
+    public ResponseEntity<PurchaseOrderDTO> updateOrderPaymentStatus(@RequestBody PurchaseOrderDTO orderDTO){
+        PurchaseOrderDTO orderDTO1 = financialOfficerService.updateOrdersPaymentStatus(orderDTO);
+        return new ResponseEntity<>(orderDTO1,HttpStatus.OK);
+    }
+
+    @PostMapping("/petty_cash")
+    public ResponseEntity<PettyCashDTO> insertPettyCash(@RequestBody PettyCashDTO pettyCashDTO){
+        PettyCashDTO pettyCashDTO1 = financialOfficerService.insertPettyCash(pettyCashDTO);
+        return new ResponseEntity<>(pettyCashDTO1,HttpStatus.OK);
+    }
+
+    @PutMapping("/petty_cash")
+    public ResponseEntity<?> updatePettyCash(@RequestBody PettyCashDTO pettyCashDTO) {
+        try {
+            Boolean updated = financialOfficerService.updatePettyCash(pettyCashDTO);
+
+            if (Boolean.TRUE.equals(updated)) {
+                // success: return a message or the updated object
+                return ResponseEntity.ok(Map.of(
+                        "message", "Petty cash updated successfully",
+                        "pettyCashId", pettyCashDTO.getPettyCashId()
+                ));
+            } else {
+                // business rule prevented update -> return a message + 403 (Forbidden)
+                return ResponseEntity
+                        .status(HttpStatus.FORBIDDEN)
+                        .body(Map.of("message", "Cannot update petty cash: expense records already exist"));
+            }
+
+        } catch (Exception e) {
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", "Error updating petty cash"));
+        }
+    }
+
+
+    @DeleteMapping("/petty_cash/{pettyCashId}")
+    public ResponseEntity<?> deletePettyCash(@PathVariable int pettyCashId) {
+        try {
+            Boolean deleted = financialOfficerService.deletePettyCash(pettyCashId);
+
+            if (Boolean.TRUE.equals(deleted)) {
+                // Success
+                return ResponseEntity.ok(Map.of(
+                        "message", "Petty cash deleted successfully",
+                        "pettyCashId", pettyCashId
+                ));
+            } else {
+                // Not allowed due to existing expense records
+                return ResponseEntity
+                        .status(HttpStatus.FORBIDDEN)
+                        .body(Map.of("message", "Cannot delete petty cash: expense records already exist"));
+            }
+
+        } catch (Exception e) {
+            // Unexpected error
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", "Error deleting petty cash"));
+        }
+    }
+
+
+    @GetMapping("/petty_cash")
+    public ResponseEntity<List<PettyCashDTO>> getAllPettyCash(){
+        List<PettyCashDTO> pettyCashDTOList = financialOfficerService.getAllPettyCash();
+        return new ResponseEntity<>(pettyCashDTOList, HttpStatus.OK);
+    }
+
+    @GetMapping("/payment_confirmation")
+    public ResponseEntity<List<PaymentConfirmationDTO>> getAllConfirmations() {
+        List<PaymentConfirmationDTO> confirmations = financialOfficerService.getAllConfirmations();
+        return new ResponseEntity<>(confirmations, HttpStatus.OK);
+    }
+
+    // Get confirmations by project
+    @GetMapping("/payment_confirmation/{projectId}")
+    public ResponseEntity<List<PaymentConfirmationDTO>> getConfirmationsByProject(@PathVariable String projectId) {
+        List<PaymentConfirmationDTO> confirmations = financialOfficerService.getConfirmationsByProject(projectId);
+        return new ResponseEntity<>(confirmations, HttpStatus.OK);
+    }
+
+    // Create a new confirmation
+    @PostMapping("/payment_confirmation")
+    public ResponseEntity<PaymentConfirmationDTO> createConfirmation(@RequestBody PaymentConfirmationDTO dto) {
+        PaymentConfirmationDTO created = financialOfficerService.insertConfirmation(dto);
+        return new ResponseEntity<>(created, HttpStatus.CREATED);
+    }
+
+    // Update a confirmation
+    @PutMapping("/payment_confirmation")
+    public ResponseEntity<PaymentConfirmationDTO> updateConfirmation(@RequestBody PaymentConfirmationDTO dto) {
+        PaymentConfirmationDTO updated = financialOfficerService.updateConfirmation(dto);
+        return new ResponseEntity<>(updated, HttpStatus.OK);
+    }
+
+    // Delete a confirmation
+    @DeleteMapping("/payment_confirmation/{confirmationId}")
+    public ResponseEntity<Void> deleteConfirmation(@PathVariable int confirmationId) {
+        financialOfficerService.deleteConfirmation(confirmationId);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+
+    @GetMapping("/payments")
+    public ResponseEntity<List<PaymentDTO>> getAllPayments(){
+        List<PaymentDTO> paymentDTOS = financialOfficerService.getAllPayments();
+        return new ResponseEntity<>(paymentDTOS, HttpStatus.OK);
+    }
+
+    @GetMapping("/expenses/{projectId}")
+    public ResponseEntity<BigDecimal> getProjectExpenses(@PathVariable String projectId) {
+        if (projectId == null || projectId.isEmpty()) {
+            return ResponseEntity.badRequest().body(BigDecimal.ZERO);
+        }
+
+        BigDecimal totalExpenses = financialOfficerService.calculateProjectExpenses(projectId);
+        return ResponseEntity.ok(totalExpenses);
     }
 
 

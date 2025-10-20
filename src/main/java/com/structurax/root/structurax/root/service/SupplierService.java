@@ -1,18 +1,13 @@
 package com.structurax.root.structurax.root.service;
 
-import java.util.List;
+import com.structurax.root.structurax.root.dto.*;
 
-import com.structurax.root.structurax.root.dto.CatalogDTO;
-import com.structurax.root.structurax.root.dto.SupplierDTO;
+import java.util.List;
 
 public interface SupplierService {
     CatalogDTO createCatalog(CatalogDTO dto);
     List<CatalogDTO> getAllCatalogs();
     void deleteCatalog(Integer itemId);
     CatalogDTO getCatalogById(Integer itemId);
-
-    
-    List<SupplierDTO> getAllSuppliers();
-    
-    SupplierDTO getSupplierById(Integer supplierId);
+    SupplierDTO getSupplierById(int supplierId);
 }

@@ -64,6 +64,11 @@ public class SiteSupervisorServiceImpl implements SiteSupervisorService {
     }
 
     @Override
+    public List<RequestSiteResourcesDTO> getAllLaborRequests() {
+        return siteSupervisorDAO.getAllLaborRequests();
+    }
+
+    @Override
     public RequestSiteResourcesDTO createMaterialRequest(RequestSiteResourcesDTO requestDTO) {
         RequestSiteResourcesDTO request=siteSupervisorDAO.createMaterialRequest(requestDTO);
         return request;
@@ -104,6 +109,56 @@ public class SiteSupervisorServiceImpl implements SiteSupervisorService {
     @Override
     public boolean deleteToDoTask(Integer taskId) {
         return siteSupervisorDAO.deleteToDoTask(taskId);
+    }
+
+    @Override
+    public DailyUpdatesDTO insertDailyUpdates(DailyUpdatesDTO dailyUpdatesDTO) {
+        return siteSupervisorDAO.insertDailyUpdates(dailyUpdatesDTO);
+    }
+
+    @Override
+    public List<DailyUpdatesDTO> getAllDailyUpdatesBySsId(String ssId) {
+        return siteSupervisorDAO.getAllDailyUpdatesBySsId(ssId);
+    }
+
+    @Override
+    public DailyUpdatesDTO updateDailyUpdates(DailyUpdatesDTO dailyUpdatesDTO) {
+        return siteSupervisorDAO.updateDailyUpdates(dailyUpdatesDTO);
+    }
+
+    @Override
+    public boolean deleteDailyUpdate(int updateId) {
+        return siteSupervisorDAO.deleteDailyUpdate(updateId);
+    }
+
+    @Override
+    public WBSDTO updateWbsStatus(WBSDTO wbsdto) {
+        return siteSupervisorDAO.updateWbsStatus(wbsdto);
+    }
+
+    @Override
+    public List<WBSDTO> getAllWbsBySsId(String ssId) {
+        return siteSupervisorDAO.getAllWbsBySsId(ssId);
+    }
+
+    @Override
+    public PettyCashRecordDTO insertPettyCashRecord(PettyCashRecordDTO recordDTO) {
+        return siteSupervisorDAO.insertPettyCashRecord(recordDTO);
+    }
+
+    @Override
+    public List<PettyCashDTO> getPettyCashBySsId(String ssId) {
+        return siteSupervisorDAO.getPettyCashBySsId(ssId);
+    }
+
+    @Override
+    public PettyCashRecordDTO updatePettyCashRecord(PettyCashRecordDTO recordDTO) {
+        return siteSupervisorDAO.updatePettyCashRecord(recordDTO);
+    }
+
+    @Override
+    public boolean deletePettyCashRecord(int recordId) {
+        return siteSupervisorDAO.deletePettyCashRecord(recordId);
     }
 
     /*@Override

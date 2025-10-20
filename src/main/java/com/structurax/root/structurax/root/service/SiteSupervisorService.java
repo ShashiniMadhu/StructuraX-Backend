@@ -28,6 +28,8 @@ public interface SiteSupervisorService {
 
     List<RequestSiteResourcesDTO> getAllToolRequests();
 
+    List<RequestSiteResourcesDTO> getAllLaborRequests();
+
     //RequestDTO getRequestById(Integer id);
     RequestSiteResourcesDTO createMaterialRequest(RequestSiteResourcesDTO requestDTO);
 
@@ -46,4 +48,27 @@ public interface SiteSupervisorService {
     boolean updateTodo(TodoDTO todoDTO);
 
     boolean deleteToDoTask(Integer taskId);
+
+    // daily updates
+    DailyUpdatesDTO insertDailyUpdates(DailyUpdatesDTO dailyUpdatesDTO);
+
+    List<DailyUpdatesDTO> getAllDailyUpdatesBySsId(String ssId);
+
+    DailyUpdatesDTO updateDailyUpdates(DailyUpdatesDTO dailyUpdatesDTO);
+
+    boolean deleteDailyUpdate(int updateId);
+
+    //wbs
+    WBSDTO updateWbsStatus(WBSDTO wbsdto);
+
+    List<WBSDTO> getAllWbsBySsId(String ssId);
+
+    // petty cash record
+    PettyCashRecordDTO insertPettyCashRecord(PettyCashRecordDTO recordDTO);
+
+    List<PettyCashDTO> getPettyCashBySsId(String ssId);
+
+    PettyCashRecordDTO updatePettyCashRecord(PettyCashRecordDTO recordDTO);
+
+    boolean deletePettyCashRecord(int recordId);
 }

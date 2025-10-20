@@ -12,7 +12,7 @@ import java.sql.Date;
 public class TodoDTO {
 
     @JsonProperty("task_id")
-    private Integer taskId;
+    private int taskId;
     @JsonProperty("employee_id")
     private String employeeId;
     private String status;
@@ -20,7 +20,7 @@ public class TodoDTO {
     private Date date;
 
 
-    public TodoDTO(Integer taskId, String employeeId, String status, String description, Date date) {
+    public TodoDTO(int taskId, String employeeId, String status, String description, Date date) {
         this.taskId = taskId;
         this.employeeId = employeeId;
         this.status = status;

@@ -19,10 +19,14 @@ public class ProjectManagerServiceImpl implements ProjectManagerService {
         return visitLogDAO.createVisitLog(dto);
     }
 
+    @Override
+    public List<SiteVisitLogDTO> getAllVisitLogs() {
+        return visitLogDAO.getAllVisitLogs();
+    }
 
     @Override
-    public List<SiteVisitLogDTO> getSiteVisitLogsByPmId(String pmId) {
-        return visitLogDAO.getSiteVisitLogsByPmId(pmId);
+    public SiteVisitLogDTO getVisitLogById(Integer id) {
+        return visitLogDAO.getVisitLogById(id);
     }
 
     @Override
@@ -31,10 +35,9 @@ public class ProjectManagerServiceImpl implements ProjectManagerService {
     }
 
     @Override
-    public List<VisitRequestDTO> getAllVisitRequests( String pmId){
-        return visitLogDAO.getAllVisitRequests(pmId);
+    public List<VisitRequestDTO> getAllVisitRequests(){
+        return visitLogDAO.getAllVisitRequests();
     }
-
     @Override
     public  boolean updateVisitRequest(VisitRequestDTO dto){
         return  visitLogDAO.updateVisitRequest(dto);
@@ -114,7 +117,7 @@ public class ProjectManagerServiceImpl implements ProjectManagerService {
         return visitLogDAO.getBOQItemsByProjectId(projectId);
     }
     @Override
-    public List<PaymentDTO> getPaymentByProjectId(String projectId) {
+    public PaymentDTO getPaymentByProjectId(String projectId) {
         return visitLogDAO.getPaymentByProjectId(projectId);
     }
 
@@ -128,9 +131,10 @@ public class ProjectManagerServiceImpl implements ProjectManagerService {
         return visitLogDAO.getSiteResourcesByRequestId(requestId);
     }
 
+
     @Override
-    public List<ProjectMaterialsDTO> getProjectMaterialsByProjectId(String projectId){
-        return  visitLogDAO.getProjectMaterialsByProjectId(projectId);
+    public List<String> getOngoingProjectIds() {
+        return visitLogDAO.getOngoingProjectIds();
     }
 
 

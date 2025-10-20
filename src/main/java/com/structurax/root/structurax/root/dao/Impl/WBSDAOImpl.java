@@ -1,220 +1,237 @@
 package com.structurax.root.structurax.root.dao.Impl;
 
-import com.structurax.root.structurax.root.dao.WBSDAO;
-import com.structurax.root.structurax.root.dto.WBSDTO;
-import com.structurax.root.structurax.root.util.DatabaseConnection;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.sql.PreparedStatement;
+import java.sql.Statement;
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
-import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
+import com.structurax.root.structurax.root.dao.WBSDAO;
+import com.structurax.root.structurax.root.dto.WBSDTO;
 
 @Repository
 public class WBSDAOImpl implements WBSDAO {
-
-    private static final Logger logger = LoggerFactory.getLogger(WBSDAOImpl.class);
-    private final DatabaseConnection databaseConnection;
-
-    public WBSDAOImpl(DatabaseConnection databaseConnection) {
-        this.databaseConnection = databaseConnection;
-    }
-
+    
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+    
     @Override
-    public List<WBSDTO> getWBSByProjectId(String projectId) {
-        String sql = "SELECT task_id, project_id, parent_id, name, status, milestone " +
-                     "FROM wbs WHERE project_id = ? ORDER BY task_id";
-        List<WBSDTO> wbsList = new ArrayList<>();
-
-        try (Connection conn = databaseConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, projectId);
-            ResultSet rs = ps.executeQuery();
-
-            while (rs.next()) {
-                wbsList.add(mapResultSetToDTO(rs));
-            }
-            logger.info("Retrieved {} WBS tasks for project_id: {}", wbsList.size(), projectId);
-        } catch (SQLException e) {
-            logger.error("Error retrieving WBS tasks for project {}: {}", projectId, e.getMessage(), e);
-            throw new RuntimeException("Error retrieving WBS tasks: " + e.getMessage(), e);
-        }
-        return wbsList;
-    }
-
-    @Override
-    public WBSDTO getWBSByTaskId(Integer taskId) {
-        String sql = "SELECT task_id, project_id, parent_id, name, status, milestone " +
-                     "FROM wbs WHERE task_id = ?";
-
-        try (Connection conn = databaseConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, taskId);
-            ResultSet rs = ps.executeQuery();
-
-            if (rs.next()) {
-                logger.info("Retrieved WBS task with task_id: {}", taskId);
-                return mapResultSetToDTO(rs);
-            } else {
-                logger.warn("No WBS task found with task_id: {}", taskId);
-                return null;
-            }
-        } catch (SQLException e) {
-            logger.error("Error retrieving WBS task by id {}: {}", taskId, e.getMessage(), e);
-            throw new RuntimeException("Error retrieving WBS task: " + e.getMessage(), e);
-        }
-    }
-
-    @Override
-    public List<WBSDTO> getWBSByParentId(Integer parentId) {
-        String sql = "SELECT task_id, project_id, parent_id, name, status, milestone " +
-                     "FROM wbs WHERE parent_id = ? ORDER BY task_id";
-        List<WBSDTO> wbsList = new ArrayList<>();
-
-        try (Connection conn = databaseConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, parentId);
-            ResultSet rs = ps.executeQuery();
-
-            while (rs.next()) {
-                wbsList.add(mapResultSetToDTO(rs));
-            }
-            logger.info("Retrieved {} child WBS tasks for parent_id: {}", wbsList.size(), parentId);
-        } catch (SQLException e) {
-            logger.error("Error retrieving child WBS tasks for parent {}: {}", parentId, e.getMessage(), e);
-            throw new RuntimeException("Error retrieving child WBS tasks: " + e.getMessage(), e);
-        }
-        return wbsList;
-    }
-
-    @Override
-    public List<WBSDTO> getRootWBSTasks(String projectId) {
-        String sql = "SELECT task_id, project_id, parent_id, name, status, milestone " +
-                     "FROM wbs WHERE project_id = ? AND parent_id IS NULL ORDER BY task_id";
-        List<WBSDTO> wbsList = new ArrayList<>();
-
-        try (Connection conn = databaseConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, projectId);
-            ResultSet rs = ps.executeQuery();
-
-            while (rs.next()) {
-                wbsList.add(mapResultSetToDTO(rs));
-            }
-            logger.info("Retrieved {} root WBS tasks for project_id: {}", wbsList.size(), projectId);
-        } catch (SQLException e) {
-            logger.error("Error retrieving root WBS tasks for project {}: {}", projectId, e.getMessage(), e);
-            throw new RuntimeException("Error retrieving root WBS tasks: " + e.getMessage(), e);
-        }
-        return wbsList;
-    }
-
-    @Override
-    public WBSDTO createWBS(WBSDTO wbsDTO) {
+    public int insertWBSTask(WBSDTO wbs) {
         String sql = "INSERT INTO wbs (project_id, parent_id, name, status, milestone) VALUES (?, ?, ?, ?, ?)";
-
-        try (Connection conn = databaseConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-
-            ps.setString(1, wbsDTO.getProjectId());
-            if (wbsDTO.getParentId() != null) {
-                ps.setInt(2, wbsDTO.getParentId());
+        KeyHolder keyHolder = new GeneratedKeyHolder();
+        
+        jdbcTemplate.update(connection -> {
+            PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+            ps.setString(1, wbs.getProjectId());
+            if (wbs.getParentId() != null) {
+                ps.setInt(2, wbs.getParentId());
             } else {
-                ps.setNull(2, Types.INTEGER);
+                ps.setNull(2, java.sql.Types.INTEGER);
             }
-            ps.setString(3, wbsDTO.getName());
-            ps.setString(4, wbsDTO.getStatus());
-            ps.setBoolean(5, wbsDTO.getMilestone() != null ? wbsDTO.getMilestone() : false);
-
-            int affectedRows = ps.executeUpdate();
-
-            if (affectedRows == 0) {
-                throw new SQLException("Creating WBS task failed, no rows affected.");
-            }
-
-            try (ResultSet generatedKeys = ps.getGeneratedKeys()) {
-                if (generatedKeys.next()) {
-                    wbsDTO.setTaskId(generatedKeys.getInt(1));
+            ps.setString(3, wbs.getName());
+            ps.setString(4, wbs.getStatus());
+            ps.setBoolean(5, wbs.getMilestone() != null ? wbs.getMilestone() : false);
+            return ps;
+        }, keyHolder);
+        
+        if (keyHolder.getKey() != null) {
+            return keyHolder.getKey().intValue();
+        } else {
+            throw new RuntimeException("Failed to insert WBS task");
+        }
+    }
+    
+    @Override
+    public List<Integer> insertBulkWBSTasks(List<WBSDTO> wbsTasks) {
+        if (wbsTasks == null || wbsTasks.isEmpty()) {
+            throw new IllegalArgumentException("WBS tasks list cannot be null or empty");
+        }
+        
+        List<Integer> generatedIds = new java.util.ArrayList<>();
+        String sql = "INSERT INTO wbs (project_id, parent_id, name, status, milestone) VALUES (?, ?, ?, ?, ?)";
+        
+        try {
+            for (WBSDTO wbs : wbsTasks) {
+                KeyHolder keyHolder = new GeneratedKeyHolder();
+                
+                jdbcTemplate.update(connection -> {
+                    PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+                    ps.setString(1, wbs.getProjectId());
+                    if (wbs.getParentId() != null) {
+                        ps.setInt(2, wbs.getParentId());
+                    } else {
+                        ps.setNull(2, java.sql.Types.INTEGER);
+                    }
+                    ps.setString(3, wbs.getName());
+                    ps.setString(4, wbs.getStatus());
+                    ps.setBoolean(5, wbs.getMilestone() != null ? wbs.getMilestone() : false);
+                    return ps;
+                }, keyHolder);
+                
+                if (keyHolder.getKey() != null) {
+                    int generatedId = keyHolder.getKey().intValue();
+                    generatedIds.add(generatedId);
+                    
+                    // Update the taskId in the DTO for reference
+                    wbs.setTaskId(generatedId);
                 } else {
-                    throw new SQLException("Creating WBS task failed, no ID obtained.");
+                    throw new RuntimeException("Failed to insert WBS task: " + wbs.getName());
                 }
             }
-
-            logger.info("WBS task created successfully with ID: {}", wbsDTO.getTaskId());
-            return wbsDTO;
-
-        } catch (SQLException e) {
-            logger.error("Error creating WBS task: {}", e.getMessage(), e);
-            throw new RuntimeException("Error creating WBS task: " + e.getMessage(), e);
+            
+            return generatedIds;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to insert bulk WBS tasks: " + e.getMessage(), e);
         }
     }
-
+    
     @Override
-    public void updateWBS(WBSDTO wbsDTO) {
-        String sql = "UPDATE wbs SET name = ?, status = ?, milestone = ?, parent_id = ? WHERE task_id = ?";
-
-        try (Connection conn = databaseConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setString(1, wbsDTO.getName());
-            ps.setString(2, wbsDTO.getStatus());
-            ps.setBoolean(3, wbsDTO.getMilestone() != null ? wbsDTO.getMilestone() : false);
-            if (wbsDTO.getParentId() != null) {
-                ps.setInt(4, wbsDTO.getParentId());
-            } else {
-                ps.setNull(4, Types.INTEGER);
-            }
-            ps.setInt(5, wbsDTO.getTaskId());
-
-            int affectedRows = ps.executeUpdate();
-
-            if (affectedRows == 0) {
-                logger.warn("No WBS task found with task_id: {}", wbsDTO.getTaskId());
-            } else {
-                logger.info("WBS task updated successfully with ID: {}", wbsDTO.getTaskId());
-            }
-
-        } catch (SQLException e) {
-            logger.error("Error updating WBS task: {}", e.getMessage(), e);
-            throw new RuntimeException("Error updating WBS task: " + e.getMessage(), e);
-        }
+    public List<WBSDTO> getWBSByProjectId(String projectId) {
+        String sql = "SELECT task_id, project_id, parent_id, name, status, milestone FROM wbs WHERE project_id = ? ORDER BY task_id";
+        return jdbcTemplate.query(sql, new Object[]{projectId}, (rs, rowNum) -> {
+            WBSDTO wbs = new WBSDTO();
+            wbs.setTaskId(rs.getInt("task_id"));
+            wbs.setProjectId(rs.getString("project_id"));
+            int parentId = rs.getInt("parent_id");
+            wbs.setParentId(rs.wasNull() ? null : parentId);
+            wbs.setName(rs.getString("name"));
+            wbs.setStatus(rs.getString("status"));
+            wbs.setMilestone(rs.getBoolean("milestone"));
+            return wbs;
+        });
     }
-
+    
     @Override
-    public void deleteWBS(Integer taskId) {
-        String sql = "DELETE FROM wbs WHERE task_id = ?";
-
-        try (Connection conn = databaseConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setInt(1, taskId);
-            int affectedRows = ps.executeUpdate();
-
-            if (affectedRows == 0) {
-                logger.warn("No WBS task found with task_id: {}", taskId);
-            } else {
-                logger.info("WBS task deleted successfully with ID: {}", taskId);
-            }
-
-        } catch (SQLException e) {
-            logger.error("Error deleting WBS task: {}", e.getMessage(), e);
-            throw new RuntimeException("Error deleting WBS task: " + e.getMessage(), e);
+    public WBSDTO getWBSByTaskId(int taskId) {
+        String sql = "SELECT task_id, project_id, parent_id, name, status, milestone FROM wbs WHERE task_id = ?";
+        List<WBSDTO> results = jdbcTemplate.query(sql, new Object[]{taskId}, (rs, rowNum) -> {
+            WBSDTO wbs = new WBSDTO();
+            wbs.setTaskId(rs.getInt("task_id"));
+            wbs.setProjectId(rs.getString("project_id"));
+            int parentId = rs.getInt("parent_id");
+            wbs.setParentId(rs.wasNull() ? null : parentId);
+            wbs.setName(rs.getString("name"));
+            wbs.setStatus(rs.getString("status"));
+            wbs.setMilestone(rs.getBoolean("milestone"));
+            return wbs;
+        });
+        
+        return results.isEmpty() ? null : results.get(0);
+    }
+    
+    @Override
+    public boolean updateWBSTask(WBSDTO wbs) {
+        String sql = "UPDATE wbs SET project_id = ?, parent_id = ?, name = ?, status = ?, milestone = ? WHERE task_id = ?";
+        try {
+            int rowsAffected = jdbcTemplate.update(sql,
+                wbs.getProjectId(),
+                wbs.getParentId(),
+                wbs.getName(),
+                wbs.getStatus(),
+                wbs.getMilestone() != null ? wbs.getMilestone() : false,
+                wbs.getTaskId()
+            );
+            return rowsAffected > 0;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to update WBS task: " + e.getMessage(), e);
         }
     }
-
-    private WBSDTO mapResultSetToDTO(ResultSet rs) throws SQLException {
-        WBSDTO dto = new WBSDTO();
-        dto.setTaskId(rs.getInt("task_id"));
-        dto.setProjectId(rs.getString("project_id"));
-
-        int parentId = rs.getInt("parent_id");
-        dto.setParentId(rs.wasNull() ? null : parentId);
-
-        dto.setName(rs.getString("name"));
-        dto.setStatus(rs.getString("status"));
-        dto.setMilestone(rs.getBoolean("milestone"));
-
-        return dto;
+    
+    @Override
+    public boolean updateWBSMilestone(int taskId, boolean milestone) {
+        String sql = "UPDATE wbs SET milestone = ? WHERE task_id = ?";
+        try {
+            int rowsAffected = jdbcTemplate.update(sql, milestone, taskId);
+            return rowsAffected > 0;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to update WBS milestone: " + e.getMessage(), e);
+        }
+    }
+    
+    @Override
+    public boolean deleteWBSTask(int taskId) {
+        try {
+            // Disable foreign key checks temporarily
+            jdbcTemplate.execute("SET FOREIGN_KEY_CHECKS = 0");
+            
+            // Get all child tasks recursively and collect their IDs
+            List<Integer> taskIdsToDelete = new java.util.ArrayList<>();
+            collectTaskIds(taskId, taskIdsToDelete);
+            
+            // Delete all tasks at once
+            if (!taskIdsToDelete.isEmpty()) {
+                String placeholders = String.join(",", taskIdsToDelete.stream()
+                    .map(String::valueOf).toArray(String[]::new));
+                String sql = "DELETE FROM wbs WHERE task_id IN (" + placeholders + ")";
+                jdbcTemplate.update(sql);
+            }
+            
+            // Re-enable foreign key checks
+            jdbcTemplate.execute("SET FOREIGN_KEY_CHECKS = 1");
+            
+            return true;
+        } catch (Exception e) {
+            // Make sure to re-enable foreign key checks even if an error occurs
+            try {
+                jdbcTemplate.execute("SET FOREIGN_KEY_CHECKS = 1");
+            } catch (Exception ex) {
+                // Ignore error when re-enabling
+            }
+            throw new RuntimeException("Failed to delete WBS task: " + e.getMessage(), e);
+        }
+    }
+    
+    // Helper method to recursively collect all task IDs (including children)
+    private void collectTaskIds(int taskId, List<Integer> taskIds) {
+        taskIds.add(taskId);
+        List<WBSDTO> children = getChildTasks(taskId);
+        for (WBSDTO child : children) {
+            collectTaskIds(child.getTaskId(), taskIds);
+        }
+    }
+    
+    @Override
+    public int deleteWBSByProjectId(String projectId) {
+        try {
+            // Disable foreign key checks temporarily
+            jdbcTemplate.execute("SET FOREIGN_KEY_CHECKS = 0");
+            
+            // Delete all WBS tasks for the project
+            String sql = "DELETE FROM wbs WHERE project_id = ?";
+            int rowsDeleted = jdbcTemplate.update(sql, projectId);
+            
+            // Re-enable foreign key checks
+            jdbcTemplate.execute("SET FOREIGN_KEY_CHECKS = 1");
+            
+            return rowsDeleted;
+        } catch (Exception e) {
+            // Make sure to re-enable foreign key checks even if an error occurs
+            try {
+                jdbcTemplate.execute("SET FOREIGN_KEY_CHECKS = 1");
+            } catch (Exception ex) {
+                // Ignore error when re-enabling
+            }
+            throw new RuntimeException("Failed to delete WBS for project: " + e.getMessage(), e);
+        }
+    }
+    
+    @Override
+    public List<WBSDTO> getChildTasks(int parentId) {
+        String sql = "SELECT task_id, project_id, parent_id, name, status, milestone FROM wbs WHERE parent_id = ? ORDER BY task_id";
+        return jdbcTemplate.query(sql, new Object[]{parentId}, (rs, rowNum) -> {
+            WBSDTO wbs = new WBSDTO();
+            wbs.setTaskId(rs.getInt("task_id"));
+            wbs.setProjectId(rs.getString("project_id"));
+            int parentIdValue = rs.getInt("parent_id");
+            wbs.setParentId(rs.wasNull() ? null : parentIdValue);
+            wbs.setName(rs.getString("name"));
+            wbs.setStatus(rs.getString("status"));
+            wbs.setMilestone(rs.getBoolean("milestone"));
+            return wbs;
+        });
     }
 }

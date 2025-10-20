@@ -1,43 +1,71 @@
 package com.structurax.root.structurax.root.dao;
 
-import com.structurax.root.structurax.root.dto.WBSDTO;
-
 import java.util.List;
 
+import com.structurax.root.structurax.root.dto.WBSDTO;
+
 public interface WBSDAO {
-
-    /**
-     * Get all WBS tasks for a specific project
-     */
-    List<WBSDTO> getWBSByProjectId(String projectId);
-
-    /**
-     * Get a single WBS task by task ID
-     */
-    WBSDTO getWBSByTaskId(Integer taskId);
-
-    /**
-     * Get all child tasks for a parent task
-     */
-    List<WBSDTO> getWBSByParentId(Integer parentId);
-
-    /**
-     * Get all root level tasks (tasks with no parent) for a project
-     */
-    List<WBSDTO> getRootWBSTasks(String projectId);
-
     /**
      * Create a new WBS task
+     * @param wbs the WBS task to create
+     * @return the generated task_id
      */
-    WBSDTO createWBS(WBSDTO wbsDTO);
-
+    int insertWBSTask(WBSDTO wbs);
+    
     /**
-     * Update WBS task
+     * Bulk insert multiple WBS tasks at once
+     * @param wbsTasks list of WBS tasks to create
+     * @return list of generated task_ids in the same order
      */
-    void updateWBS(WBSDTO wbsDTO);
-
+    List<Integer> insertBulkWBSTasks(List<WBSDTO> wbsTasks);
+    
     /**
-     * Delete WBS task
+     * Get all WBS tasks for a specific project
+     * @param projectId the project ID
+     * @return list of WBS tasks
      */
-    void deleteWBS(Integer taskId);
+    List<WBSDTO> getWBSByProjectId(String projectId);
+    
+    /**
+     * Get a single WBS task by task ID
+     * @param taskId the task ID
+     * @return the WBS task
+     */
+    WBSDTO getWBSByTaskId(int taskId);
+    
+    /**
+     * Update a WBS task (all fields)
+     * @param wbs the WBS task with updated data
+     * @return true if update was successful
+     */
+    boolean updateWBSTask(WBSDTO wbs);
+    
+    /**
+     * Update only the milestone flag of a WBS task
+     * @param taskId the task ID
+     * @param milestone the new milestone value
+     * @return true if update was successful
+     */
+    boolean updateWBSMilestone(int taskId, boolean milestone);
+    
+    /**
+     * Delete a single WBS task by task ID
+     * @param taskId the task ID
+     * @return true if deletion was successful
+     */
+    boolean deleteWBSTask(int taskId);
+    
+    /**
+     * Delete all WBS tasks for a project
+     * @param projectId the project ID
+     * @return number of tasks deleted
+     */
+    int deleteWBSByProjectId(String projectId);
+    
+    /**
+     * Get child tasks of a parent task
+     * @param parentId the parent task ID
+     * @return list of child WBS tasks
+     */
+    List<WBSDTO> getChildTasks(int parentId);
 }

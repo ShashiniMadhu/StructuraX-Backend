@@ -6,7 +6,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,13 +26,14 @@ public class ProjectManagerController {
         return "New Visit Log Added Successfully";
     }
 
-    @GetMapping("/site-visits/{pm_id}")
-    public ResponseEntity<List<SiteVisitLogDTO>> getSiteVisitsByPmId(@PathVariable("pm_id") String pmId) {
-        List<SiteVisitLogDTO> siteVisits = ProjectManagerService.getSiteVisitLogsByPmId(pmId);
-        if (siteVisits.isEmpty()) {
-            return ResponseEntity.noContent().build();
-        }
-        return ResponseEntity.ok(siteVisits);
+    @GetMapping("/visits")
+    public ResponseEntity<List<SiteVisitLogDTO>> getAllVisits() {
+        return ResponseEntity.ok(ProjectManagerService.getAllVisitLogs());
+    }
+
+    @GetMapping("/visits/{id}")
+    public ResponseEntity<SiteVisitLogDTO> getVisitById(@PathVariable Integer id) {
+        return ResponseEntity.ok(ProjectManagerService.getVisitLogById(id));
     }
 
     @PutMapping("/visits/{id}")
@@ -48,13 +48,9 @@ public class ProjectManagerController {
         }
     }
 
-    @GetMapping("/request/{pm_id}")
-    public ResponseEntity<List<VisitRequestDTO>> getAllVisitRequests (@PathVariable("pm_id") String pmId){
-        List<VisitRequestDTO> allRequests = ProjectManagerService.getAllVisitRequests(pmId);
-        if (allRequests.isEmpty()) {
-            return ResponseEntity.noContent().build();
-        }
-        return ResponseEntity.ok(allRequests);
+    @GetMapping("/request")
+    public ResponseEntity<List<VisitRequestDTO>> getAllVisitRequests (){
+        return ResponseEntity.ok(ProjectManagerService.getAllVisitRequests());
     }
 
     @PutMapping("/request/{id}/accept")
@@ -212,20 +208,22 @@ public class ProjectManagerController {
     }
 
     @GetMapping("/payment/{project_id}")
-    public ResponseEntity<List<PaymentDTO>> getPaymentByProjectId(@PathVariable("project_id") String projectId) {
-        List<PaymentDTO> payments = ProjectManagerService.getPaymentByProjectId(projectId);
-        if (payments != null && !payments.isEmpty()) {
-            return ResponseEntity.ok(payments);
+    public ResponseEntity<PaymentDTO> getPaymentByProjectId(@PathVariable("project_id") String projectId) {
+        PaymentDTO payment = ProjectManagerService.getPaymentByProjectId(projectId);
+        if (payment != null) {
+            return ResponseEntity.ok(payment);
         }
-        // Return empty list instead of 404
-        return ResponseEntity.ok(new ArrayList<>());
+        return ResponseEntity.notFound().build();
+    }
+//hi
+
+    @GetMapping("/projects/ongoing/ids")
+    public ResponseEntity<List<String>> getOngoingProjectIds() {
+        List<String> ongoingProjectIds = ProjectManagerService.getOngoingProjectIds();
+        return ResponseEntity.ok(ongoingProjectIds);
     }
 
-    @GetMapping("/materials/{project_id}")
-    public ResponseEntity<List<ProjectMaterialsDTO>> getProjectMaterials(@PathVariable("project_id") String projectId){
-        List<ProjectMaterialsDTO> materials = ProjectManagerService.getProjectMaterialsByProjectId(projectId);
-        return ResponseEntity.ok(materials);
-    }
+
 
 
 
