@@ -18,6 +18,9 @@ public class CatalogDTO {
     @JsonProperty("item_id")
     private Integer itemId;
 
+    @JsonProperty("supplier_id")
+    private Integer supplierId;
+
     private String name;
     private String description;
     private Float rate; // Changed back to Float
