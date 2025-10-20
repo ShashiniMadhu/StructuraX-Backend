@@ -16,11 +16,17 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
+import com.structurax.root.structurax.root.dto.Project1DTO;
+import com.structurax.root.structurax.root.dto.PurchaseOrderDTO;
 import com.structurax.root.structurax.root.dto.QuotationDTO;
 import com.structurax.root.structurax.root.dto.QuotationItemDTO;
 import com.structurax.root.structurax.root.dto.QuotationResponseDTO;
 import com.structurax.root.structurax.root.dto.QuotationResponseWithSupplierDTO;
+import com.structurax.root.structurax.root.dto.SupplierDTO;
+import com.structurax.root.structurax.root.dto.UserDTO;
+import com.structurax.root.structurax.root.service.AdminService;
+import com.structurax.root.structurax.root.service.MailService;
+import com.structurax.root.structurax.root.service.PurchaseOrderService;
 import com.structurax.root.structurax.root.service.QuotationResponseService;
 import com.structurax.root.structurax.root.service.QuotationService;
 
@@ -44,17 +50,46 @@ public class QuotationController {
         
         try {
             // Extract quotation data
+            @SuppressWarnings("unchecked")
             Map<String, Object> quotationData = (Map<String, Object>) request.get("quotation");
+
+            if (quotationData == null) {
+                response.put("success", false);
+                response.put("message", "Quotation data is missing");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+            }
+
             QuotationDTO quotation = new QuotationDTO();
             quotation.setProjectId((String) quotationData.get("projectId"));
             quotation.setQsId((String) quotationData.get("qsId"));
-            quotation.setDate(java.sql.Date.valueOf(java.time.LocalDate.parse((String) quotationData.get("date"))));
-            quotation.setDeadline(java.sql.Date.valueOf(java.time.LocalDate.parse((String) quotationData.get("deadline"))));
+
+            // Parse date
+            try {
+                String dateStr = (String) quotationData.get("date");
+                quotation.setDate(java.sql.Date.valueOf(java.time.LocalDate.parse(dateStr)));
+            } catch (Exception e) {
+                response.put("success", false);
+                response.put("message", "Invalid date format. Use YYYY-MM-DD format.");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+            }
+
+            // Parse deadline
+            try {
+                String deadlineStr = (String) quotationData.get("deadline");
+                quotation.setDeadline(java.sql.Date.valueOf(java.time.LocalDate.parse(deadlineStr)));
+            } catch (Exception e) {
+                response.put("success", false);
+                response.put("message", "Invalid deadline format. Use YYYY-MM-DD format.");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+            }
+
             quotation.setStatus((String) quotationData.get("status"));
             quotation.setDescription((String) quotationData.get("description"));
 
             // Extract items data
+            @SuppressWarnings("unchecked")
             List<Map<String, Object>> itemsData = (List<Map<String, Object>>) request.get("items");
+
             List<QuotationItemDTO> items = null;
             
             if (itemsData != null && !itemsData.isEmpty()) {
@@ -63,8 +98,27 @@ public class QuotationController {
                     QuotationItemDTO item = new QuotationItemDTO();
                     item.setName((String) itemData.get("name"));
                     item.setDescription((String) itemData.get("description"));
-                    item.setAmount(new java.math.BigDecimal(itemData.get("amount").toString()));
-                    item.setQuantity(Integer.valueOf(itemData.get("quantity").toString()));
+
+                    // Parse amount
+                    try {
+                        Object amountObj = itemData.get("amount");
+                        item.setAmount(new java.math.BigDecimal(amountObj.toString()));
+                    } catch (Exception e) {
+                        response.put("success", false);
+                        response.put("message", "Invalid amount format for item: " + itemData.get("name"));
+                        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+                    }
+
+                    // Parse quantity
+                    try {
+                        Object quantityObj = itemData.get("quantity");
+                        item.setQuantity(Integer.valueOf(quantityObj.toString()));
+                    } catch (Exception e) {
+                        response.put("success", false);
+                        response.put("message", "Invalid quantity format for item: " + itemData.get("name"));
+                        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+                    }
+
                     items.add(item);
                 }
             }
@@ -72,15 +126,24 @@ public class QuotationController {
             // Extract suppliers data
             List<Integer> supplierIds = null;
             if (request.containsKey("supplierIds")) {
+                @SuppressWarnings("unchecked")
                 List<Object> supplierData = (List<Object>) request.get("supplierIds");
+
                 if (supplierData != null && !supplierData.isEmpty()) {
                     supplierIds = new java.util.ArrayList<>();
                     for (Object supplierId : supplierData) {
-                        supplierIds.add(Integer.valueOf(supplierId.toString()));
+                        try {
+                            supplierIds.add(Integer.valueOf(supplierId.toString()));
+                        } catch (Exception e) {
+                            response.put("success", false);
+                            response.put("message", "Invalid supplier ID format");
+                            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+                        }
                     }
                 }
             }
 
+            // Create quotation
             Integer qId;
             if (supplierIds != null && !supplierIds.isEmpty()) {
                 qId = quotationService.createQuotation(quotation, items, supplierIds);
@@ -92,13 +155,89 @@ public class QuotationController {
                 response.put("success", true);
                 response.put("message", "Quotation created successfully");
                 response.put("qId", qId);
+                
+                // Send emails to suppliers if status is 'sent' or 'pending' (auto-send for both)
+                if (supplierIds != null && !supplierIds.isEmpty()) {
+                    int emailCount = 0;
+                    List<Map<String, Object>> emailResults = new java.util.ArrayList<>();
+                    
+                    try {
+                        Project1DTO project = sqsService.getProjectById(quotation.getProjectId());
+                        String projectName = project != null ? project.getName() : "Project #" + quotation.getProjectId();
+                        
+                        UserDTO qsEmployee = adminService.getEmployeeById(quotation.getQsId());
+                        String qsName = qsEmployee != null ? qsEmployee.getName() : "QS";
+                        String qsEmail = qsEmployee != null ? qsEmployee.getEmail() : "noreply@structurax.com";
+                        
+                        for (Integer supplierId : supplierIds) {
+                            try {
+                                SupplierDTO supplier = supplierService.getSupplierById(supplierId);
+                                
+                                if (supplier != null && supplier.getEmail() != null && !supplier.getEmail().isEmpty()) {
+                                    mailService.sendQuotationRequest(
+                                        supplier.getEmail(),
+                                        supplier.getSupplier_name(),
+                                        qId,
+                                        projectName,
+                                        qsName,
+                                        qsEmail,
+                                        quotation.getDeadline() != null ? quotation.getDeadline().toString() : "Not specified"
+                                    );
+                                    
+                                    emailCount++;
+                                    Map<String, Object> emailResult = new HashMap<>();
+                                    emailResult.put("supplierId", supplierId);
+                                    emailResult.put("supplierName", supplier.getSupplier_name());
+                                    emailResult.put("email", supplier.getEmail());
+                                    emailResult.put("status", "sent");
+                                    emailResults.add(emailResult);
+                                } else {
+                                    Map<String, Object> emailResult = new HashMap<>();
+                                    emailResult.put("supplierId", supplierId);
+                                    emailResult.put("status", "failed");
+                                    emailResult.put("reason", supplier == null ? "Supplier not found" : "Email not found");
+                                    emailResults.add(emailResult);
+                                }
+                            } catch (Exception e) {
+                                Map<String, Object> emailResult = new HashMap<>();
+                                emailResult.put("supplierId", supplierId);
+                                emailResult.put("status", "failed");
+                                emailResult.put("reason", e.getMessage());
+                                emailResults.add(emailResult);
+                            }
+                        }
+                        
+                        // Update status to 'sent' after emails are sent
+                        if (emailCount > 0 && "pending".equalsIgnoreCase(quotation.getStatus())) {
+                            quotationService.updateQuotationStatus(qId, "sent");
+                        }
+                        
+                        response.put("emailsSent", emailCount);
+                        response.put("totalSuppliers", supplierIds.size());
+                        response.put("emailResults", emailResults);
+                        
+                        if (emailCount > 0) {
+                            response.put("message", "Quotation created and " + emailCount + " email(s) sent successfully");
+                        } else {
+                            response.put("warning", "Quotation created but no emails were sent");
+                        }
+                    } catch (Exception e) {
+                        response.put("warning", "Quotation created but email sending failed: " + e.getMessage());
+                    }
+                }
+                
                 return ResponseEntity.ok(response);
             } else {
                 response.put("success", false);
                 response.put("message", "Failed to create quotation");
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
             }
-            
+
+
+        } catch (IllegalArgumentException e) {
+            response.put("success", false);
+            response.put("message", e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         } catch (Exception e) {
             response.put("success", false);
             response.put("message", "Error creating quotation: " + e.getMessage());
@@ -709,7 +848,655 @@ public class QuotationController {
         }
     }
 
-    // ============ SUPPLIER QUOTATION ENDPOINTS ============
+    // ============ SUPPLIER METHODS (from Malith-new-Backend) ============
+
+    /**
+     * Get all suppliers with their contact information (including emails)
+     */
+    @GetMapping("/suppliers/all")
+    public ResponseEntity<Map<String, Object>> getAllSuppliers() {
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            List<SupplierDTO> suppliers = supplierService.getAllSuppliers();
+
+            // Create a simplified view with essential supplier information
+            List<Map<String, Object>> supplierList = new java.util.ArrayList<>();
+            for (SupplierDTO supplier : suppliers) {
+                Map<String, Object> supplierInfo = new HashMap<>();
+                supplierInfo.put("supplierId", supplier.getSupplier_id());
+                supplierInfo.put("supplierName", supplier.getSupplier_name());
+                supplierInfo.put("email", supplier.getEmail());
+                supplierInfo.put("phone", supplier.getPhone());
+                supplierInfo.put("address", supplier.getAddress());
+                supplierInfo.put("status", supplier.getStatus());
+                supplierInfo.put("joinedDate", supplier.getJoined_date());
+                supplierList.add(supplierInfo);
+            }
+
+            response.put("success", true);
+            response.put("suppliers", supplierList);
+            response.put("totalCount", suppliers.size());
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "Error fetching suppliers: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    /**
+     * Get suppliers with only essential contact information (ID, Name, Email)
+     */
+    @GetMapping("/suppliers/contacts")
+    public ResponseEntity<Map<String, Object>> getSuppliersContacts() {
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            List<SupplierDTO> suppliers = supplierService.getAllSuppliers();
+
+            // Create a minimal view with only contact essentials
+            List<Map<String, Object>> contactList = new java.util.ArrayList<>();
+            for (SupplierDTO supplier : suppliers) {
+                Map<String, Object> contact = new HashMap<>();
+                contact.put("supplierId", supplier.getSupplier_id());
+                contact.put("supplierName", supplier.getSupplier_name());
+                contact.put("email", supplier.getEmail());
+                contactList.add(contact);
+            }
+
+            response.put("success", true);
+            response.put("contacts", contactList);
+            response.put("totalCount", suppliers.size());
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "Error fetching supplier contacts: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    /**
+     * Get active suppliers only
+     */
+    @GetMapping("/suppliers/active")
+    public ResponseEntity<Map<String, Object>> getActiveSuppliers() {
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            List<SupplierDTO> allSuppliers = supplierService.getAllSuppliers();
+
+            // Filter for active suppliers only
+            List<Map<String, Object>> activeSuppliers = new java.util.ArrayList<>();
+            for (SupplierDTO supplier : allSuppliers) {
+                if ("active".equalsIgnoreCase(supplier.getStatus()) || "Active".equalsIgnoreCase(supplier.getStatus())) {
+                    Map<String, Object> supplierInfo = new HashMap<>();
+                    supplierInfo.put("supplierId", supplier.getSupplier_id());
+                    supplierInfo.put("supplierName", supplier.getSupplier_name());
+                    supplierInfo.put("email", supplier.getEmail());
+                    supplierInfo.put("phone", supplier.getPhone());
+                    supplierInfo.put("address", supplier.getAddress());
+                    supplierInfo.put("status", supplier.getStatus());
+                    activeSuppliers.add(supplierInfo);
+                }
+            }
+
+            response.put("success", true);
+            response.put("suppliers", activeSuppliers);
+            response.put("totalActive", activeSuppliers.size());
+            response.put("totalSuppliers", allSuppliers.size());
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "Error fetching active suppliers: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    // ============ EMAIL NOTIFICATION METHODS (from Malith-new-Backend) ============
+
+    /**
+     * Send quotation request to specific suppliers
+     */
+    @PostMapping("/{qId}/send-quotation-request")
+    public ResponseEntity<Map<String, Object>> sendQuotationRequestToSuppliers(
+        @PathVariable Integer qId,
+        @RequestBody(required = false) Map<String, Object> request) {
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            // Get the quotation details
+            QuotationDTO quotation = quotationService.getQuotationById(qId);
+            if (quotation == null) {
+                response.put("success", false);
+                response.put("message", "Quotation not found");
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+            }
+
+            // Get project details
+            Project1DTO project = sqsService.getProjectById(quotation.getProjectId());
+            String projectName = project != null ? project.getName() : "Project #" + quotation.getProjectId();
+
+            // Get QS details
+            UserDTO qsEmployee = adminService.getEmployeeById(quotation.getQsId());
+            String qsName = qsEmployee != null ? qsEmployee.getName() : "QS";
+            String qsEmail = qsEmployee != null ? qsEmployee.getEmail() : "noreply@structurax.com";
+
+            // Determine which suppliers to send to
+            List<Integer> supplierIds = null;
+            if (request != null && request.containsKey("supplierIds")) {
+                @SuppressWarnings("unchecked")
+                List<Object> supplierData = (List<Object>) request.get("supplierIds");
+                if (supplierData != null && !supplierData.isEmpty()) {
+                    supplierIds = new java.util.ArrayList<>();
+                    for (Object supplierId : supplierData) {
+                        supplierIds.add(Integer.valueOf(supplierId.toString()));
+                    }
+                }
+            }
+
+            // If no specific suppliers provided, get all suppliers for this quotation
+            if (supplierIds == null || supplierIds.isEmpty()) {
+                List<com.structurax.root.structurax.root.dto.QuotationSupplierDTO> quotationSuppliers =
+                    quotationService.getQuotationSuppliersByQuotationId(qId);
+                supplierIds = new java.util.ArrayList<>();
+                for (com.structurax.root.structurax.root.dto.QuotationSupplierDTO qs : quotationSuppliers) {
+                    supplierIds.add(qs.getSupplierId());
+                }
+            }
+
+            if (supplierIds.isEmpty()) {
+                response.put("success", false);
+                response.put("message", "No suppliers found for this quotation");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+            }
+
+            // Send emails to each supplier
+            int emailsSent = 0;
+            List<Map<String, Object>> emailResults = new java.util.ArrayList<>();
+
+            for (Integer supplierId : supplierIds) {
+                try {
+                    System.out.println("=== DEBUG: Processing supplier ID: " + supplierId);
+                    
+                    SupplierDTO supplier = supplierService.getSupplierById(supplierId);
+                    System.out.println("=== DEBUG: Supplier data: " + supplier);
+                    
+                    if (supplier == null) {
+                        System.out.println("=== ERROR: Supplier is null for ID: " + supplierId);
+                        Map<String, Object> emailResult = new HashMap<>();
+                        emailResult.put("supplierId", supplierId);
+                        emailResult.put("status", "failed");
+                        emailResult.put("reason", "Supplier not found in database");
+                        emailResults.add(emailResult);
+                        continue;
+                    }
+                    
+                    System.out.println("=== DEBUG: Supplier email: " + supplier.getEmail());
+                    System.out.println("=== DEBUG: Supplier name: " + supplier.getSupplier_name());
+                    
+                    if (supplier.getEmail() == null || supplier.getEmail().isEmpty()) {
+                        System.out.println("=== ERROR: Supplier email is null or empty for ID: " + supplierId);
+                        Map<String, Object> emailResult = new HashMap<>();
+                        emailResult.put("supplierId", supplierId);
+                        emailResult.put("supplierName", supplier.getSupplier_name());
+                        emailResult.put("status", "failed");
+                        emailResult.put("reason", "Supplier email not found in users table");
+                        emailResults.add(emailResult);
+                        continue;
+                    }
+                    
+                    System.out.println("=== DEBUG: Sending email to: " + supplier.getEmail());
+                    
+                    mailService.sendQuotationRequest(
+                        supplier.getEmail(),
+                        supplier.getSupplier_name(),
+                        qId,
+                        projectName,
+                        qsName,
+                        qsEmail,
+                        quotation.getDeadline() != null ? quotation.getDeadline().toString() : "Not specified"
+                    );
+
+                    System.out.println("=== SUCCESS: Email sent to: " + supplier.getEmail());
+                    
+                    emailsSent++;
+                    Map<String, Object> emailResult = new HashMap<>();
+                    emailResult.put("supplierId", supplierId);
+                    emailResult.put("supplierName", supplier.getSupplier_name());
+                    emailResult.put("email", supplier.getEmail());
+                    emailResult.put("status", "sent");
+                    emailResults.add(emailResult);
+                    
+                } catch (Exception e) {
+                    System.out.println("=== ERROR: Exception for supplier ID " + supplierId + ": " + e.getMessage());
+                    e.printStackTrace();
+                    
+                    Map<String, Object> emailResult = new HashMap<>();
+                    emailResult.put("supplierId", supplierId);
+                    emailResult.put("status", "failed");
+                    emailResult.put("reason", "Error: " + e.getMessage());
+                    emailResult.put("errorType", e.getClass().getSimpleName());
+                    emailResults.add(emailResult);
+                }
+            }
+
+            // Update quotation status to 'sent' if emails were sent
+            if (emailsSent > 0) {
+                quotationService.updateQuotationStatus(qId, "sent");
+            }
+
+            response.put("success", true);
+            response.put("message", "Quotation request processed");
+            response.put("quotationId", qId);
+            response.put("projectName", projectName);
+            response.put("emailsSent", emailsSent);
+            response.put("totalSuppliers", supplierIds.size());
+            response.put("emailResults", emailResults);
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "Error sending quotation request: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    /**
+     * Send purchase order notification to supplier
+     */
+    @PostMapping("/purchase-orders/{orderId}/send-notification")
+    public ResponseEntity<Map<String, Object>> sendPurchaseOrderNotification(@PathVariable Integer orderId) {
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            // Get purchase order details
+            PurchaseOrderDTO purchaseOrder = purchaseOrderService.getPurchaseOrderById(orderId);
+            if (purchaseOrder == null) {
+                response.put("success", false);
+                response.put("message", "Purchase order not found");
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+            }
+
+            // Get supplier details
+            SupplierDTO supplier = supplierService.getSupplierById(purchaseOrder.getSupplierId());
+            if (supplier == null || supplier.getEmail() == null || supplier.getEmail().isEmpty()) {
+                response.put("success", false);
+                response.put("message", "Supplier not found or email not available");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+            }
+
+            // Get project details
+            Project1DTO project = sqsService.getProjectById(purchaseOrder.getProjectId());
+            String projectName = project != null ? project.getName() : "Project #" + purchaseOrder.getProjectId();
+
+            // Get quotation response to find the original QS
+            QuotationResponseWithSupplierDTO quotationResponse =
+                quotationResponseService.getQuotationResponseWithSupplierById(purchaseOrder.getResponseId());
+
+            String qsName = "QS";
+            String qsEmail = "noreply@structurax.com";
+
+            if (quotationResponse != null) {
+                // Get the quotation to find QS details
+                QuotationDTO quotation = quotationService.getQuotationById(quotationResponse.getQId());
+                if (quotation != null) {
+                    UserDTO qsEmployee = adminService.getEmployeeById(quotation.getQsId());
+                    if (qsEmployee != null) {
+                        qsName = qsEmployee.getName();
+                        qsEmail = qsEmployee.getEmail();
+                    }
+                }
+            }
+
+            // Send purchase order notification
+            mailService.sendPurchaseOrderNotification(
+                supplier.getEmail(),
+                supplier.getSupplier_name(),
+                orderId,
+                projectName,
+                qsName,
+                qsEmail,
+                purchaseOrder.getOrderDate() != null ? purchaseOrder.getOrderDate().toString() : "Today",
+                purchaseOrder.getEstimatedDeliveryDate() != null ? purchaseOrder.getEstimatedDeliveryDate().toString() : null
+            );
+
+            response.put("success", true);
+            response.put("message", "Purchase order notification sent successfully");
+            response.put("orderId", orderId);
+            response.put("supplierName", supplier.getSupplier_name());
+            response.put("supplierEmail", supplier.getEmail());
+            response.put("projectName", projectName);
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "Error sending purchase order notification: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    /**
+     * Send quotation request to all suppliers in the system
+     */
+    @PostMapping("/{qId}/send-to-all-suppliers")
+    public ResponseEntity<Map<String, Object>> sendQuotationRequestToAllSuppliers(@PathVariable Integer qId) {
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            // Get the quotation details
+            QuotationDTO quotation = quotationService.getQuotationById(qId);
+            if (quotation == null) {
+                response.put("success", false);
+                response.put("message", "Quotation not found");
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+            }
+
+            // Get all active suppliers
+            List<SupplierDTO> allSuppliers = supplierService.getAllSuppliers();
+            List<SupplierDTO> activeSuppliers = new java.util.ArrayList<>();
+
+            for (SupplierDTO supplier : allSuppliers) {
+                if ("active".equalsIgnoreCase(supplier.getStatus()) && supplier.getEmail() != null && !supplier.getEmail().isEmpty()) {
+                    activeSuppliers.add(supplier);
+                }
+            }
+
+            if (activeSuppliers.isEmpty()) {
+                response.put("success", false);
+                response.put("message", "No active suppliers with valid emails found");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+            }
+
+            // Get project and QS details
+            Project1DTO project = sqsService.getProjectById(quotation.getProjectId());
+            String projectName = project != null ? project.getName() : "Project #" + quotation.getProjectId();
+
+            UserDTO qsEmployee = adminService.getEmployeeById(quotation.getQsId());
+            String qsName = qsEmployee != null ? qsEmployee.getName() : "QS";
+            String qsEmail = qsEmployee != null ? qsEmployee.getEmail() : "noreply@structurax.com";
+
+            // Send emails to all active suppliers
+            int emailsSent = 0;
+            List<Map<String, Object>> emailResults = new java.util.ArrayList<>();
+
+            for (SupplierDTO supplier : activeSuppliers) {
+                try {
+                    System.out.println("=== DEBUG: Sending to all suppliers - Processing: " + supplier.getSupplier_name());
+                    System.out.println("=== DEBUG: Supplier ID: " + supplier.getSupplier_id() + ", Email: " + supplier.getEmail());
+                    
+                    mailService.sendQuotationRequest(
+                        supplier.getEmail(),
+                        supplier.getSupplier_name(),
+                        qId,
+                        projectName,
+                        qsName,
+                        qsEmail,
+                        quotation.getDeadline() != null ? quotation.getDeadline().toString() : "Not specified"
+                    );
+
+                    System.out.println("=== SUCCESS: Email sent to: " + supplier.getEmail());
+
+                    // Add supplier to quotation_supplier table if not already added
+                    try {
+                        quotationService.addQuotationSupplier(qId, supplier.getSupplier_id());
+                    } catch (Exception e) {
+                        // Supplier might already be added, ignore duplicate errors
+                        System.out.println("=== INFO: Supplier already linked or error linking: " + e.getMessage());
+                    }
+
+                    emailsSent++;
+                    Map<String, Object> emailResult = new HashMap<>();
+                    emailResult.put("supplierId", supplier.getSupplier_id());
+                    emailResult.put("supplierName", supplier.getSupplier_name());
+                    emailResult.put("email", supplier.getEmail());
+                    emailResult.put("status", "sent");
+                    emailResults.add(emailResult);
+
+                } catch (Exception e) {
+                    System.out.println("=== ERROR: Failed to send email to " + supplier.getSupplier_name() + ": " + e.getMessage());
+                    e.printStackTrace();
+                    
+                    Map<String, Object> emailResult = new HashMap<>();
+                    emailResult.put("supplierId", supplier.getSupplier_id());
+                    emailResult.put("supplierName", supplier.getSupplier_name());
+                    emailResult.put("email", supplier.getEmail());
+                    emailResult.put("status", "failed");
+                    emailResult.put("reason", "Error: " + e.getMessage());
+                    emailResult.put("errorType", e.getClass().getSimpleName());
+                    emailResults.add(emailResult);
+                }
+            }
+
+            // Update quotation status to 'sent'
+            if (emailsSent > 0) {
+                quotationService.updateQuotationStatus(qId, "sent");
+            }
+
+            response.put("success", true);
+            response.put("message", "Quotation request sent to all active suppliers");
+            response.put("quotationId", qId);
+            response.put("projectName", projectName);
+            response.put("emailsSent", emailsSent);
+            response.put("totalActiveSuppliers", activeSuppliers.size());
+            response.put("emailResults", emailResults);
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "Error sending quotation request to all suppliers: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    /**
+     * Close quotation if there are no responses or all responses are rejected
+     */
+    @PutMapping("/{qId}/close-if-no-responses-or-rejected")
+    public ResponseEntity<Map<String, Object>> closeQuotationIfNoResponsesOrAllRejected(@PathVariable Integer qId) {
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            boolean closed = quotationService.closeQuotationIfNoResponsesOrAllRejected(qId);
+
+            if (closed) {
+                response.put("success", true);
+                response.put("message", "Quotation closed successfully");
+                response.put("qId", qId);
+                response.put("action", "closed");
+                return ResponseEntity.ok(response);
+            } else {
+                // Check why it wasn't closed - provide more detailed feedback
+                QuotationDTO quotation = quotationService.getQuotationById(qId);
+                if (quotation == null) {
+                    response.put("success", false);
+                    response.put("message", "Quotation not found");
+                    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+                }
+
+                List<QuotationResponseDTO> responses = quotationResponseService.getQuotationResponsesByQuotationId(qId);
+
+                if ("closed".equalsIgnoreCase(quotation.getStatus())) {
+                    response.put("success", true);
+                    response.put("message", "Quotation is already closed");
+                    response.put("qId", qId);
+                    response.put("action", "already_closed");
+                } else if (responses != null && !responses.isEmpty()) {
+                    // Check if there are any non-rejected responses
+                    boolean hasNonRejectedResponses = false;
+                    for (QuotationResponseDTO resp : responses) {
+                        if (!"rejected".equalsIgnoreCase(resp.getStatus())) {
+                            hasNonRejectedResponses = true;
+                            break;
+                        }
+                    }
+                    if (hasNonRejectedResponses) {
+                        response.put("success", true);
+                        response.put("message", "Quotation has pending or accepted responses, cannot close");
+                        response.put("qId", qId);
+                        response.put("action", "not_closed_has_responses");
+                        response.put("totalResponses", responses.size());
+                    } else {
+                        response.put("success", false);
+                        response.put("message", "Failed to close quotation despite all responses being rejected");
+                        response.put("qId", qId);
+                    }
+                } else {
+                    response.put("success", false);
+                    response.put("message", "Failed to close quotation despite no responses");
+                    response.put("qId", qId);
+                }
+
+                return ResponseEntity.ok(response);
+            }
+
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "Error checking/closing quotation: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    /**
+     * Get detailed status of a quotation including response analysis
+     */
+    @GetMapping("/{qId}/close-status")
+    public ResponseEntity<Map<String, Object>> getQuotationCloseStatus(@PathVariable Integer qId) {
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            QuotationDTO quotation = quotationService.getQuotationById(qId);
+            if (quotation == null) {
+                response.put("success", false);
+                response.put("message", "Quotation not found");
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+            }
+
+            List<QuotationResponseDTO> responses = quotationResponseService.getQuotationResponsesByQuotationId(qId);
+
+            // Analyze response statuses
+            int totalResponses = responses != null ? responses.size() : 0;
+            int pendingResponses = 0;
+            int acceptedResponses = 0;
+            int rejectedResponses = 0;
+
+            if (responses != null) {
+                for (QuotationResponseDTO resp : responses) {
+                    String status = resp.getStatus();
+                    if ("pending".equalsIgnoreCase(status)) {
+                        pendingResponses++;
+                    } else if ("accepted".equalsIgnoreCase(status)) {
+                        acceptedResponses++;
+                    } else if ("rejected".equalsIgnoreCase(status)) {
+                        rejectedResponses++;
+                    }
+                }
+            }
+
+            boolean canClose = (totalResponses == 0) || (totalResponses > 0 && rejectedResponses == totalResponses);
+            boolean isAlreadyClosed = "closed".equalsIgnoreCase(quotation.getStatus());
+
+            response.put("success", true);
+            response.put("quotationId", qId);
+            response.put("currentStatus", quotation.getStatus());
+            response.put("isAlreadyClosed", isAlreadyClosed);
+            response.put("canClose", canClose);
+            response.put("totalResponses", totalResponses);
+            response.put("pendingResponses", pendingResponses);
+            response.put("acceptedResponses", acceptedResponses);
+            response.put("rejectedResponses", rejectedResponses);
+
+            if (canClose && !isAlreadyClosed) {
+                response.put("closeReason", totalResponses == 0 ? "No responses received" : "All responses are rejected");
+            } else if (!canClose) {
+                response.put("closeReason", "Has pending or accepted responses");
+            } else if (isAlreadyClosed) {
+                response.put("closeReason", "Already closed");
+            }
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "Error analyzing quotation status: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    /**
+     * Batch close all eligible quotations (no responses or all rejected)
+     */
+    @PutMapping("/close-all-eligible")
+    public ResponseEntity<Map<String, Object>> closeAllEligibleQuotations() {
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            Map<String, Object> result = quotationService.closeAllEligibleQuotations();
+
+            response.put("success", true);
+            response.put("message", "Batch processing completed");
+            response.putAll(result); // Include all details from service result
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "Error in batch processing: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    /**
+     * Get email sending status for a quotation
+     */
+    @GetMapping("/{qId}/email-status")
+    public ResponseEntity<Map<String, Object>> getQuotationEmailStatus(@PathVariable Integer qId) {
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            QuotationDTO quotation = quotationService.getQuotationById(qId);
+            if (quotation == null) {
+                response.put("success", false);
+                response.put("message", "Quotation not found");
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+            }
+
+            List<com.structurax.root.structurax.root.dto.QuotationSupplierDTO> quotationSuppliers =
+                quotationService.getQuotationSuppliersByQuotationId(qId);
+
+            List<Map<String, Object>> supplierDetails = new java.util.ArrayList<>();
+            for (com.structurax.root.structurax.root.dto.QuotationSupplierDTO qs : quotationSuppliers) {
+                SupplierDTO supplier = supplierService.getSupplierById(qs.getSupplierId());
+                if (supplier != null) {
+                    Map<String, Object> supplierDetail = new HashMap<>();
+                    supplierDetail.put("supplierId", supplier.getSupplier_id());
+                    supplierDetail.put("supplierName", supplier.getSupplier_name());
+                    supplierDetail.put("email", supplier.getEmail());
+                    supplierDetail.put("status", supplier.getStatus());
+                    supplierDetails.add(supplierDetail);
+                }
+            }
+
+            response.put("success", true);
+            response.put("quotationId", qId);
+            response.put("quotationStatus", quotation.getStatus());
+            response.put("suppliers", supplierDetails);
+            response.put("totalSuppliers", supplierDetails.size());
+            response.put("deadline", quotation.getDeadline());
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "Error fetching email status: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+	
+	// ============ SUPPLIER QUOTATION ENDPOINTS (from Dev) ============
+
     // These endpoints bridge the gap between SupplierQuotationController and frontend expectations
 
     /**

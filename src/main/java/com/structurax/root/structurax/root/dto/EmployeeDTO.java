@@ -1,16 +1,13 @@
 package com.structurax.root.structurax.root.dto;
 
+import java.time.LocalDate;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
+
 import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.time.LocalDate;
 
 @Data
 @NoArgsConstructor
@@ -24,32 +21,51 @@ public class EmployeeDTO {
     @JsonProperty("user_id")
     private int userId;
 
+
     private String availability;
     public EmployeeDTO(String employeeId, String name, String email, String phoneNumber, String address, String type, LocalDate localJoinedDate, Object o, String availability, String profileImageUrl) {
     }
 
+    @JsonProperty("first_name")
+    private String firstName;
 
-    public void setName(String name) {
-    }
+    @JsonProperty("last_name")
+    private String lastName;
 
-    public void setEmail(String email) {
-    }
+    @JsonProperty("name")
+    private String name;
 
-    public void setPhoneNumber(String phoneNumber) {
-    }
+    @JsonProperty("role")
+    private String role;
 
-    public void setJoinedDate(LocalDate localDate) {
-    }
+    @JsonProperty("email")
+    private String email;
 
-    public void setType(String type) {
-    }
+    @JsonProperty("phone_number")
+    private String phoneNumber;
 
-    public void setPassword(String password) {
-    }
+    @JsonProperty("address")
+    private String address;
 
-    public void setAvailability(String availability) {
-    }
+    @JsonProperty("joined_date")
+    private LocalDate joinedDate;
 
-    public void setProfileImageUrl(String profileImageUrl) {
+    @JsonProperty("availability")
+    private String availability;
+
+    @JsonProperty("profile_image_url")
+    private String profileImageUrl;
+
+    // Keep the old constructor for backward compatibility
+    public EmployeeDTO(String employeeId, String name, String email, String phoneNumber, String address, String type, LocalDate localJoinedDate, Object o, String availability, String profileImageUrl) {
+        this.employeeId = employeeId;
+        this.name = name;
+        this.email = email;
+        this.phoneNumber = phoneNumber;
+        this.address = address;
+        this.role = type;
+        this.joinedDate = localJoinedDate;
+        this.availability = availability;
+        this.profileImageUrl = profileImageUrl;
     }
 }

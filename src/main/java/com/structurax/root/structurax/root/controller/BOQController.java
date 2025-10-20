@@ -29,17 +29,49 @@ public class BOQController {
 
     @PostMapping(value = "/create", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> createBOQWithItems(@RequestBody com.structurax.root.structurax.root.dto.BOQWithItemsDTO boqWithItems) {
-        String boqId = boqService.createBOQ(boqWithItems.getBoq());
-        if (boqId != null) {
-            if (boqWithItems.getItems() != null) {
-                for (com.structurax.root.structurax.root.dto.BOQitemDTO item : boqWithItems.getItems()) {
-                    item.setBoqId(boqId);
-                    boqService.addBOQItem(item);
-                }
+        try {
+            // Validate BOQ data
+            if (boqWithItems == null || boqWithItems.getBoq() == null) {
+                return new ResponseEntity<>("BOQ data is missing", HttpStatus.BAD_REQUEST);
             }
-            return ResponseEntity.ok(boqId);
-        } else {
-            return new ResponseEntity<>("Failed to create BOQ", HttpStatus.INTERNAL_SERVER_ERROR);
+            
+            BOQDTO boq = boqWithItems.getBoq();
+            
+            // Validate required fields
+            if (boq.getProjectId() == null || boq.getProjectId().trim().isEmpty()) {
+                return new ResponseEntity<>("Project ID is required", HttpStatus.BAD_REQUEST);
+            }
+            
+            if (boq.getQsId() == null || boq.getQsId().trim().isEmpty()) {
+                return new ResponseEntity<>("QS ID is required (can be QS Officer or Senior QS Officer ID)", HttpStatus.BAD_REQUEST);
+            }
+            
+            if (boq.getDate() == null) {
+                return new ResponseEntity<>("Date is required", HttpStatus.BAD_REQUEST);
+            }
+            
+            if (boq.getStatus() == null) {
+                return new ResponseEntity<>("Status is required", HttpStatus.BAD_REQUEST);
+            }
+            
+            // Create BOQ
+            String boqId = boqService.createBOQ(boq);
+            
+            if (boqId != null) {
+                // Add items if provided
+                if (boqWithItems.getItems() != null && !boqWithItems.getItems().isEmpty()) {
+                    for (com.structurax.root.structurax.root.dto.BOQitemDTO item : boqWithItems.getItems()) {
+                        item.setBoqId(boqId);
+                        boqService.addBOQItem(item);
+                    }
+                }
+                return ResponseEntity.ok(boqId);
+            } else {
+                return new ResponseEntity<>("Failed to create BOQ", HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+            
+        } catch (Exception e) {
+            return new ResponseEntity<>("Failed to save BOQ: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -63,6 +95,20 @@ public class BOQController {
         }
     }
 
+    @GetMapping(value = "/project/{projectId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> getBOQByProjectId(@PathVariable String projectId) {
+        try {
+            com.structurax.root.structurax.root.dto.BOQWithItemsDTO boqWithItems = boqService.getBOQWithItemsByProjectId(projectId);
+            if (boqWithItems != null) {
+                return ResponseEntity.ok(boqWithItems);
+            } else {
+                return new ResponseEntity<>("No BOQ found for project ID: " + projectId, HttpStatus.NOT_FOUND);
+            }
+        } catch (Exception e) {
+            return new ResponseEntity<>("Failed to retrieve BOQ: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
     @GetMapping(value = "/{boqId}/items", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<List<BOQitemDTO>> getBOQItems(@PathVariable String boqId) {
         List<BOQitemDTO> items = boqService.getBOQItemsByBOQId(boqId);
@@ -71,11 +117,45 @@ public class BOQController {
 
     @PutMapping(value = "/update", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> updateBOQWithItems(@RequestBody com.structurax.root.structurax.root.dto.BOQWithItemsDTO boqWithItems) {
-        boolean updated = boqService.updateBOQWithItems(boqWithItems);
-        if (updated) {
-            return ResponseEntity.ok("BOQ updated successfully");
-        } else {
-            return new ResponseEntity<>("Failed to update BOQ", HttpStatus.INTERNAL_SERVER_ERROR);
+        try {
+            // Validate BOQ data
+            if (boqWithItems == null || boqWithItems.getBoq() == null) {
+                return new ResponseEntity<>("BOQ data is missing", HttpStatus.BAD_REQUEST);
+            }
+            
+            BOQDTO boq = boqWithItems.getBoq();
+            
+            // Validate required fields
+            if (boq.getBoqId() == null || boq.getBoqId().trim().isEmpty()) {
+                return new ResponseEntity<>("BOQ ID is required for update", HttpStatus.BAD_REQUEST);
+            }
+            
+            if (boq.getProjectId() == null || boq.getProjectId().trim().isEmpty()) {
+                return new ResponseEntity<>("Project ID is required", HttpStatus.BAD_REQUEST);
+            }
+            
+            if (boq.getQsId() == null || boq.getQsId().trim().isEmpty()) {
+                return new ResponseEntity<>("QS ID is required (can be QS Officer or Senior QS Officer ID)", HttpStatus.BAD_REQUEST);
+            }
+            
+            if (boq.getDate() == null) {
+                return new ResponseEntity<>("Date is required", HttpStatus.BAD_REQUEST);
+            }
+            
+            if (boq.getStatus() == null) {
+                return new ResponseEntity<>("Status is required", HttpStatus.BAD_REQUEST);
+            }
+            
+            boolean updated = boqService.updateBOQWithItems(boqWithItems);
+            
+            if (updated) {
+                return ResponseEntity.ok("BOQ updated successfully");
+            } else {
+                return new ResponseEntity<>("Failed to update BOQ", HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+            
+        } catch (Exception e) {
+            return new ResponseEntity<>("Failed to update BOQ: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }

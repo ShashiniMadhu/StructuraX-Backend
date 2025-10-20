@@ -249,9 +249,10 @@ public class QuotationDAOImpl implements QuotationDAO {
 
     @Override
     public List<QuotationSupplierDTO> getQuotationSuppliersByQuotationId(Integer qId) {
-        String sql = "SELECT qs.q_id, qs.supplier_id, s.supplier_name " +
+        String sql = "SELECT qs.q_id, qs.supplier_id, u.name as supplier_name " +
                 "FROM quotation_supplier qs " +
                 "JOIN supplier s ON qs.supplier_id = s.supplier_id " +
+                "JOIN users u ON s.user_id = u.user_id " +
                 "WHERE qs.q_id = ?";
         return jdbcTemplate.query(sql, new Object[]{qId}, (rs, rowNum) -> {
             QuotationSupplierDTO quotationSupplier = new QuotationSupplierDTO();
@@ -290,22 +291,29 @@ public class QuotationDAOImpl implements QuotationDAO {
 
     @Override
     public List<QuotationDTO> getQuotationsByQsId(String qsId) {
-        String sql = "SELECT q.q_id, q.project_id, p.name as project_name, q.qs_id, q.date, q.deadline, q.status, q.description " +
-                "FROM quotation q " +
-                "JOIN project p ON q.project_id = p.project_id " +
-                "WHERE q.qs_id = ? ORDER BY q.date DESC";
-        return jdbcTemplate.query(sql, new Object[]{qsId}, (rs, rowNum) -> {
-            QuotationDTO quotation = new QuotationDTO();
-            quotation.setQId(rs.getInt("q_id"));
-            quotation.setProjectId(rs.getString("project_id"));
-            quotation.setProjectName(rs.getString("project_name"));
-            quotation.setQsId(rs.getString("qs_id"));
-            quotation.setDate(rs.getDate("date"));
-            quotation.setDeadline(rs.getDate("deadline"));
-            quotation.setStatus(rs.getString("status"));
-            quotation.setDescription(rs.getString("description"));
-            return quotation;
-        });
+        try {
+            String sql = "SELECT q.q_id, q.project_id, p.name as project_name, q.qs_id, q.date, q.deadline, q.status, q.description " +
+                    "FROM quotation q " +
+                    "LEFT JOIN project p ON q.project_id = p.project_id " +
+                    "WHERE q.qs_id = ? ORDER BY q.date DESC";
+            return jdbcTemplate.query(sql, new Object[]{qsId}, (rs, rowNum) -> {
+                QuotationDTO quotation = new QuotationDTO();
+                quotation.setQId(rs.getInt("q_id"));
+                quotation.setProjectId(rs.getString("project_id"));
+                quotation.setProjectName(rs.getString("project_name"));
+                quotation.setQsId(rs.getString("qs_id"));
+                quotation.setDate(rs.getDate("date"));
+                quotation.setDeadline(rs.getDate("deadline"));
+                quotation.setStatus(rs.getString("status"));
+                quotation.setDescription(rs.getString("description"));
+                return quotation;
+            });
+        } catch (Exception e) {
+            System.err.println("Error in getQuotationsByQsId for qsId: " + qsId);
+            System.err.println("Error message: " + e.getMessage());
+            e.printStackTrace();
+            return new java.util.ArrayList<>();
+        }
     }
 
     @Override

@@ -126,4 +126,19 @@ public class UserServiceImpl implements UserService {
 
     }
 
+    @Override
+    public UserDTO getUserProfileByAnyId(String id) {
+        if (id == null || id.trim().isEmpty()) {
+            throw new IllegalArgumentException("ID cannot be null or empty");
+        }
+
+        UserDTO user = userDAO.getUserProfileByAnyId(id.trim())
+                .orElseThrow(() ->
+                        new RuntimeException("User not found with ID: " + id));
+
+        return user;
+    }
+
+
+
 }
