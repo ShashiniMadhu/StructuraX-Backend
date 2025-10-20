@@ -13,7 +13,7 @@ public interface UserDAO {
 
     String findEmployeeIdByUserId(Integer userId);
     String findClientIdByUserId(Integer userId);
-    String findSupplierIdByUserId(Integer userId);
+    int findSupplierIdByUserId(Integer userId);
     String findAdminIdByUserId(Integer userId);
     Optional<UserDTO> getUserProfileByAnyId(String id);
 }
