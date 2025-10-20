@@ -71,4 +71,53 @@ public class UserDTO {
         this.availability = availability;
         this.profileImageUrl = profileImageUrl;
     }
+
+    // Explicit getters for compatibility when Lombok is not processing annotations.
+    public String getName() {
+        return name;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public String getPhoneNumber() {
+        return phoneNumber;
+    }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public LocalDate getJoinedDate() {
+        return joinedDate;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public String getAvailability() {
+        return availability;
+    }
+
+    public String getProfileImageUrl() {
+        return profileImageUrl;
+    }
+
+    public int getUserId() {
+        return userId;
+    }
+
+    public String getResetToken() {
+        return resetToken;
+    }
+
+    public LocalDateTime getTokenExpiry() {
+        return tokenExpiry;
+    }
 }

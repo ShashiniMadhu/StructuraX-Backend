@@ -97,4 +97,34 @@ public class DesignerController {
             return new ResponseEntity<>("Error initializing design: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+    @GetMapping(value = "ongoing_projects", produces = Constants.APPLICATION_JSON)
+    public ResponseEntity<?> getOngoingProjects(){
+        try{
+            final List<DesignFullDTO> designDTOs = designerService.getOngoingProjects();
+            return ResponseEntity.ok(designDTOs);
+        }catch (Exception e) {
+            return new ResponseEntity<>("Error fetching ongoing projects: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping(value = "completed_projects", produces = Constants.APPLICATION_JSON)
+    public ResponseEntity<?> getCompletedProjects(){
+        try{
+            final List<DesignFullDTO> designDTOs = designerService.getCompletedProjects();
+            return ResponseEntity.ok(designDTOs);
+        }catch (Exception e) {
+            return new ResponseEntity<>("Error fetching completed projects: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @PutMapping(value = "mark_project_complete/{id}", produces = Constants.APPLICATION_JSON)
+    public ResponseEntity<?> markProjectAsComplete(@PathVariable String id){
+        try{
+            DesignFullDTO design = designerService.markProjectAsComplete(id);
+            return ResponseEntity.ok(design);
+        }catch(Exception e){
+            return new ResponseEntity<>("Error marking project as complete: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 }

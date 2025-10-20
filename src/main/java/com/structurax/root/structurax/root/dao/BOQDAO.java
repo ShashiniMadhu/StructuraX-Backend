@@ -10,6 +10,7 @@ public interface BOQDAO {
     String insertBOQ(BOQDTO boq);
     void insertBOQItem(BOQitemDTO item);
     BOQDTO getBOQById(String boqId);
+    BOQDTO getBOQByProjectId(String projectId);
     List<BOQitemDTO> getBOQItemsByBOQId(String boqId);
     void updateBOQ(BOQDTO boq);
     void deleteBOQItemsByBOQId(String boqId);
