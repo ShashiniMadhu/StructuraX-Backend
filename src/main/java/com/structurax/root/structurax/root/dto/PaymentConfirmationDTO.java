@@ -30,4 +30,5 @@ public class PaymentConfirmationDTO {
     private LocalDate confirmationDate;
 
     private List<ProjectDocumentsDTO> documents;
+    private PaymentDTO payments;
 }
