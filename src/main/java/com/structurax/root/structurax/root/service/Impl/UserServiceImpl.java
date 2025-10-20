@@ -45,7 +45,7 @@ public class UserServiceImpl implements UserService {
 
         String employeeId = null;
         String clientId = null;
-        String supplierId = null;
+        int supplierId = 0;
         String adminId = null;
 
         if(user.getType().equalsIgnoreCase("supplier")){

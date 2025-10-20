@@ -2,6 +2,7 @@ package com.structurax.root.structurax.root.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.sql.Date;
 import java.time.LocalDate;
 
 public class DailyUpdatesDTO {

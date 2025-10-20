@@ -128,6 +128,7 @@ public class AdminDAOImpl implements AdminDAO {
         }
     }
 
+    // Helper method to generate a random password for deactivation
     private String generateRandomPassword() {
         return "DEACTIVATED_" + UUID.randomUUID().toString().replace("-", "").substring(0, 16);
     }

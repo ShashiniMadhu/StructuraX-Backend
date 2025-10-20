@@ -21,6 +21,11 @@ public class EmployeeDTO {
     @JsonProperty("user_id")
     private int userId;
 
+
+    private String availability;
+    public EmployeeDTO(String employeeId, String name, String email, String phoneNumber, String address, String type, LocalDate localJoinedDate, Object o, String availability, String profileImageUrl) {
+    }
+
     @JsonProperty("first_name")
     private String firstName;
 

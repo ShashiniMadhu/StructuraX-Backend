@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class RequestSiteResourcesDTO {
 
-    private Integer requestId;
+    private int requestId;
     private String pmApproval;
     private String qsApproval;
     private String requestType;
@@ -23,6 +23,7 @@ public class RequestSiteResourcesDTO {
     private String projectId;
     private String siteSupervisorId;
     private String qsId;
+    private String pmId;
     private Boolean isReceived;
     private List<SiteResourceDTO> materials;
     
@@ -32,7 +33,7 @@ public class RequestSiteResourcesDTO {
     private String qsOfficerName;
 
 
-    public RequestSiteResourcesDTO(Integer requestId, String pmApproval, String qsApproval,String requestType, Date date, String projectId, String siteSupervisorId, String qsId, Boolean isReceived) {
+    public RequestSiteResourcesDTO(int requestId, String pmApproval, String qsApproval,String requestType, Date date, String projectId, String siteSupervisorId, String qsId, String pmId,Boolean isReceived) {
         this.requestId = requestId;
         this.pmApproval=pmApproval;
         this.qsApproval=qsApproval;
@@ -41,11 +42,12 @@ public class RequestSiteResourcesDTO {
         this.projectId = projectId;
         this.siteSupervisorId = siteSupervisorId;
         this.qsId = qsId;
+        this.pmId = pmId;
         this.isReceived = isReceived;
     }
 
     // Constructor with enhanced details including site supervisor name and project name
-    public RequestSiteResourcesDTO(Integer requestId, String pmApproval, String qsApproval, String requestType, 
+    public RequestSiteResourcesDTO(int requestId, String pmApproval, String qsApproval, String requestType,
                                    Date date, String projectId, String siteSupervisorId, String qsId, 
                                    Boolean isReceived, String siteSupervisorName, String projectName) {
         this.requestId = requestId;
@@ -62,7 +64,7 @@ public class RequestSiteResourcesDTO {
     }
 
     // Constructor with all enhanced details including QS officer name (for SQS use)
-    public RequestSiteResourcesDTO(Integer requestId, String pmApproval, String qsApproval, String requestType, 
+    public RequestSiteResourcesDTO(int requestId, String pmApproval, String qsApproval, String requestType,
                                    Date date, String projectId, String siteSupervisorId, String qsId, 
                                    Boolean isReceived, String siteSupervisorName, String projectName, String qsOfficerName) {
         this.requestId = requestId;
