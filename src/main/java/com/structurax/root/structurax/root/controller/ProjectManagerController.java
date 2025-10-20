@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,14 +27,13 @@ public class ProjectManagerController {
         return "New Visit Log Added Successfully";
     }
 
-    @GetMapping("/visits")
-    public ResponseEntity<List<SiteVisitLogDTO>> getAllVisits() {
-        return ResponseEntity.ok(ProjectManagerService.getAllVisitLogs());
-    }
-
-    @GetMapping("/visits/{id}")
-    public ResponseEntity<SiteVisitLogDTO> getVisitById(@PathVariable Integer id) {
-        return ResponseEntity.ok(ProjectManagerService.getVisitLogById(id));
+    @GetMapping("/site-visits/{pm_id}")
+    public ResponseEntity<List<SiteVisitLogDTO>> getSiteVisitsByPmId(@PathVariable("pm_id") String pmId) {
+        List<SiteVisitLogDTO> siteVisits = ProjectManagerService.getSiteVisitLogsByPmId(pmId);
+        if (siteVisits.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.ok(siteVisits);
     }
 
     @PutMapping("/visits/{id}")
@@ -48,9 +48,13 @@ public class ProjectManagerController {
         }
     }
 
-    @GetMapping("/request")
-    public ResponseEntity<List<VisitRequestDTO>> getAllVisitRequests (){
-        return ResponseEntity.ok(ProjectManagerService.getAllVisitRequests());
+    @GetMapping("/request/{pm_id}")
+    public ResponseEntity<List<VisitRequestDTO>> getAllVisitRequests (@PathVariable("pm_id") String pmId){
+        List<VisitRequestDTO> allRequests = ProjectManagerService.getAllVisitRequests(pmId);
+        if (allRequests.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.ok(allRequests);
     }
 
     @PutMapping("/request/{id}/accept")
@@ -107,13 +111,13 @@ public class ProjectManagerController {
     @PutMapping("/requestSiteResources/{id}/accept")
     public ResponseEntity<String> acceptRequestSiteResource(@PathVariable("id") Integer id) {
         boolean ok = ProjectManagerService.approveRequestSiteResource(id);
-            return ResponseEntity.ok("Request " + id + " approved.");
+        return ResponseEntity.ok("Request " + id + " approved.");
     }
 
     @PutMapping("/requestSiteResources/{id}/reject")
     public ResponseEntity<String> rejectRequestSiteResource(@PathVariable("id") Integer id) {
         boolean ok = ProjectManagerService.rejectRequestSiteResource(id);
-            return ResponseEntity.ok("Request " + id + " rejected.");
+        return ResponseEntity.ok("Request " + id + " rejected.");
     }
 
     @GetMapping("/todo/{employeeId}")
@@ -208,14 +212,21 @@ public class ProjectManagerController {
     }
 
     @GetMapping("/payment/{project_id}")
-    public ResponseEntity<PaymentDTO> getPaymentByProjectId(@PathVariable("project_id") String projectId) {
-        PaymentDTO payment = ProjectManagerService.getPaymentByProjectId(projectId);
-        if (payment != null) {
-            return ResponseEntity.ok(payment);
+    public ResponseEntity<List<PaymentDTO>> getPaymentByProjectId(@PathVariable("project_id") String projectId) {
+        List<PaymentDTO> payments = ProjectManagerService.getPaymentByProjectId(projectId);
+        if (payments != null && !payments.isEmpty()) {
+            return ResponseEntity.ok(payments);
         }
-        return ResponseEntity.notFound().build();
+        // Return empty list instead of 404
+        return ResponseEntity.ok(new ArrayList<>());
     }
-//hi
+
+    @GetMapping("/materials/{project_id}")
+    public ResponseEntity<List<ProjectMaterialsDTO>> getProjectMaterials(@PathVariable("project_id") String projectId){
+        List<ProjectMaterialsDTO> materials = ProjectManagerService.getProjectMaterialsByProjectId(projectId);
+        return ResponseEntity.ok(materials);
+    }
+
 
     @GetMapping("/projects/ongoing/ids")
     public ResponseEntity<List<String>> getOngoingProjectIds() {
@@ -223,8 +234,5 @@ public class ProjectManagerController {
         return ResponseEntity.ok(ongoingProjectIds);
     }
 
-
-
-
-
 }
+

@@ -1,3 +1,4 @@
+
 package com.structurax.root.structurax.root.service.Impl;
 
 import com.structurax.root.structurax.root.dao.ProjectManagerDAO;
@@ -19,14 +20,10 @@ public class ProjectManagerServiceImpl implements ProjectManagerService {
         return visitLogDAO.createVisitLog(dto);
     }
 
-    @Override
-    public List<SiteVisitLogDTO> getAllVisitLogs() {
-        return visitLogDAO.getAllVisitLogs();
-    }
 
     @Override
-    public SiteVisitLogDTO getVisitLogById(Integer id) {
-        return visitLogDAO.getVisitLogById(id);
+    public List<SiteVisitLogDTO> getSiteVisitLogsByPmId(String pmId) {
+        return visitLogDAO.getSiteVisitLogsByPmId(pmId);
     }
 
     @Override
@@ -35,9 +32,10 @@ public class ProjectManagerServiceImpl implements ProjectManagerService {
     }
 
     @Override
-    public List<VisitRequestDTO> getAllVisitRequests(){
-        return visitLogDAO.getAllVisitRequests();
+    public List<VisitRequestDTO> getAllVisitRequests( String pmId){
+        return visitLogDAO.getAllVisitRequests(pmId);
     }
+
     @Override
     public  boolean updateVisitRequest(VisitRequestDTO dto){
         return  visitLogDAO.updateVisitRequest(dto);
@@ -117,7 +115,7 @@ public class ProjectManagerServiceImpl implements ProjectManagerService {
         return visitLogDAO.getBOQItemsByProjectId(projectId);
     }
     @Override
-    public PaymentDTO getPaymentByProjectId(String projectId) {
+    public List<PaymentDTO> getPaymentByProjectId(String projectId) {
         return visitLogDAO.getPaymentByProjectId(projectId);
     }
 
@@ -131,12 +129,15 @@ public class ProjectManagerServiceImpl implements ProjectManagerService {
         return visitLogDAO.getSiteResourcesByRequestId(requestId);
     }
 
+    @Override
+    public List<ProjectMaterialsDTO> getProjectMaterialsByProjectId(String projectId){
+        return  visitLogDAO.getProjectMaterialsByProjectId(projectId);
+    }
 
     @Override
     public List<String> getOngoingProjectIds() {
         return visitLogDAO.getOngoingProjectIds();
     }
-
 
 
 }
