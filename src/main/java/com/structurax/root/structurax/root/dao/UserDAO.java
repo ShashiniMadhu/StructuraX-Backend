@@ -15,6 +15,5 @@ public interface UserDAO {
     String findClientIdByUserId(Integer userId);
     String findSupplierIdByUserId(Integer userId);
     String findAdminIdByUserId(Integer userId);
-
-
+    Optional<UserDTO> getUserProfileByAnyId(String id);
 }
