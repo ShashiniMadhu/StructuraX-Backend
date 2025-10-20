@@ -224,7 +224,7 @@ public class ProjectManagerDAOImpl implements ProjectManagerDAO {
         String sql = """
         SELECT request_id, project_id, date, site_supervisor_id, pm_id, pm_approval
         FROM request_site_resources 
-        WHERE pm_id = ? AND pm_approval = 'pending'
+        WHERE pm_id = ? AND pm_approval = 'Pending'
     """;
 
         try (Connection conn = databaseConnection.getConnection();

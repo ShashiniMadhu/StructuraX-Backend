@@ -108,13 +108,13 @@ public class ProjectManagerController {
         return ResponseEntity.ok(response);
     }
 
-    @PutMapping("/requestSiteResources/{id}/accept")
+    @PutMapping("/requestSiteResources/{id}/Approved")
     public ResponseEntity<String> acceptRequestSiteResource(@PathVariable("id") Integer id) {
         boolean ok = ProjectManagerService.approveRequestSiteResource(id);
             return ResponseEntity.ok("Request " + id + " approved.");
     }
 
-    @PutMapping("/requestSiteResources/{id}/reject")
+    @PutMapping("/requestSiteResources/{id}/Rejected")
     public ResponseEntity<String> rejectRequestSiteResource(@PathVariable("id") Integer id) {
         boolean ok = ProjectManagerService.rejectRequestSiteResource(id);
             return ResponseEntity.ok("Request " + id + " rejected.");
