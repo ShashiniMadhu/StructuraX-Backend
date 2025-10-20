@@ -2,6 +2,7 @@ package com.structurax.root.structurax.root.controller;
 
 import com.structurax.root.structurax.root.dto.ForgotPasswordRequest;
 import com.structurax.root.structurax.root.dto.ResetPasswordRequest;
+import com.structurax.root.structurax.root.dto.UserDTO;
 import com.structurax.root.structurax.root.dto.UserLoginDTO;
 import com.structurax.root.structurax.root.dto.UserResponseDTO;
 import com.structurax.root.structurax.root.service.UserService;
@@ -34,11 +35,23 @@ public class UserController {
         return ResponseEntity.ok("Password reset link sent (check console or email)");
     }
 
-
-
     @PostMapping("/reset-password")
     public ResponseEntity<String> resetPassword(@RequestBody ResetPasswordRequest request) {
         userService.resetPassword(request);
         return ResponseEntity.ok("Password reset successful");
     }
+
+    @GetMapping("/profile/{id}")
+    public ResponseEntity<UserDTO> getUserProfile(@PathVariable String id) {
+        try {
+            UserDTO userProfile = userService.getUserProfileByAnyId(id);
+            return ResponseEntity.ok(userProfile);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+
 }
