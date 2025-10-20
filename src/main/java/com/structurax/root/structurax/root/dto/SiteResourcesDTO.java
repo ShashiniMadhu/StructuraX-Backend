@@ -12,7 +12,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 public class SiteResourcesDTO {
-    private Integer id;
+    private int id;
     @JsonProperty("request_id")
     private Integer requestId;
     private String name;

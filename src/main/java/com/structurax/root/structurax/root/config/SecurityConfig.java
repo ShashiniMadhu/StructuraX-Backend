@@ -27,6 +27,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/**").permitAll()
                         .requestMatchers("/admin/**").permitAll()
                         .requestMatchers("/user/**").permitAll()
+                        .requestMatchers("/site_supervisor/**").permitAll()
+                        .requestMatchers("/financial_officer/**").permitAll()
                         .anyRequest().authenticated()
                 );
         return http.build();
