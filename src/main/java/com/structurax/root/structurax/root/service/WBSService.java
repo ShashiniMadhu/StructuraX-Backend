@@ -68,4 +68,30 @@ public interface WBSService {
      * @return list of child WBS tasks
      */
     List<WBSDTO> getChildTasks(int parentId);
+    
+    /**
+     * Get root level WBS tasks (tasks with no parent) for a project
+     * @param projectId the project ID
+     * @return list of root WBS tasks
+     */
+    List<WBSDTO> getRootWBSTasks(String projectId);
+    
+    // Alias methods for backward compatibility
+    default WBSDTO createWBS(WBSDTO wbs) {
+        int taskId = createWBSTask(wbs);
+        wbs.setTaskId(taskId);
+        return wbs;
+    }
+    
+    default boolean updateWBS(WBSDTO wbs) {
+        return updateWBSTask(wbs);
+    }
+    
+    default boolean deleteWBS(int taskId) {
+        return deleteWBSTask(taskId);
+    }
+    
+    default List<WBSDTO> getWBSByParentId(int parentId) {
+        return getChildTasks(parentId);
+    }
 }

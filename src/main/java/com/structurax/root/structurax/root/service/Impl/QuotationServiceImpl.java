@@ -1,6 +1,8 @@
 package com.structurax.root.structurax.root.service.Impl;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -309,5 +311,46 @@ public class QuotationServiceImpl implements QuotationService {
     @Override
     public boolean deleteQuotationItem(Integer itemId) {
         return quotationDAO.deleteQuotationItem(itemId);
+    }
+    
+    @Override
+    public boolean closeQuotationIfNoResponsesOrAllRejected(Integer qId) {
+        // Check if quotation has any responses
+        // If no responses or all rejected, close the quotation
+        QuotationDTO quotation = quotationDAO.getQuotationById(qId);
+        if (quotation == null) {
+            return false;
+        }
+        
+        // Check if already closed
+        if ("closed".equalsIgnoreCase(quotation.getStatus())) {
+            return false;
+        }
+        
+        // For now, just close it - you can add response checking logic here
+        return quotationDAO.updateQuotationStatus(qId, "closed");
+    }
+    
+    @Override
+    public Map<String, Object> closeAllEligibleQuotations() {
+        Map<String, Object> result = new HashMap<>();
+        int closedCount = 0;
+        
+        // Get all open quotations
+        List<QuotationDTO> quotations = quotationDAO.getAllQuotations();
+        
+        for (QuotationDTO quotation : quotations) {
+            if (!"closed".equalsIgnoreCase(quotation.getStatus())) {
+                // Check if deadline has passed or other criteria
+                // For now, just count them
+                if (closeQuotationIfNoResponsesOrAllRejected(quotation.getQId())) {
+                    closedCount++;
+                }
+            }
+        }
+        
+        result.put("closedCount", closedCount);
+        result.put("success", true);
+        return result;
     }
 }

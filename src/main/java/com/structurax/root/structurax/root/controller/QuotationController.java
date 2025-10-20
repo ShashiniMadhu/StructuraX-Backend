@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
 import com.structurax.root.structurax.root.dto.Project1DTO;
 import com.structurax.root.structurax.root.dto.PurchaseOrderDTO;
 import com.structurax.root.structurax.root.dto.QuotationDTO;
@@ -29,6 +30,8 @@ import com.structurax.root.structurax.root.service.MailService;
 import com.structurax.root.structurax.root.service.PurchaseOrderService;
 import com.structurax.root.structurax.root.service.QuotationResponseService;
 import com.structurax.root.structurax.root.service.QuotationService;
+import com.structurax.root.structurax.root.service.SQSService;
+import com.structurax.root.structurax.root.service.SupplierService;
 
 @RestController
 @RequestMapping("/quotation")
@@ -40,6 +43,21 @@ public class QuotationController {
     
     @Autowired
     private QuotationResponseService quotationResponseService;
+    
+    @Autowired
+    private SQSService sqsService;
+    
+    @Autowired
+    private AdminService adminService;
+    
+    @Autowired
+    private SupplierService supplierService;
+    
+    @Autowired
+    private MailService mailService;
+    
+    @Autowired
+    private PurchaseOrderService purchaseOrderService;
 
     /**
      * Create a new quotation with items

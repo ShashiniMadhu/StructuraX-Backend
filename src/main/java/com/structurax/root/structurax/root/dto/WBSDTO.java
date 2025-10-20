@@ -3,7 +3,7 @@ package com.structurax.root.structurax.root.dto;
 public class WBSDTO {
     private int taskId;
     private String projectId;
-    private int parentId;
+    private Integer parentId;  // Changed to Integer to allow null values
     private String name;
     private String status;
     private Boolean milestone;
@@ -13,7 +13,7 @@ public class WBSDTO {
     }
 
     // Parameterized constructor
-    public WBSDTO(int taskId, String projectId, int parentId, String name, String status, Boolean milestone) {
+    public WBSDTO(int taskId, String projectId, Integer parentId, String name, String status, Boolean milestone) {
         this.taskId = taskId;
         this.projectId = projectId;
         this.parentId = parentId;
@@ -22,7 +22,12 @@ public class WBSDTO {
         this.milestone = milestone;
     }
 
-    public WBSDTO(int taskId, String projectId, int parentId, String status, Boolean milestone) {
+    public WBSDTO(int taskId, String projectId, Integer parentId, String status, Boolean milestone) {
+        this.taskId = taskId;
+        this.projectId = projectId;
+        this.parentId = parentId;
+        this.status = status;
+        this.milestone = milestone;
     }
 
     // Getters and Setters
@@ -46,7 +51,7 @@ public class WBSDTO {
         return parentId;
     }
 
-    public void setParentId(int parentId) {
+    public void setParentId(Integer parentId) {
         this.parentId = parentId;
     }
 

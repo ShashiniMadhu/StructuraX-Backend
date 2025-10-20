@@ -121,4 +121,16 @@ public class WBSServiceImpl implements WBSService {
         }
         return wbsDAO.getChildTasks(parentId);
     }
+    
+    @Override
+    public List<WBSDTO> getRootWBSTasks(String projectId) {
+        if (projectId == null || projectId.trim().isEmpty()) {
+            throw new IllegalArgumentException("Project ID is required");
+        }
+        // Get all tasks for the project and filter only those with null parent_id
+        List<WBSDTO> allTasks = wbsDAO.getWBSByProjectId(projectId);
+        return allTasks.stream()
+            .filter(task -> task.getParentId() == null)
+            .collect(java.util.stream.Collectors.toList());
+    }
 }
