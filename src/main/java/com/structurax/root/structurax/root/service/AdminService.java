@@ -18,13 +18,16 @@ public interface AdminService {
 
     UserDTO createEmployee(UserDTO userDTO);
 
-    List<EmployeeDTO> getAllEmployees();
+    List<NewEmployeeDTO> getAllEmployees();
 
-    void deactivateEmployee(String empId);
+    public void deactivateEmployee(String empId);
 
     UserDTO getEmployeeById(String id);
 
-    SupplierDTO addSupplier(SupplierDTO supplierDTO);
+    UserDTO addSupplier(UserDTO userDTO) ;
 
+    List<FullClientDTO> getAllClients();
+
+    public List<Project1DTO> getAllProjects();
 
 }

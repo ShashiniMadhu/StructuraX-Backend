@@ -111,13 +111,13 @@ public class ProjectManagerController {
     @PutMapping("/requestSiteResources/{id}/accept")
     public ResponseEntity<String> acceptRequestSiteResource(@PathVariable("id") Integer id) {
         boolean ok = ProjectManagerService.approveRequestSiteResource(id);
-            return ResponseEntity.ok("Request " + id + " approved.");
+        return ResponseEntity.ok("Request " + id + " approved.");
     }
 
     @PutMapping("/requestSiteResources/{id}/reject")
     public ResponseEntity<String> rejectRequestSiteResource(@PathVariable("id") Integer id) {
         boolean ok = ProjectManagerService.rejectRequestSiteResource(id);
-            return ResponseEntity.ok("Request " + id + " rejected.");
+        return ResponseEntity.ok("Request " + id + " rejected.");
     }
 
     @GetMapping("/todo/{employeeId}")
@@ -228,5 +228,11 @@ public class ProjectManagerController {
     }
 
 
+    @GetMapping("/projects/ongoing/ids")
+    public ResponseEntity<List<String>> getOngoingProjectIds() {
+        List<String> ongoingProjectIds = ProjectManagerService.getOngoingProjectIds();
+        return ResponseEntity.ok(ongoingProjectIds);
+    }
 
 }
+

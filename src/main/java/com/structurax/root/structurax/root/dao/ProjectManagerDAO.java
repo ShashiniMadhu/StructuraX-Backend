@@ -6,8 +6,8 @@ import java.util.List;
 
 public interface ProjectManagerDAO {
     SiteVisitLogDTO createVisitLog(SiteVisitLogDTO visitLogDTO);
-//    List<SiteVisitLogDTO> getAllVisitLogs();
-List<SiteVisitLogDTO> getSiteVisitLogsByPmId(String pmId);
+    //    List<SiteVisitLogDTO> getAllVisitLogs();
+    List<SiteVisitLogDTO> getSiteVisitLogsByPmId(String pmId);
     boolean updateVisitLog(SiteVisitLogDTO visitLogDTO);
     List<VisitRequestDTO> getAllVisitRequests( String pmId);
     boolean updateVisitRequest(VisitRequestDTO visitRequestDTO);
@@ -29,5 +29,6 @@ List<SiteVisitLogDTO> getSiteVisitLogsByPmId(String pmId);
     List<RequestSiteResourceDTO> getPendingRequestsByPmId(String pmId);
     List<SiteResourcesDTO> getSiteResourcesByRequestId(Integer requestId);
     List<ProjectMaterialsDTO> getProjectMaterialsByProjectId(String projectId);
+    List<String> getOngoingProjectIds();
 
 }

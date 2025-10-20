@@ -114,7 +114,7 @@ public class AdminController {
                         availability.equals("Deactive"));
     }
 
-    /*@GetMapping(value = "get_employees" , produces = Constants.APPLICATION_JSON)
+    @GetMapping(value = "get_employees" , produces = Constants.APPLICATION_JSON)
     public ResponseEntity<?> getAllEmployees() {
         try {
             final List employeeDTOS = adminService.getAllEmployees();
@@ -122,32 +122,33 @@ public class AdminController {
         } catch (Exception e) {
             return new ResponseEntity<>("Error fetching employees: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
-    }*/
+    }
 
     @PutMapping(value = "/deactivate/{id}")
     public ResponseEntity<?> deactivateEmployee(@PathVariable @Pattern(regexp = "^EMP_\\d{3}$") String id) {
         try {
-            //EmployeeDTO employee = adminService.getEmployeeById(id);
-            //if (employee == null) {
-            return new ResponseEntity<>("Employee not found", HttpStatus.NOT_FOUND);
-            // }
+            // Get employee using existing method
+            UserDTO employee = adminService.getEmployeeById(id);
+            if (employee == null) {
+                return new ResponseEntity<>("Employee not found with id: " + id, HttpStatus.NOT_FOUND);
+            }
 
-            // Check if employee is already deactivated
-            //  if ("Deactive".equals(employee.getAvailability())) {
-            //  return new ResponseEntity<>("Employee is already deactivated", HttpStatus.BAD_REQUEST);
-            //}
 
-            //  adminService.deactivateEmployee(id);
-            //mailService.sendRemovalNotification(employee.getEmail(), employee.getName());
 
-            //  return ResponseEntity.ok("Employee deactivated successfully and notification email sent.");
+            // Deactivate the employee
+            adminService.deactivateEmployee(id);
+
+            // Send removal notification email
+            mailService.sendRemovalNotification(employee.getEmail(), employee.getName());
+
+            return ResponseEntity.ok("Employee deactivated successfully and notification email sent.");
         } catch (Exception e) {
             return new ResponseEntity<>("Error deactivating employee: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
 
-    @GetMapping(value = "/{id}", produces = Constants.APPLICATION_JSON)
+   @GetMapping(value = "/{id}", produces = Constants.APPLICATION_JSON)
     public ResponseEntity<?> getEmployeeById(@PathVariable @Pattern(regexp = "^EMP_\\d{3}$", message = "Employee ID must follow format EMP_XXX") String id) {
         try {
             final UserDTO employee = adminService.getEmployeeById(id);
@@ -162,31 +163,51 @@ public class AdminController {
     }
 
     @PostMapping(value = "/add_supplier")
-    public ResponseEntity<?> addSupplier(@RequestBody SupplierDTO supplierDTO){
-        try{
+    public ResponseEntity<?> addSupplier(@RequestBody UserDTO supplierDTO) {
+        try {
             // Generate OTP for the supplier
             String otp = OtpUtil.generateOtp();
 
-            // Set the OTP as password in the DTO (will be hashed in service/DAO layer)
-            supplierDTO.setPassword(otp); // Assuming SupplierDTO has a password field
+            // Set type as Supplier
+            supplierDTO.setType("Supplier");
+            supplierDTO.setPassword(otp);
 
-            // Save supplier
-            SupplierDTO savedSupplier = adminService.addSupplier(supplierDTO);
+            // Save supplier as user
+            UserDTO savedSupplier = adminService.addSupplier(supplierDTO);
 
             // Send OTP email to supplier
             mailService.sendSupplierOtp(
                     savedSupplier.getEmail(),
-                    savedSupplier.getSupplier_name(), // Assuming this is the field name
+                    savedSupplier.getName(),
                     otp
             );
 
-            log.info("📦 Supplier created successfully: {} and OTP email sent", savedSupplier.getSupplier_name());
+            log.info("Supplier created successfully: {} and OTP email sent", savedSupplier.getName());
 
             return ResponseEntity.ok(savedSupplier);
-        }catch (Exception e){
-            log.error("❌ Error adding supplier: {}", e.getMessage());
+        } catch (Exception e) {
+            log.error("Error adding supplier: {}", e.getMessage());
             return new ResponseEntity<>("Error adding supplier: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
+    @GetMapping(value = "/get_all_clients", produces = Constants.APPLICATION_JSON)
+    public ResponseEntity<?> getAllClients() {
+        try {
+            List<FullClientDTO> clients = adminService.getAllClients();
+            return ResponseEntity.ok(clients);
+        } catch (Exception e) {
+            return new ResponseEntity<>("Error fetching clients: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping(value = "/get_all_projects", produces = Constants.APPLICATION_JSON)
+    public ResponseEntity<?> getAllProjects() {
+        try {
+            List<Project1DTO> projects = adminService.getAllProjects();
+            return ResponseEntity.ok(projects);
+        } catch (Exception e) {
+            return new ResponseEntity<>("Error fetching projects: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 }

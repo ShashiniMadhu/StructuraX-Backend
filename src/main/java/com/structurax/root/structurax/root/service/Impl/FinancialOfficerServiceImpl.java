@@ -6,6 +6,8 @@ import com.structurax.root.structurax.root.service.FinancialOfficerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.sql.SQLException;
 import java.util.Date;
 import java.util.List;
 
@@ -65,6 +67,13 @@ public class FinancialOfficerServiceImpl implements FinancialOfficerService {
     }
 
     @Override
+    public LaborPaymentDTO createLaborPayment(LaborPaymentDTO paymentDTO) {
+        LaborPaymentDTO payment = financialOfficerDAO.createLaborPayment(paymentDTO);
+        return paymentDTO;
+    }
+
+
+    @Override
     public List<LaborAttendanceDTO> getLaborAttendanceByProjectId(String projectId, Date date) {
         return financialOfficerDAO.getLaborAttendanceByProjectId(projectId,date);
     }
@@ -96,7 +105,92 @@ public class FinancialOfficerServiceImpl implements FinancialOfficerService {
     }
 
 
+    @Override
+    public List<LaborPaymentDTO> getAllLaborPayments() {
+        return financialOfficerDAO.getAllLaborPayments();
+    }
 
+    @Override
+    public LaborPaymentDTO updateLaborPaymentRecord(LaborPaymentDTO laborPaymentDTO) {
+        return  financialOfficerDAO.updateLaborPaymentRecord(laborPaymentDTO);
+    }
+
+    @Override
+    public LaborPaymentDTO getPaymentRecordById(int paymentId) {
+        return financialOfficerDAO.getLaborPaymentRecordById(paymentId);
+    }
+
+    @Override
+    public LaborPaymentDTO deletePaymentRecordById(int paymentId) {
+        return  financialOfficerDAO.deletePaymentRecordById(paymentId);
+    }
+
+    @Override
+    public List<PurchaseOrderDTO> getAllOrders() {
+        return financialOfficerDAO.getAllOrders();
+    }
+
+    @Override
+    public PurchaseOrderDTO updateOrdersPaymentStatus(PurchaseOrderDTO orderDTO) {
+        return financialOfficerDAO.updateOrderPaymentStatus(orderDTO);
+    }
+
+    @Override
+    public PettyCashDTO insertPettyCash(PettyCashDTO pettyCashDTO) {
+        return financialOfficerDAO.insertPettyCash(pettyCashDTO);
+    }
+
+    @Override
+    public Boolean updatePettyCash(PettyCashDTO pettyCashDTO) throws SQLException {
+        return financialOfficerDAO.updatePettyCash(pettyCashDTO);
+    }
+
+    @Override
+    public Boolean deletePettyCash(int pettyCashId) {
+        return financialOfficerDAO.deletePettyCash(pettyCashId);
+    }
+
+    @Override
+    public List<PettyCashDTO> getAllPettyCash() {
+        return financialOfficerDAO.getAllPettyCash();
+    }
+
+
+
+    @Override
+    public List<PaymentConfirmationDTO> getAllConfirmations() {
+        return financialOfficerDAO.getAllConfirmations();
+    }
+
+    @Override
+    public List<PaymentConfirmationDTO> getConfirmationsByProject(String projectId) {
+        return financialOfficerDAO.getConfirmationsByProject(projectId);
+    }
+
+    @Override
+    public PaymentConfirmationDTO insertConfirmation(PaymentConfirmationDTO dto) {
+        return financialOfficerDAO.insertConfirmation(dto);
+    }
+
+    @Override
+    public PaymentConfirmationDTO updateConfirmation(PaymentConfirmationDTO dto) {
+        return financialOfficerDAO.updateConfirmation(dto);
+    }
+
+    @Override
+    public void deleteConfirmation(int confirmationId) {
+        return;
+    }
+
+    @Override
+    public List<PaymentDTO> getAllPayments() {
+        return financialOfficerDAO.getAllPayments();
+    }
+
+    @Override
+    public BigDecimal calculateProjectExpenses(String projectId) {
+        return financialOfficerDAO.calculateProjectExpenses(projectId);
+    }
 
 
 

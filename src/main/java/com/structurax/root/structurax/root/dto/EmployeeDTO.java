@@ -1,16 +1,13 @@
 package com.structurax.root.structurax.root.dto;
 
+import java.time.LocalDate;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
+
 import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.time.LocalDate;
 
 @Data
 @NoArgsConstructor
@@ -24,31 +21,46 @@ public class EmployeeDTO {
     @JsonProperty("user_id")
     private int userId;
 
+    @JsonProperty("first_name")
+    private String firstName;
+
+    @JsonProperty("last_name")
+    private String lastName;
+
+    @JsonProperty("name")
+    private String name;
+
+    @JsonProperty("role")
+    private String role;
+
+    @JsonProperty("email")
+    private String email;
+
+    @JsonProperty("phone_number")
+    private String phoneNumber;
+
+    @JsonProperty("address")
+    private String address;
+
+    @JsonProperty("joined_date")
+    private LocalDate joinedDate;
+
+    @JsonProperty("availability")
+    private String availability;
+
+    @JsonProperty("profile_image_url")
+    private String profileImageUrl;
+
+    // Keep the old constructor for backward compatibility
     public EmployeeDTO(String employeeId, String name, String email, String phoneNumber, String address, String type, LocalDate localJoinedDate, Object o, String availability, String profileImageUrl) {
-    }
-
-
-    public void setName(String name) {
-    }
-
-    public void setEmail(String email) {
-    }
-
-    public void setPhoneNumber(String phoneNumber) {
-    }
-
-    public void setJoinedDate(LocalDate localDate) {
-    }
-
-    public void setType(String type) {
-    }
-
-    public void setPassword(String password) {
-    }
-
-    public void setAvailability(String availability) {
-    }
-
-    public void setProfileImageUrl(String profileImageUrl) {
+        this.employeeId = employeeId;
+        this.name = name;
+        this.email = email;
+        this.phoneNumber = phoneNumber;
+        this.address = address;
+        this.role = type;
+        this.joinedDate = localJoinedDate;
+        this.availability = availability;
+        this.profileImageUrl = profileImageUrl;
     }
 }

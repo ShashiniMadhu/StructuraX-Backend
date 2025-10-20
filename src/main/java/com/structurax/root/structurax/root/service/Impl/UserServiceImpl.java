@@ -45,7 +45,7 @@ public class UserServiceImpl implements UserService {
 
         String employeeId = null;
         String clientId = null;
-        String supplierId = null;
+        int supplierId = 0;
         String adminId = null;
 
         if(user.getType().equalsIgnoreCase("supplier")){
@@ -125,5 +125,20 @@ public class UserServiceImpl implements UserService {
         }
 
     }
+
+    @Override
+    public UserDTO getUserProfileByAnyId(String id) {
+        if (id == null || id.trim().isEmpty()) {
+            throw new IllegalArgumentException("ID cannot be null or empty");
+        }
+
+        UserDTO user = userDAO.getUserProfileByAnyId(id.trim())
+                .orElseThrow(() ->
+                        new RuntimeException("User not found with ID: " + id));
+
+        return user;
+    }
+
+
 
 }

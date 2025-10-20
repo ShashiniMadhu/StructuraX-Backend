@@ -16,7 +16,8 @@ import java.util.List;
 @RequestMapping("/director")
 @CrossOrigin("http://localhost:5173/")
 
-public class DirectorController {
+public class
+DirectorController {
 
     @Autowired
     private DirectorService directorService;
