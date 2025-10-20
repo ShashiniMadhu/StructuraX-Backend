@@ -6,21 +6,16 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.List;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class PettyCashDTO {
+public class PettyCashRecordDTO {
 
+    private int recordId;
     private int pettyCashId;
-    private String projectId;
+    private BigDecimal expenseAmount;
     private LocalDate date;
-    private BigDecimal amount;
-    private String employeeId;
-
-    private List<PettyCashRecordDTO> pettyCashRecords;
-
-
+    private String description;
 
 }
