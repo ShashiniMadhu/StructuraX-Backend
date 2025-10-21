@@ -28,6 +28,7 @@ public class SecurityConfig {
                         .requestMatchers("/admin/**").permitAll()
                         .requestMatchers("/user/**").permitAll()
                         .requestMatchers("/designer/**").permitAll()
+                        .requestMatchers("/transactions/**").permitAll()
                         .requestMatchers("/qs/**").permitAll()
                         .requestMatchers("/sqs/**").permitAll()
                         .requestMatchers("/wbs/**").permitAll()
@@ -42,6 +43,7 @@ public class SecurityConfig {
                         .requestMatchers("/director/**").permitAll()
                         .requestMatchers("/boq/**").permitAll()
                         .requestMatchers("/financial_officer/**").permitAll()
+
                         .anyRequest().authenticated()
                 );
         return http.build();

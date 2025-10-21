@@ -13,8 +13,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.structurax.root.structurax.root.dto.DailyUpdateDTO;
 import com.structurax.root.structurax.root.dto.DesignDTO;
+import com.structurax.root.structurax.root.dto.PaymentPlanDTO;
 import com.structurax.root.structurax.root.dto.ProjectWithClientDTO;
 import com.structurax.root.structurax.root.dto.SiteVisitWithParticipantsDTO;
+import com.structurax.root.structurax.root.service.FinancialOfficerService;
 import com.structurax.root.structurax.root.service.QSProjectService;
 
 @CrossOrigin(origins = "http://localhost:5173")
@@ -24,6 +26,9 @@ public class QSProjectController {
     
     @Autowired
     private QSProjectService qsProjectService;
+    
+    @Autowired
+    private FinancialOfficerService financialOfficerService;
     
     /**
      * Endpoint to get all projects with client details and images.
@@ -108,6 +113,29 @@ public class QSProjectController {
         try {
             List<SiteVisitWithParticipantsDTO> siteVisits = qsProjectService.getSiteVisitsByProjectId(projectId);
             return ResponseEntity.ok(siteVisits);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+    
+    /**
+     * Endpoint to get payment plan with installment details for a specific project.
+     * This returns the payment plan associated with a project including payment plan ID,
+     * created date, total amount, start date, end date, number of installments,
+     * and a list of all installments with their details (installment ID, amount, due date, 
+     * status, and paid date).
+     * 
+     * @param projectId the project ID
+     * @return ResponseEntity with payment plan and installments for the project
+     */
+    @GetMapping("/payment-plan/{projectId}")
+    public ResponseEntity<PaymentPlanDTO> getPaymentPlanByProjectId(@PathVariable String projectId) {
+        try {
+            PaymentPlanDTO paymentPlan = financialOfficerService.getPaymentPlanByProjectId(projectId);
+            if (paymentPlan == null) {
+                return ResponseEntity.notFound().build();
+            }
+            return ResponseEntity.ok(paymentPlan);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }

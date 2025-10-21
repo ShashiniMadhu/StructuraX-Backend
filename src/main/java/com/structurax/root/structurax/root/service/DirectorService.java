@@ -21,5 +21,8 @@ public interface DirectorService {
     List<GetEmployeeDTO> getAllEmployee() throws SQLException;
     EmployeeByIdDTO getEmployeeById(String empid);
     double calculateProjectProgress(String projectId);
+    List<CatalogDTO> getInventory() throws SQLException;
+
+    void addInventoryItem(AddinventoryDTO addinventoryDTO);
 
 }

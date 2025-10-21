@@ -318,4 +318,31 @@ public class AdminDAOImpl implements AdminDAO {
             return project;
         });
     }
+
+    @Override
+    public UserDTO getAdminDetails() {
+        try {
+            String sql = "SELECT user_id, name, email, phone_number, address, type, joined_date, profile_image_url " +
+                    "FROM `users` WHERE type = 'Admin' LIMIT 1";
+
+            List<UserDTO> results = jdbcTemplate.query(sql, (rs, rowNum) ->
+                    new UserDTO(
+                            rs.getInt("user_id"),
+                            rs.getString("name"),
+                            rs.getString("email"),
+                            rs.getString("phone_number"),
+                            rs.getString("address"),
+                            rs.getString("type"),
+                            rs.getDate("joined_date").toLocalDate(),
+                            null, // availability - this column doesn't exist in your users table
+                            rs.getString("profile_image_url")
+                    )
+            );
+
+            return results.isEmpty() ? null : results.get(0);
+
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to fetch admin details: " + e.getMessage(), e);
+        }
+    }
 }

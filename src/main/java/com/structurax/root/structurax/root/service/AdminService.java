@@ -30,4 +30,5 @@ public interface AdminService {
 
     public List<Project1DTO> getAllProjects();
 
+    UserDTO getAdminDetails();
 }
