@@ -52,7 +52,7 @@ public class UserServiceImpl implements UserService {
         String adminId = null;
 
         if(user.getType().equalsIgnoreCase("supplier")){
-            employeeId = userDAO.findSupplierIdByUserId(user.getUserId());
+            supplierId = userDAO.findSupplierIdByUserId(user.getUserId());
         } else if (user.getType().equalsIgnoreCase("client")) {
             clientId = userDAO.findClientIdByUserId(user.getUserId());
         } else if(user.getType().equalsIgnoreCase("admin")){

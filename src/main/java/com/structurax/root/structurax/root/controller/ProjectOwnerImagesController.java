@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/project-owner/images")
+@RequestMapping("/project-owner/images")
 public class ProjectOwnerImagesController {
 
     private static final Logger logger = LoggerFactory.getLogger(ProjectOwnerImagesController.class);

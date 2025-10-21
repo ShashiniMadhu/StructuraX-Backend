@@ -15,7 +15,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/supplier/history")
-@CrossOrigin(origins = "*")
+@CrossOrigin(originPatterns = "*", allowCredentials = "true")
 public class SupplierHistoryController {
 
     private static final Logger logger = LoggerFactory.getLogger(SupplierHistoryController.class);

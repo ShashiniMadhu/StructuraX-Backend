@@ -10,6 +10,8 @@ public interface SupplierService {
     List<CatalogDTO> getAllCatalogs();
     void deleteCatalog(Integer itemId);
     CatalogDTO getCatalogById(Integer itemId);
+    CatalogDTO updateCatalog(CatalogDTO dto);
+    List<CatalogDTO> getCatalogsBySupplierId(Integer supplierId);
     SupplierDTO getSupplierById(int supplierId);
     List<SupplierDTO> getAllSuppliers();
 }

@@ -21,8 +21,8 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/supplier/quotations")
-@CrossOrigin(origins = "*")
+@RequestMapping("/api/supplier/quotations")
+@CrossOrigin(originPatterns = "*", allowCredentials = "true")
 public class SupplierQuotationController {
 
     private static final Logger logger = LoggerFactory.getLogger(SupplierQuotationController.class);

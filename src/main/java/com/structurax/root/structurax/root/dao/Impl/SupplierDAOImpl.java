@@ -3,6 +3,7 @@ package com.structurax.root.structurax.root.dao.Impl;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.Date;
+
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -139,9 +140,9 @@ public class SupplierDAOImpl implements SupplierDAO {
     public CatalogDTO createCatalog(CatalogDTO catalogDTO) {
         String sql;
         if (catalogDTO.getItemId() != null) {
-            sql = "INSERT INTO catalog(item_id, name, description, rate, availability, category) VALUES (?, ?, ?, ?, ?, ?)";
+            sql = "INSERT INTO catalog(item_id, name, description, rate, availability, category, supplier_id) VALUES (?, ?, ?, ?, ?, ?, ?)";
         } else {
-            sql = "INSERT INTO catalog(name, description, rate, availability, category) VALUES (?, ?, ?, ?, ?)";
+            sql = "INSERT INTO catalog(name, description, rate, availability, category, supplier_id) VALUES (?, ?, ?, ?, ?, ?)";
         }
 
         try (Connection conn = databaseConnection.getConnection();
@@ -157,7 +158,13 @@ public class SupplierDAOImpl implements SupplierDAO {
             ps.setString(paramIndex++, catalogDTO.getDescription());
             ps.setFloat(paramIndex++, catalogDTO.getRate());
             ps.setBoolean(paramIndex++, catalogDTO.getAvailability());
-            ps.setString(paramIndex, catalogDTO.getCategory());
+            ps.setString(paramIndex++, catalogDTO.getCategory());
+
+            if (catalogDTO.getSupplierId() != null) {
+                ps.setInt(paramIndex, catalogDTO.getSupplierId());
+            } else {
+                ps.setNull(paramIndex, java.sql.Types.INTEGER);
+            }
 
             int rowsAffected = ps.executeUpdate();
             logger.info("Catalog created successfully. Rows affected: {}", rowsAffected);
@@ -177,7 +184,7 @@ public class SupplierDAOImpl implements SupplierDAO {
 
     @Override
     public List<CatalogDTO> getAllCatalogs() {
-        String sql = "SELECT item_id, name, description, rate, availability, category FROM catalog";
+        String sql = "SELECT item_id, name, description, rate, availability, category, supplier_id FROM catalog";
         List<CatalogDTO> catalogs = new ArrayList<>();
 
         try (Connection conn = databaseConnection.getConnection();
@@ -192,6 +199,7 @@ public class SupplierDAOImpl implements SupplierDAO {
                 catalog.setRate(rs.getFloat("rate"));
                 catalog.setAvailability(rs.getBoolean("availability"));
                 catalog.setCategory(rs.getString("category"));
+                catalog.setSupplierId((Integer) rs.getObject("supplier_id"));
                 catalogs.add(catalog);
             }
             logger.info("Retrieved {} catalogs from database", catalogs.size());
@@ -224,7 +232,7 @@ public class SupplierDAOImpl implements SupplierDAO {
 
     @Override
     public CatalogDTO getCatalogById(Integer itemId) {
-        String sql = "SELECT item_id, name, description, rate, availability, category FROM catalog WHERE item_id = ?";
+        String sql = "SELECT item_id, name, description, rate, availability, category, supplier_id FROM catalog WHERE item_id = ?";
         CatalogDTO catalog = null;
 
         try (Connection conn = databaseConnection.getConnection();
@@ -241,6 +249,7 @@ public class SupplierDAOImpl implements SupplierDAO {
                 catalog.setRate(rs.getFloat("rate"));
                 catalog.setAvailability(rs.getBoolean("availability"));
                 catalog.setCategory(rs.getString("category"));
+                catalog.setSupplierId((Integer) rs.getObject("supplier_id"));
                 logger.info("Retrieved catalog with item_id: {}", itemId);
             } else {
                 logger.warn("No catalog found with item_id: {}", itemId);
@@ -250,6 +259,70 @@ public class SupplierDAOImpl implements SupplierDAO {
             throw new RuntimeException("Error retrieving catalog by item_id: " + e.getMessage(), e);
         }
         return catalog;
+    }
+
+    @Override
+    public CatalogDTO updateCatalog(CatalogDTO catalogDTO) {
+        String sql = "UPDATE catalog SET name = ?, description = ?, rate = ?, availability = ?, category = ?, supplier_id = ? WHERE item_id = ?";
+
+        try (Connection conn = databaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, catalogDTO.getName());
+            ps.setString(2, catalogDTO.getDescription());
+            ps.setFloat(3, catalogDTO.getRate());
+            ps.setBoolean(4, catalogDTO.getAvailability());
+            ps.setString(5, catalogDTO.getCategory());
+
+            if (catalogDTO.getSupplierId() != null) {
+                ps.setInt(6, catalogDTO.getSupplierId());
+            } else {
+                ps.setNull(6, java.sql.Types.INTEGER);
+            }
+
+            ps.setInt(7, catalogDTO.getItemId());
+
+            int rowsAffected = ps.executeUpdate();
+            if (rowsAffected == 0) {
+                logger.warn("No catalog found with item_id: {}", catalogDTO.getItemId());
+                throw new RuntimeException("No catalog found with item_id: " + catalogDTO.getItemId());
+            }
+            logger.info("Catalog with item_id {} updated successfully. Rows affected: {}", catalogDTO.getItemId(), rowsAffected);
+        } catch (SQLException e) {
+            logger.error("Error updating catalog with item_id {}: {}", catalogDTO.getItemId(), e.getMessage(), e);
+            throw new RuntimeException("Error updating catalog: " + e.getMessage(), e);
+        }
+        return catalogDTO;
+    }
+
+    @Override
+    public List<CatalogDTO> getCatalogsBySupplierId(Integer supplierId) {
+        String sql = "SELECT item_id, name, description, rate, availability, category, supplier_id FROM catalog WHERE supplier_id = ?";
+        List<CatalogDTO> catalogs = new ArrayList<>();
+
+        try (Connection conn = databaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, supplierId);
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                CatalogDTO catalog = new CatalogDTO();
+                catalog.setItemId(rs.getInt("item_id"));
+                catalog.setName(rs.getString("name"));
+                catalog.setDescription(rs.getString("description"));
+                catalog.setRate(rs.getFloat("rate"));
+                catalog.setAvailability(rs.getBoolean("availability"));
+                catalog.setCategory(rs.getString("category"));
+                catalog.setSupplierId((Integer) rs.getObject("supplier_id"));
+                catalogs.add(catalog);
+            }
+            logger.info("Retrieved {} catalogs for supplier_id: {}", catalogs.size(), supplierId);
+        } catch (SQLException e) {
+            logger.error("Error retrieving catalogs for supplier_id {}: {}", supplierId, e.getMessage(), e);
+            throw new RuntimeException("Error retrieving catalogs for supplier: " + e.getMessage(), e);
+        }
+        return catalogs;
     }
 
     // ========== PURCHASE ORDER AND PROJECT METHODS (from Dev branch) ==========
@@ -349,8 +422,22 @@ public class SupplierDAOImpl implements SupplierDAO {
         order.setSupplierId(rs.getInt("supplier_id"));
         order.setResponseId((Integer) rs.getObject("response_id"));
         order.setPaymentStatus(rs.getString("payment_status"));
-        order.setEstimatedDeliveryDate(rs.getDate("estimated_delivery_date") != null ? rs.getDate("estimated_delivery_date").toLocalDate() : null);
-        order.setOrderDate(rs.getDate("order_date") != null ? rs.getDate("order_date").toLocalDate() : null);
+
+        // Handle zero dates by converting them to null
+        try {
+            Date estimatedDate = rs.getDate("estimated_delivery_date");
+            order.setEstimatedDeliveryDate(estimatedDate != null ? estimatedDate.toLocalDate() : null);
+        } catch (SQLException e) {
+            order.setEstimatedDeliveryDate(null);
+        }
+
+        try {
+            Date orderDate = rs.getDate("order_date");
+            order.setOrderDate(orderDate != null ? orderDate.toLocalDate() : null);
+        } catch (SQLException e) {
+            order.setOrderDate(null);
+        }
+
         order.setOrderStatus(rs.getBoolean("order_status"));
         return order;
     }
@@ -379,7 +466,13 @@ public class SupplierDAOImpl implements SupplierDAO {
                 PurchaseOrderDTO order = new PurchaseOrderDTO();
                 order.setOrderId(rs.getInt("order_id"));
                 order.setProjectId(rs.getString("project_id"));
-                order.setOrderDate(rs.getDate("order_date").toLocalDate());
+                // Handle zero dates by converting them to null
+                try {
+                    Date orderDate = rs.getDate("order_date");
+                    order.setOrderDate(orderDate != null ? orderDate.toLocalDate() : null);
+                } catch (SQLException e) {
+                    order.setOrderDate(null);
+                }
                 order.setStatus(rs.getString("order_status"));
                 return order;
             });
@@ -788,3 +881,4 @@ public class SupplierDAOImpl implements SupplierDAO {
     }
 
 }
+

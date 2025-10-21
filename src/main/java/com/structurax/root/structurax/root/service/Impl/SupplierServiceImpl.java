@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.structurax.root.structurax.root.dao.ClientDAO;
 import com.structurax.root.structurax.root.dao.SupplierDAO;
@@ -123,6 +124,58 @@ public class SupplierServiceImpl implements SupplierService {
     }
 
     @Override
+    @Transactional
+    public CatalogDTO updateCatalog(CatalogDTO catalogDTO) {
+        logger.info("Updating catalog with item_id: {}", catalogDTO != null ? catalogDTO.getItemId() : null);
+
+        if (catalogDTO == null) {
+            logger.error("Validation failed: CatalogDTO is required");
+            throw new IllegalArgumentException("CatalogDTO is required");
+        }
+
+        Integer itemId = catalogDTO.getItemId();
+        if (itemId == null || itemId <= 0) {
+            logger.error("Validation failed: Valid item_id is required for update");
+            throw new IllegalArgumentException("Valid item_id is required for update");
+        }
+
+        // Validate other required fields (same rules as create)
+        if (catalogDTO.getName() == null || catalogDTO.getName().trim().isEmpty()) {
+            logger.error("Validation failed: Name is required");
+            throw new IllegalArgumentException("Name is required");
+        }
+        if (catalogDTO.getRate() == null || catalogDTO.getRate() <= 0) {
+            logger.error("Validation failed: Rate must be positive");
+            throw new IllegalArgumentException("Rate must be positive");
+        }
+        if (catalogDTO.getCategory() == null || catalogDTO.getCategory().trim().isEmpty()) {
+            logger.error("Validation failed: Category is required");
+            throw new IllegalArgumentException("Category is required");
+        }
+
+        if (catalogDTO.getAvailability() == null) {
+            catalogDTO.setAvailability(true);
+        }
+
+        try {
+            // Ensure existing catalog is present
+            CatalogDTO existing = supplierDAO.getCatalogById(itemId);
+            if (existing == null) {
+                logger.warn("Catalog not found for update with item_id: {}", itemId);
+                throw new RuntimeException("Catalog not found with item_id: " + itemId);
+            }
+
+            // Call DAO update to update in-place and preserve item_id
+            CatalogDTO updated = supplierDAO.updateCatalog(catalogDTO);
+            logger.info("Catalog updated successfully, item_id: {}", updated.getItemId());
+            return updated;
+        } catch (Exception e) {
+            logger.error("Error updating catalog with item_id {}: {}", itemId, e.getMessage(), e);
+            throw e;
+        }
+    }
+
+    @Override
     public SupplierDTO getSupplierById(int supplierId) {
         logger.info("Retrieving supplier with ID: {}", supplierId);
 
@@ -140,6 +193,25 @@ public class SupplierServiceImpl implements SupplierService {
         return supplier;
     }
     
+    @Override
+    public List<CatalogDTO> getCatalogsBySupplierId(Integer supplierId) {
+        logger.info("Retrieving catalogs for supplier_id: {}", supplierId);
+
+        if (supplierId == null || supplierId <= 0) {
+            logger.error("Validation failed: Valid supplier_id is required");
+            throw new IllegalArgumentException("Valid supplier_id is required");
+        }
+
+        try {
+            List<CatalogDTO> catalogs = supplierDAO.getCatalogsBySupplierId(supplierId);
+            logger.info("Successfully retrieved {} catalogs for supplier_id: {}", catalogs.size(), supplierId);
+            return catalogs;
+        } catch (Exception e) {
+            logger.error("Error retrieving catalogs for supplier_id {}: {}", supplierId, e.getMessage(), e);
+            throw e;
+        }
+    }
+
     @Override
     public List<SupplierDTO> getAllSuppliers() {
         logger.info("Retrieving all suppliers");

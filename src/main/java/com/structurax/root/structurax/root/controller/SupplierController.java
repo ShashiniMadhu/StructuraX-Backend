@@ -1,6 +1,6 @@
 package com.structurax.root.structurax.root.controller;
 
-import com.structurax.root.structurax.root.dto.*;
+import com.structurax.root.structurax.root.dto.CatalogDTO;
 import com.structurax.root.structurax.root.service.SupplierService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,9 +11,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@CrossOrigin(origins = "http://localhost:5173")
 @RestController
-@RequestMapping("/")
-@CrossOrigin(origins = "*")
+@RequestMapping(value = "/api/supplier")
 public class SupplierController {
 
     private static final Logger logger = LoggerFactory.getLogger(SupplierController.class);
@@ -23,15 +23,18 @@ public class SupplierController {
 
 
 
-    @GetMapping("/supplier")
+    @GetMapping("/test")
     public ResponseEntity<String> test() {
         logger.info("Test endpoint called");
         return ResponseEntity.ok("Supplier Controller is working!");
     }
 
+
     @PostMapping("/catalog")
     public ResponseEntity<?> createCatalog(@RequestBody CatalogDTO catalogDTO) {
-        logger.info("Received request to create catalog: {}", catalogDTO.getName());
+        logger.info("Received request to create catalog");
+        logger.info("Catalog details - Name: {}, Rate: {}, Category: {}, SupplierId: {}",
+                    catalogDTO.getName(), catalogDTO.getRate(), catalogDTO.getCategory(), catalogDTO.getSupplierId());
         try {
             CatalogDTO createdCatalog = supplierService.createCatalog(catalogDTO);
             logger.info("Catalog created successfully with item_id: {}", createdCatalog.getItemId());
@@ -80,40 +83,33 @@ public class SupplierController {
         }
     }
 
-    @DeleteMapping("/catalog/{itemId}")
-    public ResponseEntity<?> deleteCatalog(@PathVariable Integer itemId) {
-        logger.info("Received request to delete catalog with item_id: {}", itemId);
-        try {
-            supplierService.deleteCatalog(itemId);
-            logger.info("Catalog with item_id {} deleted successfully", itemId);
-            return ResponseEntity.ok("Catalog deleted successfully");
-        } catch (IllegalArgumentException e) {
-            logger.warn("Validation error while deleting catalog: {}", e.getMessage());
-            return ResponseEntity.badRequest().body("Validation error: " + e.getMessage());
-        } catch (RuntimeException e) {
-            logger.warn("Catalog not found for deletion with item_id: {}", itemId);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-        } catch (Exception e) {
-            logger.error("Unexpected error while deleting catalog: {}", e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Error deleting catalog: " + e.getMessage());
-        }
-    }
+    // Delete a catalog by ID
+    @DeleteMapping(value = "/catalog/{itemId}")
+     public ResponseEntity<?> deleteCatalog(@PathVariable Integer itemId) {
+         logger.info("Received request to delete catalog with item_id: {}", itemId);
+         try {
+             supplierService.deleteCatalog(itemId);
+             logger.info("Catalog with item_id {} deleted successfully", itemId);
+             return ResponseEntity.ok("Catalog deleted successfully");
+         } catch (IllegalArgumentException e) {
+             logger.warn("Validation error while deleting catalog: {}", e.getMessage());
+             return ResponseEntity.badRequest().body("Validation error: " + e.getMessage());
+         } catch (RuntimeException e) {
+             logger.warn("Catalog not found for deletion with item_id: {}", itemId);
+             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+         } catch (Exception e) {
+             logger.error("Unexpected error while deleting catalog: {}", e.getMessage(), e);
+             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                     .body("Error deleting catalog: " + e.getMessage());
+         }
+     }
 
     @PutMapping("/catalog/{itemId}")
     public ResponseEntity<?> updateCatalog(@PathVariable Integer itemId, @RequestBody CatalogDTO catalogDTO) {
         logger.info("Received request to update catalog with item_id: {}", itemId);
         try {
-            // Set the itemId from path variable
             catalogDTO.setItemId(itemId);
-
-            // First check if catalog exists
-            supplierService.getCatalogById(itemId);
-
-            // Delete the old catalog and create new one (since we don't have update method)
-            supplierService.deleteCatalog(itemId);
-            CatalogDTO updatedCatalog = supplierService.createCatalog(catalogDTO);
-
+            CatalogDTO updatedCatalog = supplierService.updateCatalog(catalogDTO);
             logger.info("Catalog with item_id {} updated successfully", itemId);
             return ResponseEntity.ok(updatedCatalog);
         } catch (IllegalArgumentException e) {
@@ -128,4 +124,25 @@ public class SupplierController {
                     .body("Error updating catalog: " + e.getMessage());
         }
     }
+
+    @GetMapping("/{supplierId}/catalogs")
+    public ResponseEntity<?> getCatalogsBySupplierId(@PathVariable Integer supplierId) {
+        logger.info("Received request to get catalogs for supplier_id: {}", supplierId);
+        try {
+            List<CatalogDTO> catalogs = supplierService.getCatalogsBySupplierId(supplierId);
+            logger.info("Successfully retrieved {} catalogs for supplier_id: {}", catalogs.size(), supplierId);
+            return ResponseEntity.ok(catalogs);
+        } catch (IllegalArgumentException e) {
+            logger.warn("Validation error while retrieving supplier catalogs: {}", e.getMessage());
+            return ResponseEntity.badRequest().body("Validation error: " + e.getMessage());
+        } catch (RuntimeException e) {
+            logger.warn("Catalogs not found for supplier_id: {}", supplierId);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (Exception e) {
+            logger.error("Unexpected error while retrieving supplier catalogs: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error retrieving supplier catalogs: " + e.getMessage());
+        }
+    }
+
 }

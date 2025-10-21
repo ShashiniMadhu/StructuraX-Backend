@@ -84,13 +84,13 @@ public class UserDAOImpl implements UserDAO {
     }
 
     @Override
-    public String findSupplierIdByUserId(Integer userId) {
+    public int findSupplierIdByUserId(Integer userId) {
         String sql = "SELECT s.supplier_id FROM supplier s " +
                 "INNER JOIN users u ON s.user_id=u.user_id WHERE u.user_id=?";
         try{
-            return jdbcTemplate.queryForObject(sql,String.class, userId);
+            return jdbcTemplate.queryForObject(sql,int.class, userId);
         }catch(EmptyResultDataAccessException e){
-            return "";
+            return 0;
         }
     }
 

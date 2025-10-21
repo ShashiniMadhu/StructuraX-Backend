@@ -20,6 +20,8 @@ public interface SupplierDAO {
     List<CatalogDTO> getAllCatalogs();
     void deleteCatalog(Integer itemId);
     CatalogDTO getCatalogById(Integer itemId);
+    CatalogDTO updateCatalog(CatalogDTO catalogDTO);
+    List<CatalogDTO> getCatalogsBySupplierId(Integer supplierId);
 
     // Existing supplier methods
     Optional<SupplierDTO> findByEmail(String email);
