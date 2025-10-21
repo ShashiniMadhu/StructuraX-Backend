@@ -92,6 +92,18 @@ DirectorController {
         return ResponseEntity.ok(Math.round(progress * 10.0) / 10.0);
     }
 
+    @GetMapping("/inventory")
+    public List<CatalogDTO> getInventory() throws SQLException {
+        return directorService.getInventory();
+    }
+
+    @PostMapping("/add_inventory")
+    public String addInventory(@RequestBody AddinventoryDTO addinventoryDTO){
+        directorService.addInventoryItem(addinventoryDTO);
+        return "Inventory added successfully";
+
+    }
+
 
 
 

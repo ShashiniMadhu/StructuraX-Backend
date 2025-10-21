@@ -93,5 +93,15 @@ public class DirectorServiceImpl implements DirectorService {
         return directorDAO.calculateProjectProgress(projectId);
     }
 
+    @Override
+    public List<CatalogDTO> getInventory() throws SQLException {
+        return directorDAO.getInventory();
+    }
+
+    @Override
+    public void addInventoryItem(AddinventoryDTO addinventoryDTO) {
+        directorDAO.addInventoryItem(addinventoryDTO);
+    }
+
 
 }
