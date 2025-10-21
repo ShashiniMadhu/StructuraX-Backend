@@ -8,6 +8,9 @@ import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
+import java.sql.Date;
+import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -134,6 +137,50 @@ public class UserDAOImpl implements UserDAO {
         } catch (EmptyResultDataAccessException e) {
             return Optional.empty();
         }
+    }
+
+    @Override
+    public List<UserDTO> getAllUsers() {
+        String sql = """
+            SELECT 
+                u.user_id,
+                u.name,
+                u.email,
+                u.phone_number,
+                u.address,
+                u.type,
+                u.joined_date,
+                u.profile_image_url,
+                CASE 
+                    WHEN u.type = 'Admin' THEN 'N/A'
+                    WHEN e.availability IS NOT NULL THEN e.availability
+                    ELSE 'N/A'
+                END AS availability
+            FROM users u
+            LEFT JOIN employee e ON u.user_id = e.user_id
+            WHERE u.type != 'Admin'
+            ORDER BY u.user_id ASC
+        """;
+
+        return jdbcTemplate.query(sql, (rs, rowNum) -> {
+            LocalDate joinedDate = null;
+            Date joinedDateSql = rs.getDate("joined_date");
+            if (joinedDateSql != null) {
+                joinedDate = joinedDateSql.toLocalDate();
+            }
+
+            return new UserDTO(
+                    rs.getInt("user_id"),
+                    rs.getString("name"),
+                    rs.getString("email"),
+                    rs.getString("phone_number"),
+                    rs.getString("address"),
+                    rs.getString("type"),
+                    joinedDate,
+                    rs.getString("availability"),
+                    rs.getString("profile_image_url")
+            );
+        });
     }
 
 

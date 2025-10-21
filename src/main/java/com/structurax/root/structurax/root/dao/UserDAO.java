@@ -3,6 +3,7 @@ package com.structurax.root.structurax.root.dao;
 import com.structurax.root.structurax.root.dto.UserDTO;
 import org.apache.catalina.User;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface UserDAO {
@@ -16,4 +17,6 @@ public interface UserDAO {
     String findSupplierIdByUserId(Integer userId);
     String findAdminIdByUserId(Integer userId);
     Optional<UserDTO> getUserProfileByAnyId(String id);
+    List<UserDTO> getAllUsers();
+
 }
