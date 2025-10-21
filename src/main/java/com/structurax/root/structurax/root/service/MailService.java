@@ -28,7 +28,7 @@ public class MailService {
             helper.setText(
                     "Hi " + name + ",\n\n" +
                             "Your Structurax employee account has been created successfully.\n\n" +
-                            "Here is your one-time login password (OTP):\n" +
+                            "Here is your temporary login password (OTP):\n" +
                             "**" + otp + "**\n\n" +
                             "Please log in and change it as soon as possible.\n\n" +
                             "Regards,\n" +
@@ -78,7 +78,7 @@ public class MailService {
             helper.setText(
                     "Hi " + name + ",\n\n" +
                             "Your Structurax Client account has been created successfully.\n\n" +
-                            "Here is your login Otp :\n" +
+                            "Here is your login temporary password :\n" +
                             "**" + otp + "**\n\n" +
                             "Please log in and change it as soon as possible.\n\n" +
                             "Regards,\n" +
@@ -104,7 +104,7 @@ public class MailService {
             helper.setText(
                     "Dear " + supplierName + ",\n\n" +
                             "Your Structurax supplier account has been created successfully.\n\n" +
-                            "Here is your login OTP (One-Time Password):\n" +
+                            "Here is your login temporary password (One-Time Password):\n" +
                             "**" + otp + "**\n\n" +
                             "Please use this OTP to access your supplier portal and update your account details.\n\n" +
                             "For security purposes, please change your password after your first login.\n\n" +

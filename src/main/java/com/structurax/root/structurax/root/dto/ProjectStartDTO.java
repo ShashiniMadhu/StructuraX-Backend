@@ -10,9 +10,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class ProjectStartDTO {
 
-    @JsonProperty("qs_id")
-    private String qsId;
-
     @JsonProperty("pm_id")
     private String pmId;
 

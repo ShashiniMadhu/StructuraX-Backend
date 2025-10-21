@@ -432,17 +432,17 @@ public class DirectorDAOImpl implements DirectorDAO {
         Connection connection = null;
         PreparedStatement projectStmt = null;
         PreparedStatement updateEmpStmt = null;
-        final String projectSql = "UPDATE project SET qs_id = ?, pm_id = ?, ss_id = ? , status = ? WHERE project_id = ? ";
+        final String projectSql = "UPDATE project SET pm_id = ?, ss_id = ? , status = ? WHERE project_id = ? ";
 
 
         try{
             connection = databaseConnection.getConnection();
             projectStmt = connection.prepareStatement(projectSql);
-            projectStmt.setString(1, projectStartDTO.getQsId());
-            projectStmt.setString(2,projectStartDTO.getPmId());
-            projectStmt.setString(3,projectStartDTO.getSsId());
-            projectStmt.setString(4,projectStartDTO.getStatus());
-            projectStmt.setString(5,projectId);
+
+            projectStmt.setString(1,projectStartDTO.getPmId());
+            projectStmt.setString(2,projectStartDTO.getSsId());
+            projectStmt.setString(3,projectStartDTO.getStatus());
+            projectStmt.setString(4,projectId);
             int rowUpdated = projectStmt.executeUpdate();
             if(rowUpdated == 0){
                 throw new RuntimeException("Error Editing: " );
@@ -608,6 +608,55 @@ public class DirectorDAOImpl implements DirectorDAO {
         } catch (SQLException e) {
             e.printStackTrace();
             throw new RuntimeException("Error calculating project progress for project: " + projectId, e);
+        }
+    }
+
+    @Override
+    public List<CatalogDTO> getInventory() throws SQLException {
+        List<CatalogDTO> inventory = new ArrayList<>();
+
+        final String sql = "SELECT * FROM catalog";
+        try(
+                Connection connection = databaseConnection.getConnection();
+                PreparedStatement preparedStatement = connection.prepareStatement(sql);
+                ResultSet rs = preparedStatement.executeQuery();
+                ){
+            while (rs.next()){
+                CatalogDTO inventoryItem = new CatalogDTO(
+                        rs.getInt("item_id"),
+                        rs.getString("name"),
+                        rs.getString("description"),
+                        rs.getFloat("rate"),
+                        rs.getBoolean("availability"),
+                        rs.getString("category")
+                );
+                inventory.add(inventoryItem);
+            }
+        }catch (SQLException e) {
+            throw  new RuntimeException("Error fetching inventory: " + e.getMessage(), e);
+        }
+        return inventory;
+    }
+
+    @Override
+    public void addInventoryItem(AddinventoryDTO addinventoryDTO) {
+        final String sql = "INSERT INTO catalog (name,category,description,rate) VALUES (?,?,?,?)";
+
+        try (
+                Connection connection = databaseConnection.getConnection();
+                PreparedStatement ps = connection.prepareStatement(sql)
+        ) {
+            ps.setString(1, addinventoryDTO.getName());
+            ps.setString(2, addinventoryDTO.getCategory());
+            ps.setString(3, addinventoryDTO.getDescription());
+            ps.setFloat(4, addinventoryDTO.getRate());
+
+
+
+            ps.executeUpdate();
+            System.out.println("✅ Inventory item added successfully!");
+        } catch (SQLException e) {
+            throw new RuntimeException("Error adding inventory item: " + e.getMessage(), e);
         }
     }
 
