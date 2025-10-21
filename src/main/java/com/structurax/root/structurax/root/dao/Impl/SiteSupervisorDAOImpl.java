@@ -553,50 +553,86 @@ public class SiteSupervisorDAOImpl implements SiteSupervisorDAO {
     @Override
     public RequestSiteResourcesDTO updateRequest(RequestSiteResourcesDTO requestSiteResourcesDTO) {
         Connection connection = null;
+
         try {
             connection = databaseConnection.getConnection();
-            connection.setAutoCommit(false);  // begin transaction
+            connection.setAutoCommit(false); // Begin transaction
 
-            final String sqlUpdateRequest = "UPDATE request_site_resources SET is_received = ?, project_id = ? " +
-            "WHERE request_id = ? AND pm_approval = 'Approved' AND qs_approval = 'Approved'";;
-            try (PreparedStatement psPlan = connection.prepareStatement(sqlUpdateRequest)) {
+            // Step 1: Check current approval statuses
+            final String sqlCheckStatus =
+                    "SELECT pm_approval, qs_approval FROM request_site_resources WHERE request_id = ?";
+            String pmApproval = null, qsApproval = null;
 
-                psPlan.setBoolean(1, requestSiteResourcesDTO.getIsReceived());
-
-                psPlan.setString(2, requestSiteResourcesDTO.getProjectId());
-                psPlan.setInt(3, requestSiteResourcesDTO.getRequestId());
-
-
-                int updatedRequestRows = psPlan.executeUpdate();
-                if (updatedRequestRows == 0) {
-                    throw new RuntimeException("Request update failed. Either it's already approved or the Site Supervisor ID is incorrect.");
+            try (PreparedStatement psCheck = connection.prepareStatement(sqlCheckStatus)) {
+                psCheck.setInt(1, requestSiteResourcesDTO.getRequestId());
+                try (ResultSet rs = psCheck.executeQuery()) {
+                    if (rs.next()) {
+                        pmApproval = rs.getString("pm_approval");
+                        qsApproval = rs.getString("qs_approval");
+                    } else {
+                        throw new RuntimeException(
+                                "Request not found with ID: " + requestSiteResourcesDTO.getRequestId());
+                    }
                 }
             }
 
-            final String sqlUpdateResources = "UPDATE site_resources SET name = ?, quantity = ?, priority = ? WHERE id = ?";
-            try (PreparedStatement psResources = connection.prepareStatement(sqlUpdateResources)) {
-                for (SiteResourceDTO resource : requestSiteResourcesDTO.getMaterials()) {
-                    if (resource.getId() == 0) {
-                        throw new RuntimeException("Invalid resource ID for update: " + resource);
-                    }
+            // Step 2: Handle update logic based on approval status
+            if ("Pending".equalsIgnoreCase(pmApproval) && "Pending".equalsIgnoreCase(qsApproval)) {
+                // ✅ Both Pending → Allow full update (project details + materials)
 
+                final String sqlUpdateProject =
+                        "UPDATE request_site_resources SET project_id = ? WHERE request_id = ?";
+                try (PreparedStatement psUpdateProject = connection.prepareStatement(sqlUpdateProject)) {
+                    psUpdateProject.setString(1, requestSiteResourcesDTO.getProjectId());
+                    psUpdateProject.setInt(2, requestSiteResourcesDTO.getRequestId());
+                    psUpdateProject.executeUpdate();
+                }
 
-                    psResources.setString(1, resource.getMaterialName());
-                    psResources.setInt(2, resource.getQuantity());
-                    psResources.setString(3, resource.getPriority());
+                final String sqlUpdateResources =
+                        "UPDATE site_resources SET name = ?, quantity = ?, priority = ? WHERE id = ?";
 
-                    psResources.setInt(4, resource.getId());
+                try (PreparedStatement psResources = connection.prepareStatement(sqlUpdateResources)) {
+                    for (SiteResourceDTO resource : requestSiteResourcesDTO.getMaterials()) {
+                        if (resource.getId() == 0) {
+                            throw new RuntimeException("Invalid resource ID for update: " + resource);
+                        }
 
+                        psResources.setString(1, resource.getMaterialName());
+                        psResources.setInt(2, resource.getQuantity());
+                        psResources.setString(3, resource.getPriority());
+                        psResources.setInt(4, resource.getId());
 
-
-                    int updateResourcesRows = psResources.executeUpdate();
-                    if (updateResourcesRows == 0) {
-                        throw new RuntimeException("Resource update failed. ID may not exist: " + resource.getId());
+                        int rows = psResources.executeUpdate();
+                        if (rows == 0) {
+                            throw new RuntimeException("Resource update failed for ID: " + resource.getId());
+                        }
                     }
                 }
+
+            } else if ("Approved".equalsIgnoreCase(pmApproval) && "Approved".equalsIgnoreCase(qsApproval)) {
+                // ✅ Both Approved → Only allow updating is_received
+
+                final String sqlUpdateIsReceived =
+                        "UPDATE request_site_resources SET is_received = ? WHERE request_id = ?";
+                try (PreparedStatement ps = connection.prepareStatement(sqlUpdateIsReceived)) {
+                    ps.setBoolean(1, requestSiteResourcesDTO.getIsReceived());
+                    ps.setInt(2, requestSiteResourcesDTO.getRequestId());
+
+                    int rows = ps.executeUpdate();
+                    if (rows == 0) {
+                        throw new RuntimeException("Failed to update 'is_received' for approved request.");
+                    }
+                }
+
+            } else {
+                // ❌ One Approved, One Pending → No updates allowed
+                throw new RuntimeException(
+                        "Cannot update request. One approval is already given — updates are restricted.");
             }
 
             connection.commit();
+            return requestSiteResourcesDTO;
+
         } catch (SQLException e) {
             if (connection != null) {
                 try {
@@ -605,18 +641,20 @@ public class SiteSupervisorDAOImpl implements SiteSupervisorDAO {
                     throw new RuntimeException("Rollback failed: " + rollbackEx.getMessage(), rollbackEx);
                 }
             }
-            throw new RuntimeException("Error updating full resource request: " + e.getMessage(), e);
+            throw new RuntimeException("Error updating resource request: " + e.getMessage(), e);
+
         } finally {
             if (connection != null) {
                 try {
                     connection.setAutoCommit(true);
                     connection.close();
-                } catch (SQLException ignored) {}
+                } catch (SQLException ignored) {
+                }
             }
         }
-
-        return requestSiteResourcesDTO;
     }
+
+
 
     @Override
     public RequestSiteResourcesDTO getRequestById(int requestId) {
@@ -845,7 +883,7 @@ public class SiteSupervisorDAOImpl implements SiteSupervisorDAO {
 
     @Override
     public DailyUpdatesDTO updateDailyUpdates(DailyUpdatesDTO dailyUpdatesDTO) {
-        final String sql = "UPDATE  daily_updates SET project_id = ?, date = ?, note = ?";
+        final String sql = "UPDATE  daily_updates SET project_id = ?, date = ?, note = ? WHERE update_id=?";
 
         try (
                 Connection connection = databaseConnection.getConnection();
@@ -856,6 +894,7 @@ public class SiteSupervisorDAOImpl implements SiteSupervisorDAO {
             preparedStatement.setString(1, dailyUpdatesDTO.getProjectId());
             preparedStatement.setDate(2, Date.valueOf(dailyUpdatesDTO.getDate()));
             preparedStatement.setString(3, dailyUpdatesDTO.getNote());
+            preparedStatement.setInt(4, dailyUpdatesDTO.getUpdateId());
 
             int rowsAffected = preparedStatement.executeUpdate();
             if (rowsAffected == 0) {
