@@ -1,3 +1,4 @@
+
 package com.structurax.root.structurax.root.service.Impl;
 
 import com.structurax.root.structurax.root.dao.ProjectManagerDAO;
@@ -46,12 +47,12 @@ public class ProjectManagerServiceImpl implements ProjectManagerService {
 
     @Override
     public boolean approveRequestSiteResource(Integer requestId) {
-        return visitLogDAO.updateRequestSiteResourceApproval(requestId, "accepted");
+        return visitLogDAO.updateRequestSiteResourceApproval(requestId, "Approved");
     }
 
     @Override
     public boolean rejectRequestSiteResource(Integer requestId) {
-        return visitLogDAO.updateRequestSiteResourceApproval(requestId, "rejected");
+        return visitLogDAO.updateRequestSiteResourceApproval(requestId, "Rejected");
     }
 
     @Override
@@ -133,6 +134,10 @@ public class ProjectManagerServiceImpl implements ProjectManagerService {
         return  visitLogDAO.getProjectMaterialsByProjectId(projectId);
     }
 
+    @Override
+    public List<String> getOngoingProjectIds() {
+        return visitLogDAO.getOngoingProjectIds();
+    }
 
 
 }

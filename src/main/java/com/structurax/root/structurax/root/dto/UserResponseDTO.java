@@ -18,6 +18,6 @@ public class UserResponseDTO {
 
     private String employeeId;
     private String clientId;
-    private String supplierId;
+    private int supplierId;
     private String adminId;
 }

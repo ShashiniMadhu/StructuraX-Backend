@@ -32,6 +32,16 @@ public class BOQServiceImpl implements BOQService {
     }
 
     @Override
+    public BOQWithItemsDTO getBOQWithItemsByProjectId(String projectId) {
+        BOQDTO boq = boqDAO.getBOQByProjectId(projectId);
+        if (boq != null) {
+            List<BOQitemDTO> items = boqDAO.getBOQItemsByBOQId(boq.getBoqId());
+            return new BOQWithItemsDTO(boq, items);
+        }
+        return null;
+    }
+
+    @Override
     public List<BOQitemDTO> getBOQItemsByBOQId(String boqId) {
         return boqDAO.getBOQItemsByBOQId(boqId);
     }

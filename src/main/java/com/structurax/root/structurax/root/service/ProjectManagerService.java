@@ -29,5 +29,8 @@ public interface ProjectManagerService {
     List<RequestSiteResourceDTO> getPendingRequestsByPmId(String pmId);
     List<SiteResourcesDTO> getSiteResourcesByRequestId(Integer requestId);
     List<ProjectMaterialsDTO> getProjectMaterialsByProjectId(String projectId);
+    List<String> getOngoingProjectIds();
 
 }
+
+

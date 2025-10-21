@@ -1,12 +1,13 @@
 package com.structurax.root.structurax.root.dto;
 
+import java.math.BigDecimal;
+import java.util.Date;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.math.BigDecimal;
-import java.util.Date;
 
 @Data
 @NoArgsConstructor
@@ -45,4 +46,10 @@ public class DesignDTO {
 
     @JsonProperty("employee_id")
     private String employeeId;
+    
+    @JsonProperty("employee_name")
+    private String employeeName;
+    
+    @JsonProperty("employee_position")
+    private String employeePosition;
 }

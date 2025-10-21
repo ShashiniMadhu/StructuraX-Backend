@@ -52,6 +52,8 @@ public class ProjectInitiateDTO {
 
     private List<String> image_url;
 
-    private String first_name;
+    private String client_name;
+
+
 
 }

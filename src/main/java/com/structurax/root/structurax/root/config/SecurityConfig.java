@@ -29,6 +29,21 @@ public class SecurityConfig {
                         .requestMatchers("/user/**").permitAll()
                         .requestMatchers("/designer/**").permitAll()
                         .requestMatchers("/transactions/**").permitAll()
+                        .requestMatchers("/qs/**").permitAll()
+                        .requestMatchers("/sqs/**").permitAll()
+                        .requestMatchers("/wbs/**").permitAll()
+                        .requestMatchers("/supplier/**").permitAll()
+                        .requestMatchers("/site_supervisor/**").permitAll()
+                        .requestMatchers("/pdf/**").permitAll()
+                        .requestMatchers("/quotation/**").permitAll()
+                        .requestMatchers("/purchase-order-pdf/**").permitAll()
+                        .requestMatchers("/purchase-order/**").permitAll()
+                        .requestMatchers("/legal_officer/**").permitAll()
+                        .requestMatchers("/project_manager/**").permitAll()
+                        .requestMatchers("/director/**").permitAll()
+                        .requestMatchers("/boq/**").permitAll()
+                        .requestMatchers("/financial_officer/**").permitAll()
+
                         .anyRequest().authenticated()
                 );
         return http.build();

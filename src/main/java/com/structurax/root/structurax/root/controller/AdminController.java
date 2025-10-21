@@ -133,10 +133,7 @@ public class AdminController {
                 return new ResponseEntity<>("Employee not found with id: " + id, HttpStatus.NOT_FOUND);
             }
 
-            // Check if employee is already deactivated
-            if ("Deactive".equals(employee.getAvailability())) {
-                return new ResponseEntity<>("Employee is already deactivated", HttpStatus.BAD_REQUEST);
-            }
+
 
             // Deactivate the employee
             adminService.deactivateEmployee(id);
@@ -151,10 +148,11 @@ public class AdminController {
     }
 
 
-    @GetMapping(value = "/{id}", produces = Constants.APPLICATION_JSON)
+   @GetMapping(value = "/{id}", produces = Constants.APPLICATION_JSON)
     public ResponseEntity<?> getEmployeeById(@PathVariable @Pattern(regexp = "^EMP_\\d{3}$", message = "Employee ID must follow format EMP_XXX") String id) {
         try {
             final UserDTO employee = adminService.getEmployeeById(id);
+
             if (employee == null) {
                 return new ResponseEntity<>("Employee not found with id: " + id, HttpStatus.NOT_FOUND);
             }
@@ -213,6 +211,7 @@ public class AdminController {
         }
     }
 
+
     @GetMapping(value = "/get_admin", produces = Constants.APPLICATION_JSON)
     public ResponseEntity<?> getAdminDetails() {
         try {
@@ -226,4 +225,5 @@ public class AdminController {
                     HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
 }

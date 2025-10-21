@@ -11,6 +11,7 @@ public interface BOQService {
     String createBOQ(BOQDTO boq);
     void addBOQItem(BOQitemDTO item);
     BOQDTO getBOQById(String boqId);
+    BOQWithItemsDTO getBOQWithItemsByProjectId(String projectId);
     List<BOQitemDTO> getBOQItemsByBOQId(String boqId);
     boolean updateBOQWithItems(BOQWithItemsDTO boqWithItems);
     

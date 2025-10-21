@@ -27,6 +27,8 @@ public interface SiteSupervisorDAO {
 
     List<RequestSiteResourcesDTO> getAllToolRequests();
 
+    List<RequestSiteResourcesDTO> getAllLaborRequests();
+
 
 
     //RequestDTO getRequestById(Integer id);
@@ -48,4 +50,27 @@ public interface SiteSupervisorDAO {
     boolean updateTodo(TodoDTO todoDTO);
 
     boolean deleteToDoTask(Integer taskId);
+
+    // daily updates
+    DailyUpdatesDTO insertDailyUpdates(DailyUpdatesDTO dailyUpdatesDTO);
+
+    List<DailyUpdatesDTO> getAllDailyUpdatesBySsId(String ssId);
+
+    DailyUpdatesDTO updateDailyUpdates(DailyUpdatesDTO dailyUpdatesDTO);
+
+    boolean deleteDailyUpdate(int updateId);
+
+    // wbs
+    WBSDTO updateWbsStatus(WBSDTO wbsdto);
+
+    List<WBSDTO> getAllWbsBySsId(String ssId);
+
+    // petty cash records
+    PettyCashRecordDTO insertPettyCashRecord(PettyCashRecordDTO recordDTO);
+
+    List<PettyCashDTO> getPettyCashBySsId(String ssId);
+
+    PettyCashRecordDTO updatePettyCashRecord(PettyCashRecordDTO pettyCashRecordDTO);
+
+    boolean deletePettyCashRecord(int recordId);
 }

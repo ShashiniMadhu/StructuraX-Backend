@@ -3,6 +3,8 @@ package com.structurax.root.structurax.root.service;
 import com.structurax.root.structurax.root.dto.*;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.sql.SQLException;
 import java.util.Date;
 import java.util.List;
 
@@ -27,6 +29,23 @@ public interface FinancialOfficerService {
     PaymentPlanDTO updateFullPaymentPlan(PaymentPlanDTO paymentPlanDTO);
 
 
+    /* Labor payments */
+    LaborPaymentDTO createLaborPayment(LaborPaymentDTO paymentDTO);
+    List<LaborPaymentDTO> getAllLaborPayments();
+    LaborPaymentDTO updateLaborPaymentRecord(LaborPaymentDTO laborPaymentDTO);
+    LaborPaymentDTO getPaymentRecordById(int paymentId);
+    LaborPaymentDTO deletePaymentRecordById(int paymentId);
+
+    /* Order payments */
+    List<PurchaseOrderDTO> getAllOrders();
+    PurchaseOrderDTO updateOrdersPaymentStatus(PurchaseOrderDTO orderDTO);
+
+    // petty cash
+    PettyCashDTO insertPettyCash(PettyCashDTO pettyCashDTO);
+    Boolean updatePettyCash(PettyCashDTO pettyCashDTO) throws SQLException;
+    Boolean deletePettyCash(int pettyCashId);
+    List<PettyCashDTO> getAllPettyCash();
+
 
 
    // PaymentPlanDTO createPaymentPlan(PaymentPlanDTO paymentPlanDTO);
@@ -44,7 +63,7 @@ public interface FinancialOfficerService {
     //InstallmentDTO deleteInstallmentById(Integer id);
 
 
-    /* labor payment */
+    /* labor salary */
     List<LaborAttendanceDTO> getLaborAttendanceByProjectId(String projectId, Date date);
 
     LaborAttendanceDTO getAttendanceById(int attendanceId);
@@ -56,6 +75,22 @@ public interface FinancialOfficerService {
     List<LaborSalaryDTO> updateSalaryRecord(List<LaborSalaryDTO> laborSalaryDTO);
 
     LaborSalaryDTO deleteSalaryRecordById(int salaryId);
+
+
+    // payment confirmation
+    List<PaymentConfirmationDTO> getAllConfirmations();
+
+    List<PaymentConfirmationDTO> getConfirmationsByProject(String projectId);
+
+    PaymentConfirmationDTO insertConfirmation(PaymentConfirmationDTO dto);
+
+    PaymentConfirmationDTO updateConfirmation(PaymentConfirmationDTO dto);
+
+    void deleteConfirmation(int confirmationId);
+
+    List<PaymentDTO> getAllPayments();
+
+    BigDecimal calculateProjectExpenses(String projectId);
 
 
 
