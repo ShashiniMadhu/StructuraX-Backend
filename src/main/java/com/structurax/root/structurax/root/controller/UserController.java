@@ -1,5 +1,6 @@
 package com.structurax.root.structurax.root.controller;
 
+import com.structurax.root.structurax.root.Constants.Constants;
 import com.structurax.root.structurax.root.dto.ForgotPasswordRequest;
 import com.structurax.root.structurax.root.dto.ResetPasswordRequest;
 import com.structurax.root.structurax.root.dto.UserDTO;
@@ -7,8 +8,11 @@ import com.structurax.root.structurax.root.dto.UserLoginDTO;
 import com.structurax.root.structurax.root.dto.UserResponseDTO;
 import com.structurax.root.structurax.root.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @CrossOrigin(origins = "http://localhost:5173")
 @RestController
@@ -53,5 +57,20 @@ public class UserController {
         }
     }
 
+    @GetMapping(value = "/all", produces = Constants.APPLICATION_JSON)
+    public ResponseEntity<?> getAllUsers() {
+        try {
+            List<UserDTO> users = userService.getAllUsers();
+
+            if (users.isEmpty()) {
+                return ResponseEntity.ok(users);
+            }
+
+            return ResponseEntity.ok(users);
+        } catch (Exception e) {
+            return new ResponseEntity<>("Error fetching users: " + e.getMessage(),
+                    HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 
 }

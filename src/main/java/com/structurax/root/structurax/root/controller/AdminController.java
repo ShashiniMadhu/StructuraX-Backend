@@ -212,4 +212,18 @@ public class AdminController {
     }
 
 
+    @GetMapping(value = "/get_admin", produces = Constants.APPLICATION_JSON)
+    public ResponseEntity<?> getAdminDetails() {
+        try {
+            UserDTO admin = adminService.getAdminDetails();
+            if (admin == null) {
+                return new ResponseEntity<>("Admin user not found", HttpStatus.NOT_FOUND);
+            }
+            return ResponseEntity.ok(admin);
+        } catch (Exception e) {
+            return new ResponseEntity<>("Error fetching admin details: " + e.getMessage(),
+                    HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
 }

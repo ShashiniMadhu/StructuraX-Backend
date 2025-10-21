@@ -89,4 +89,9 @@ public class AdminServiceImpl implements AdminService {
         logger.info("Fetched {} projects", projects.size());
         return projects;
     }
+
+    @Override
+    public UserDTO getAdminDetails() {
+        return adminDAO.getAdminDetails();
+    }
 }

@@ -34,4 +34,7 @@ public interface AdminDAO {
     List<FullClientDTO> getAllClients();
 
     public List<Project1DTO> getAllProjects();
+
+    UserDTO getAdminDetails();
+
 }
