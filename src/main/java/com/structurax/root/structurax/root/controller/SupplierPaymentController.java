@@ -17,7 +17,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/supplier/payments")
-@CrossOrigin(origins = "*")
+@CrossOrigin(originPatterns = "*", allowCredentials = "true")
 public class SupplierPaymentController {
 
     private static final Logger logger = LoggerFactory.getLogger(SupplierPaymentController.class);

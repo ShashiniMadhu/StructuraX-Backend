@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/project-owner/documents")
+@RequestMapping("/project-owner/documents")
 public class ProjectOwnerDocumentsController {
 
     private static final Logger logger = LoggerFactory.getLogger(ProjectOwnerDocumentsController.class);

@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/project-owner/materials")
+@RequestMapping("/project-owner/materials")
 @CrossOrigin(origins = "http://localhost:5173")
 public class ProjectOwnerMaterialsController {
 

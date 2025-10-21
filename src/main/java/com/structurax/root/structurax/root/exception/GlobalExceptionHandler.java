@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.NoHandlerFoundException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.Map;
 
@@ -43,6 +44,36 @@ public class GlobalExceptionHandler {
                     "receivedValue", parameterValue,
                     "expectedType", expectedType
                 ));
+    }
+
+    /**
+     * Handle missing static resources - usually indicates incorrect API path
+     */
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<?> handleNoResourceFound(NoResourceFoundException ex) {
+        String requestedPath = ex.getResourcePath();
+        logger.warn("No static resource found: {}", requestedPath);
+
+        // Check if this looks like an API call missing the /api prefix
+        if (requestedPath != null && (requestedPath.startsWith("supplier/") ||
+                                     requestedPath.startsWith("admin/") ||
+                                     requestedPath.startsWith("user/") ||
+                                     requestedPath.startsWith("designer/") ||
+                                     requestedPath.startsWith("qs/") ||
+                                     requestedPath.startsWith("quotation/"))) {
+            String suggestedPath = "/api/" + requestedPath;
+            logger.warn("API path missing '/api' prefix. Requested: '{}', should be: '{}'",
+                       requestedPath, suggestedPath);
+
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of(
+                        "error", "API endpoint not found",
+                        "requestedPath", requestedPath,
+                        "suggestion", "Did you mean: " + suggestedPath + "? All API endpoints require the /api prefix."
+                    ));
+        }
+
+        return ResponseEntity.notFound().build();
     }
 
     /**

@@ -422,8 +422,22 @@ public class SupplierDAOImpl implements SupplierDAO {
         order.setSupplierId(rs.getInt("supplier_id"));
         order.setResponseId((Integer) rs.getObject("response_id"));
         order.setPaymentStatus(rs.getString("payment_status"));
-        order.setEstimatedDeliveryDate(rs.getDate("estimated_delivery_date") != null ? rs.getDate("estimated_delivery_date").toLocalDate() : null);
-        order.setOrderDate(rs.getDate("order_date") != null ? rs.getDate("order_date").toLocalDate() : null);
+
+        // Handle zero dates by converting them to null
+        try {
+            Date estimatedDate = rs.getDate("estimated_delivery_date");
+            order.setEstimatedDeliveryDate(estimatedDate != null ? estimatedDate.toLocalDate() : null);
+        } catch (SQLException e) {
+            order.setEstimatedDeliveryDate(null);
+        }
+
+        try {
+            Date orderDate = rs.getDate("order_date");
+            order.setOrderDate(orderDate != null ? orderDate.toLocalDate() : null);
+        } catch (SQLException e) {
+            order.setOrderDate(null);
+        }
+
         order.setOrderStatus(rs.getBoolean("order_status"));
         return order;
     }
@@ -452,7 +466,13 @@ public class SupplierDAOImpl implements SupplierDAO {
                 PurchaseOrderDTO order = new PurchaseOrderDTO();
                 order.setOrderId(rs.getInt("order_id"));
                 order.setProjectId(rs.getString("project_id"));
-                order.setOrderDate(rs.getDate("order_date").toLocalDate());
+                // Handle zero dates by converting them to null
+                try {
+                    Date orderDate = rs.getDate("order_date");
+                    order.setOrderDate(orderDate != null ? orderDate.toLocalDate() : null);
+                } catch (SQLException e) {
+                    order.setOrderDate(null);
+                }
                 order.setStatus(rs.getString("order_status"));
                 return order;
             });
