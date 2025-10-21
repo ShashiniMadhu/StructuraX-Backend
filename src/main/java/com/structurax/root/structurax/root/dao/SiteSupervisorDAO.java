@@ -35,7 +35,7 @@ public interface SiteSupervisorDAO {
 
     RequestSiteResourcesDTO createMaterialRequest(RequestSiteResourcesDTO requestDTO);
 
-    RequestSiteResourcesDTO updateRequest(RequestSiteResourcesDTO requestSiteResourcesDTO);
+    RequestSiteResourcesDTO updateRequest(RequestSiteResourcesDTO requestDTO);
 
     RequestSiteResourcesDTO getRequestById(int requestId);
 
